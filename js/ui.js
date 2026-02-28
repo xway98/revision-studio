@@ -305,7 +305,9 @@ function renderHubContent(chaptersObj) {
       + `<div class="hub-topics-list" style="display:none;">`;
 
     chaptersObj[chap].sort().forEach(top => {
-      html += `<div class="hub-topic" onclick="openTopic('${chap}','${top}')">📄 ${top}</div>`;
+      if (top !== '_placeholder') {
+        html += `<div class="hub-topic" onclick="openTopic('${chap}','${top}')">📄 ${top}</div>`;
+      }
     });
 
     html += `<div style="padding:10px;"><button class="hub-add-btn" onclick="addTopic('${chap}')">+ Add Topic to ${chap}</button></div></div></div>`;
@@ -331,9 +333,13 @@ async function openTopic(chap, top) {
   if (data && data.json) {
     try {
       const p = JSON.parse(data.json);
+      if (!p.cardData) throw new Error("Missing cardData array");
       cardData = p.cardData; globalConfig = p.globalConfig;
       openEditor(chap, top, false);
-    } catch (e) { alert('Corrupt topc data'); }
+    } catch (e) {
+      console.warn('Corrupt or empty topic data, initializing fresh:', data.json);
+      openEditor(chap, top, true);
+    }
   }
 }
 
