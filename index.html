@@ -611,6 +611,143 @@ function enterEditMode(el) {
   el.style.cursor='text';
 }
 
+// ═══════════════════════════════════════════════════════════════════
+// FONT UTILITIES
+// ═══════════════════════════════════════════════════════════════════
+
+// Google Fonts name → URL param mapping
+const GFONT_MAP = {
+  'Roboto':        'Roboto:wght@400;700',
+  'Montserrat':    'Montserrat:wght@400;700;900',
+  'Poppins':       'Poppins:wght@400;700;900',
+  'Oswald':        'Oswald:wght@400;700',
+  'Lora':          'Lora:ital,wght@0,400;0,700;1,400;1,700',
+  'Comic Neue':    'Comic+Neue:wght@400;700',
+  'Courier Prime': 'Courier+Prime:wght@400;700'
+};
+
+// Fonts that are system fonts — no Google Fonts loading needed
+const SYSTEM_FONTS = new Set(['Arial','Helvetica','Times New Roman','Times','Georgia','Verdana',
+  'Trebuchet MS','Impact','Courier New','Courier','monospace','sans-serif','serif']);
+
+/**
+ * Scan all cardData and extract every font name that is actually used,
+ * including any font-family references buried inside rich text innerHTML.
+ */
+function collectAllUsedFonts() {
+  const fonts = new Set();
+  const addFont = f => { if(f) fonts.add(f.trim().replace(/['"]/g,'')); };
+
+  cardData.forEach(card => {
+    addFont(card.header?.font);
+    card.texts?.forEach(t => {
+      addFont(t.font);
+      // Also scan rich text HTML for any inline font-family / <font face> tags
+      if (t.text) {
+        const tmp = document.createElement('div');
+        tmp.innerHTML = t.text;
+        tmp.querySelectorAll('[face]').forEach(el => addFont(el.getAttribute('face')));
+        tmp.querySelectorAll('[style]').forEach(el => {
+          const fm = el.style.fontFamily;
+          if (fm) fm.split(',').forEach(f => addFont(f));
+        });
+      }
+    });
+  });
+
+  if (globalConfig.customFont?.name) addFont(globalConfig.customFont.name);
+  return fonts;
+}
+
+/**
+ * Build a single Google Fonts <link> tag covering all fonts used in the project.
+ * Falls back to the full default set so nothing is ever missing.
+ */
+function buildFontLink() {
+  const used = collectAllUsedFonts();
+
+  // Always include the full default set as a safety net
+  const defaultFamilies = Object.values(GFONT_MAP);
+  const familyParams = new Set(defaultFamilies);
+
+  // Add any custom Google Font
+  if (globalConfig.customFont?.url) {
+    // Return two link tags: one for defaults, one for custom
+    const base = `https://fonts.googleapis.com/css2?${[...familyParams].map(f=>'family='+f).join('&')}&display=swap`;
+    return `<link href="${base}" rel="stylesheet">\n    <link href="${globalConfig.customFont.url}" rel="stylesheet">`;
+  }
+
+  const base = `https://fonts.googleapis.com/css2?${[...familyParams].map(f=>'family='+f).join('&')}&display=swap`;
+  return `<link href="${base}" rel="stylesheet">`;
+}
+
+/**
+ * Sanitize raw innerHTML from contentEditable before storing or exporting.
+ *
+ * Problems this fixes:
+ * 1. Chrome auto-wraps text in <span style="font-family:Arial;font-size:17px;color:...">
+ *    when you apply bold/colour — those inline font-family values override the parent.
+ * 2. document.execCommand generates <font face="..."> tags instead of CSS.
+ * 3. Inline font-size and color styles that duplicate the base text box settings.
+ *
+ * Strategy: strip font-family from inline styles when it matches the base font
+ * (browser auto-inserted), and convert <font face> to proper CSS spans.
+ * Intentional font-family changes (different from base) are preserved.
+ */
+function sanitizeRichHTML(html, baseFont) {
+  if (!html) return html;
+  const tmp = document.createElement('div');
+  tmp.innerHTML = html;
+
+  // 1. Convert all <font face="X"> to <span style="font-family:'X'">
+  tmp.querySelectorAll('font[face]').forEach(el => {
+    const span = document.createElement('span');
+    const face = el.getAttribute('face');
+    // Copy existing inline style if any
+    let styleStr = el.getAttribute('style') || '';
+    // Prepend font-family
+    styleStr = `font-family:'${face}';${styleStr}`;
+    span.setAttribute('style', styleStr);
+    while (el.firstChild) span.appendChild(el.firstChild);
+    // Copy other <font> attributes like size/color
+    if (el.getAttribute('color')) span.style.color = el.getAttribute('color');
+    el.replaceWith(span);
+  });
+
+  // 2. Remove auto-inserted font-family that matches the base font (or is a generic fallback)
+  //    and remove auto-inserted font-size that duplicates the parent.
+  const normalise = f => (f||'').toLowerCase().replace(/['"]/g,'').trim().split(',')[0].trim();
+  const baseNorm = normalise(baseFont);
+
+  tmp.querySelectorAll('[style]').forEach(el => {
+    const fm = el.style.fontFamily;
+    if (fm) {
+      const fmNorm = normalise(fm);
+      // Remove if it's the same as base (browser-injected noise) OR if it's a generic keyword
+      const genericFallbacks = ['inherit','initial','unset','-webkit-standard','times new roman','times'];
+      if (fmNorm === baseNorm || genericFallbacks.includes(fmNorm)) {
+        el.style.removeProperty('font-family');
+      }
+      // If it differs from base, keep it — user intentionally changed font inline
+    }
+    // Remove auto-injected font-size if it's the only thing left and it duplicates parent
+    // (we can't know the exact px here so we leave font-size alone — only clean font-family)
+
+    // Clean up empty style attributes
+    if (!el.getAttribute('style') || el.getAttribute('style').trim() === '') {
+      el.removeAttribute('style');
+    }
+  });
+
+  // 3. Remove empty <span> wrappers that do nothing (browser litter)
+  tmp.querySelectorAll('span:not([style]):not([class])').forEach(el => {
+    while (el.firstChild) el.parentNode.insertBefore(el.firstChild, el);
+    el.remove();
+  });
+
+  return tmp.innerHTML;
+}
+
 function exitEditMode(){
   if(!editingEl)return;
   const inner=editingEl.querySelector('.c-el-inner');
@@ -619,7 +756,13 @@ function exitEditMode(){
   // Save text back to data
   const type=editingEl.dataset.type, idx=parseInt(editingEl.dataset.idx)||0;
   const card=cardData[activeCardIdx];
-  if(type==='text'&&card.texts[idx]!==undefined){card.texts[idx].text=inner.innerHTML;pushHist();}
+  if(type==='text'&&card.texts[idx]!==undefined){
+    // Sanitize: strip browser-injected font-family noise before storing
+    card.texts[idx].text = sanitizeRichHTML(inner.innerHTML, card.texts[idx].font);
+    // Update the DOM to reflect cleaned HTML
+    inner.innerHTML = card.texts[idx].text;
+    pushHist();
+  }
   else if(type==='header'){card.header.text=inner.textContent;pushHist();}
   editingEl.classList.remove('editing');
   editingEl.style.cursor='move';
@@ -1045,17 +1188,19 @@ function renderPropsPanel(){
 function richCmd(cmd,val){
   let inner=null;
   if(editingEl){inner=editingEl.querySelector('.c-el-inner');}
-  else if(sel.type==='text'){
-    // Enter edit mode first
-    const el=getElDOM('text',sel.idx);
-    if(el){enterEditMode(el);inner=el.querySelector('.c-el-inner');}
+  else if(sel.type==="text"){
+    const el=getElDOM("text",sel.idx);
+    if(el){enterEditMode(el);inner=el.querySelector(".c-el-inner");}
   }
   if(!inner)return;
   inner.focus();
   document.execCommand(cmd,false,val||null);
-  // sync back
-  if(sel.type==='text'){
-    getCard().texts[sel.idx].text=inner.innerHTML;
+  // Sync back with sanitization to strip browser-injected font-family noise
+  if(sel.type==="text"){
+    const baseFont = getCard().texts[sel.idx]?.font;
+    const cleaned = sanitizeRichHTML(inner.innerHTML, baseFont);
+    if(cleaned !== inner.innerHTML) inner.innerHTML = cleaned;
+    getCard().texts[sel.idx].text = cleaned;
     pushHist();
   }
 }
@@ -1140,9 +1285,12 @@ function downloadHTML(){
   const saved={cardData,globalConfig};
   const enc=btoa(encodeURIComponent(JSON.stringify(saved)));
 
+  // ── Sanitize all rich text before export to strip browser-injected font noise ──
   const proc=cardData.map(c=>{
     const nc=JSON.parse(JSON.stringify(c));
     nc.imgs.forEach(i=>{i.url=convDrive(i.url);});
+    // Clean each text layer's HTML
+    nc.texts=nc.texts.map(t=>({...t, text: sanitizeRichHTML(t.text, t.font)}));
     return nc;
   });
 
@@ -1152,13 +1300,14 @@ function downloadHTML(){
   const bgStyle=bgUrl?`background-image:url('${bgUrl}');background-size:cover;background-position:center;`:`background-color:${globalConfig.bg.color};`;
   const progBlk=globalConfig.progress.show?'<div id="prog"></div>':'';
   const trans=globalConfig.transition?.type||'fade';
-  const cfLink=globalConfig.customFont?.url?`<link href="${globalConfig.customFont.url}" rel="stylesheet">`:'';
+  // ── Build a comprehensive font link covering every font actually used ──
+  const fontLinks=buildFontLink();
 
   const code=`<!DOCTYPE html>
 <html lang="en"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>Revision Card</title><meta id="studio-save-data" content="${enc}">
-<link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&family=Courier+Prime:wght@400;700&family=Lora:ital,wght@0,400;0,700&family=Montserrat:wght@400;700;900&family=Oswald:wght@400;700&family=Poppins:wght@400;700;900&family=Roboto:wght@400;700&display=swap" rel="stylesheet">${cfLink}
+${fontLinks}
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;outline:none;}
 body{width:100vw;height:100vh;height:100dvh;overflow:hidden;background:#1a1a1a;user-select:none;}
