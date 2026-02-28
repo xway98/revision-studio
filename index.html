@@ -19,13 +19,24 @@
     <!-- Login Screen (Visible if no currentUser) -->
     <div id="login-modal" class="modal-overlay" style="display:none;">
       <div class="modal-content">
-        <h2>Enter User ID</h2>
-        <p style="margin-bottom:15px;color:#95a5a6;font-size:14px;">Please enter your ID to access your revision cards.
+        <h2>Revision Hub Login</h2>
+        <p style="margin-bottom:15px;color:#95a5a6;font-size:14px;">Please configure your database and enter your ID.
         </p>
-        <input type="text" id="user-id-input" placeholder="User ID or Passcode..."
-          style="width:100%;margin-bottom:15px;padding:10px;font-size:16px;">
-        <button class="add-el-btn" style="background:#3498db;width:100%;padding:10px;font-size:16px;"
-          onclick="verifyUser()">Login</button>
+
+        <div style="text-align:left;margin-bottom:15px;">
+          <label style="font-size:12px;color:#bdc3c7;display:block;margin-bottom:5px;">Google Apps Script URL</label>
+          <input type="text" id="script-url-input" placeholder="https://script.google.com/macros/s/.../exec"
+            style="width:100%;padding:10px;font-size:14px;background:#1e2836;border:1px solid #34495e;color:#fff;border-radius:4px;">
+        </div>
+
+        <div style="text-align:left;margin-bottom:20px;">
+          <label style="font-size:12px;color:#bdc3c7;display:block;margin-bottom:5px;">User ID</label>
+          <input type="text" id="user-id-input" placeholder="User ID or Master Passcode..."
+            style="width:100%;padding:10px;font-size:16px;background:#1e2836;border:1px solid #34495e;color:#fff;border-radius:4px;">
+        </div>
+
+        <button class="add-el-btn" style="background:#3498db;width:100%;padding:12px;font-size:16px;font-weight:bold;"
+          onclick="verifyUser()">Login & Connect</button>
       </div>
     </div>
 

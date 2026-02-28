@@ -224,18 +224,25 @@ async function dbCall(action, params = {}) {
 }
 
 async function verifyUser() {
-  const id = document.getElementById('user-id-input').value.trim();
-  if (!id) return;
+  const urlInput = document.getElementById('script-url-input').value.trim();
+  const idInput = document.getElementById('user-id-input').value.trim();
+
+  if (!urlInput) { alert("Please enter your Google Apps Script URL."); return; }
+  if (!idInput) { alert("Please enter a User ID."); return; }
+
   const btn = event.target; const og = btn.textContent; btn.textContent = 'Verifying...'; btn.disabled = true;
 
+  globalConfig.export.scriptUrl = urlInput;
+  localStorage.setItem('revStudioAppUrl', urlInput);
+
   // Temporarily set currentUser for the request
-  const tempUser = currentUser; currentUser = id;
+  const tempUser = currentUser; currentUser = idInput;
   const res = await dbCall('verify_user');
 
   btn.textContent = og; btn.disabled = false;
   if (res) {
-    currentUser = id;
-    localStorage.setItem('revStudioUser', id);
+    currentUser = idInput;
+    localStorage.setItem('revStudioUser', idInput);
     initHub();
   } else {
     currentUser = tempUser;
@@ -246,15 +253,22 @@ function logoutAdmin() {
   currentUser = null; localStorage.removeItem('revStudioUser');
   document.getElementById('hub-container').style.display = 'none';
   document.getElementById('login-modal').style.display = 'flex';
+
+  // Pre-fill URL if it exists
+  const savedUrl = localStorage.getItem('revStudioAppUrl');
+  if (savedUrl) document.getElementById('script-url-input').value = savedUrl;
 }
 
 async function initHub() {
   appMode = 'dashboard';
   document.getElementById('editor-view').style.display = 'none';
   document.getElementById('dashboard-view').style.display = 'flex';
+
   if (!currentUser) {
     document.getElementById('login-modal').style.display = 'flex';
     document.getElementById('hub-container').style.display = 'none';
+    const savedUrl = localStorage.getItem('revStudioAppUrl');
+    if (savedUrl) document.getElementById('script-url-input').value = savedUrl;
     return;
   }
   document.getElementById('login-modal').style.display = 'none';
