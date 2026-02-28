@@ -3,71 +3,117 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ultimate Revision Card Studio</title>
+    <title>Ultimate Revision Card Studio v3</title>
     <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&family=Courier+Prime:wght@400;700&family=Lora:ital,wght@0,400;0,700&family=Montserrat:wght@400;700;900&family=Oswald:wght@400;700&family=Poppins:wght@400;700;900&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
     <style>
+        * { box-sizing: border-box; }
         body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; display: flex; height: 100vh; background-color: #2c3e50; color: white; overflow: hidden; }
+
+        /* ── PANES ── */
         #editor-pane { width: 55%; padding: 20px; overflow-y: auto; background-color: #34495e; border-right: 2px solid #1abc9c; position: relative; }
-        #preview-pane { width: 45%; position: relative; background-color: #ecf0f1; overflow: hidden; }
+        #preview-pane { width: 45%; position: relative; background-color: #1a1a2e; overflow: hidden; }
+
+        /* ── HEADINGS ── */
         h2 { margin-top: 0; color: #1abc9c; border-bottom: 2px solid #1abc9c; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px; }
-        .card-editor { background-color: #1a252f; padding: 20px; margin-bottom: 20px; border-radius: 8px; border-left: 5px solid #3498db; transition: border-color 0.2s, box-shadow 0.2s; cursor: grab; }
-        .card-editor.active-card { border-left-color: #1abc9c; box-shadow: 0 0 0 2px #1abc9c44; }
-        .card-editor.drag-over { border-left-color: #f1c40f; box-shadow: 0 0 0 3px #f1c40f88; opacity: 0.85; }
-        .card-editor.dragging { opacity: 0.4; }
+
+        /* ── CARD ACCORDION ── */
+        .card-editor { background-color: #1a252f; margin-bottom: 12px; border-radius: 8px; border-left: 5px solid #3498db; transition: border-color 0.2s, box-shadow 0.2s; }
+        .card-editor.active-card { border-left-color: #1abc9c; box-shadow: 0 0 0 2px #1abc9c33; }
+        .card-editor.drag-over { border-left-color: #f1c40f; box-shadow: 0 0 0 3px #f1c40f66; }
+        .card-editor.dragging { opacity: 0.35; }
+
+        .card-header-bar { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; cursor: pointer; user-select: none; border-radius: 6px; transition: background 0.15s; }
+        .card-header-bar:hover { background: rgba(255,255,255,0.04); }
+        .card-header-bar h3 { margin: 0; color: #3498db; display: flex; align-items: center; gap: 8px; font-size: 14px; }
+        .card-header-bar.active h3 { color: #1abc9c; }
+
+        .card-body { overflow: hidden; max-height: 4000px; transition: max-height 0.4s cubic-bezier(0.4,0,0.2,1); padding: 0 16px 16px; }
+        .card-body.collapsed { max-height: 0; padding: 0; }
+
+        /* ── SECTION ACCORDION ── */
+        .section-toggle { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; background: #263445; border-radius: 5px; cursor: pointer; margin-bottom: 0; border: none; user-select: none; transition: background 0.15s; }
+        .section-toggle:hover { background: #2e3f52; }
+        .section-toggle span { font-size: 12px; color: #f1c40f; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; }
+        .section-toggle .chevron { font-size: 10px; color: #7f8c8d; transition: transform 0.25s; }
+        .section-toggle.open .chevron { transform: rotate(90deg); }
+
+        .section-body { overflow: hidden; max-height: 3000px; transition: max-height 0.35s ease; }
+        .section-body.collapsed { max-height: 0; }
+        .section-body-inner { padding-top: 12px; }
+
+        /* ── GLOBAL EDITOR ── */
         .global-editor { background-color: #273c75; padding: 15px; margin-bottom: 25px; border-radius: 8px; border-left: 5px solid #e1b12c; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
-        .text-layer { background-color: #2c3e50; padding: 15px; margin-bottom: 15px; border-radius: 6px; border: 1px dashed #7f8c8d; position: relative; }
-        .control-group { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; }
+
+        /* ── TEXT LAYER ── */
+        .text-layer { background-color: #2c3e50; padding: 15px; margin-bottom: 12px; border-radius: 6px; border: 1px dashed #7f8c8d; position: relative; }
+
+        /* ── CONTROLS ── */
+        .control-group { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; }
         .control-item { flex: 1; min-width: 110px; }
         label { display: block; font-size: 11px; margin-bottom: 4px; color: #bdc3c7; font-weight: bold; text-transform: uppercase; }
         input[type="text"], input[type="color"], select { width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #7f8c8d; background: #ecf0f1; color: #2c3e50; box-sizing: border-box; }
         input[type="color"] { padding: 2px; height: 35px; cursor: pointer; }
         input[type="range"] { width: 100%; cursor: pointer; }
-        .section-title { font-size: 14px; color: #f1c40f; margin-bottom: 12px; font-weight: bold; width: 100%; border-bottom: 1px solid #34495e; padding-bottom: 5px; }
+
+        /* ── BUTTONS ── */
         .btn { padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
-        .btn-add { background-color: #2ecc71; color: white; margin-top: 10px; width: 100%; padding: 12px; font-size: 14px; }
-        .btn-add-card { background-color: #3498db; color: white; margin-bottom: 40px; width: 100%; padding: 15px; font-size: 16px; }
-        .btn-action { padding: 5px 10px; font-size: 12px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; color: white; margin-left: 5px; }
+        .btn-add { background-color: #2ecc71; color: white; margin-top: 8px; width: 100%; padding: 10px; font-size: 13px; }
+        .btn-add-card { background-color: #3498db; color: white; margin-bottom: 40px; width: 100%; padding: 14px; font-size: 15px; }
+        .btn-action { padding: 4px 9px; font-size: 11px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; color: white; margin-left: 4px; }
         .btn-delete { background-color: #e74c3c; }
         .btn-copy { background-color: #f39c12; }
         .btn-paste { background-color: #27ae60; }
         .btn-duplicate { background-color: #8e44ad; }
-        .btn-load { background-color: #9b59b6; color: white; padding: 8px 15px; font-size: 14px; border-radius: 5px; cursor: pointer; display: inline-block; }
-        .btn-load:hover { background-color: #8e44ad; }
+        .btn-collapse { background: #2c3e50; border: 1px solid #7f8c8d; color: #bdc3c7; padding: 3px 8px; border-radius: 4px; font-size: 12px; cursor: pointer; transition: 0.15s; }
+        .btn-collapse:hover { background: #34495e; }
+        .btn-load { background-color: #9b59b6; color: white; padding: 7px 13px; font-size: 13px; border-radius: 5px; cursor: pointer; display: inline-block; }
 
-        /* Undo/Redo bar */
+        /* ── UNDO BAR ── */
         .undo-bar { display: flex; gap: 8px; margin-bottom: 14px; align-items: center; }
-        .btn-undo, .btn-redo { background: #2c3e50; color: #1abc9c; border: 1px solid #1abc9c; border-radius: 5px; padding: 6px 14px; font-size: 13px; cursor: pointer; font-weight: bold; transition: 0.15s; }
+        .btn-undo, .btn-redo { background: #2c3e50; color: #1abc9c; border: 1px solid #1abc9c; border-radius: 5px; padding: 5px 13px; font-size: 13px; cursor: pointer; font-weight: bold; transition: 0.15s; }
         .btn-undo:hover, .btn-redo:hover { background: #1abc9c; color: #2c3e50; }
         .btn-undo:disabled, .btn-redo:disabled { opacity: 0.3; cursor: not-allowed; }
         .kbd-hint { font-size: 10px; color: #7f8c8d; }
 
-        /* Drag handle */
-        .drag-handle { color: #7f8c8d; cursor: grab; margin-right: 8px; font-size: 18px; user-select: none; }
+        /* ── DRAG HANDLE ── */
+        .drag-handle { color: #7f8c8d; cursor: grab; font-size: 16px; user-select: none; padding: 0 4px; }
         .drag-handle:active { cursor: grabbing; }
 
-        /* Rich text editor */
-        .rich-toolbar { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 6px; background: #1a252f; padding: 6px; border-radius: 4px 4px 0 0; border: 1px solid #7f8c8d; border-bottom: none; }
-        .rich-toolbar button { background: #2c3e50; color: #ecf0f1; border: 1px solid #7f8c8d; border-radius: 3px; padding: 3px 8px; cursor: pointer; font-size: 12px; font-weight: bold; line-height: 1.4; }
+        /* ── RICH TEXT ── */
+        .rich-toolbar { display: flex; flex-wrap: wrap; gap: 3px; background: #1a252f; padding: 5px; border-radius: 4px 4px 0 0; border: 1px solid #7f8c8d; border-bottom: none; }
+        .rich-toolbar button { background: #2c3e50; color: #ecf0f1; border: 1px solid #56697a; border-radius: 3px; padding: 2px 7px; cursor: pointer; font-size: 11px; font-weight: bold; line-height: 1.5; }
         .rich-toolbar button:hover { background: #3498db; border-color: #3498db; }
-        .rich-toolbar input[type="color"] { width: 28px; height: 26px; padding: 1px; border-radius: 3px; cursor: pointer; border: 1px solid #7f8c8d; }
-        .rich-toolbar select { width: auto; padding: 3px 6px; font-size: 12px; background: #2c3e50; color: #ecf0f1; border: 1px solid #7f8c8d; border-radius: 3px; height: 26px; }
-        .rich-editor { width: 100%; min-height: 60px; padding: 8px; border-radius: 0 0 4px 4px; border: 1px solid #7f8c8d; background: #ecf0f1; color: #2c3e50; box-sizing: border-box; font-size: 14px; line-height: 1.5; outline: none; cursor: text; }
-        .rich-editor:focus { border-color: #3498db; box-shadow: 0 0 0 2px #3498db44; }
+        .rich-toolbar input[type="color"] { width: 26px; height: 24px; padding: 1px; border-radius: 3px; cursor: pointer; border: 1px solid #56697a; }
+        .rich-toolbar select { width: auto; padding: 2px 5px; font-size: 11px; background: #2c3e50; color: #ecf0f1; border: 1px solid #56697a; border-radius: 3px; height: 24px; }
+        .rich-editor { width: 100%; min-height: 55px; padding: 8px; border-radius: 0 0 4px 4px; border: 1px solid #7f8c8d; background: #ecf0f1; color: #2c3e50; font-size: 13px; line-height: 1.5; outline: none; cursor: text; }
+        .rich-editor:focus { border-color: #3498db; box-shadow: 0 0 0 2px #3498db33; }
 
-        /* Download and preview */
-        .download-container { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); z-index: 500; text-align: center; width: 100%; }
-        .btn-download { background-color: #e67e22; color: white; padding: 12px 24px; font-size: 15px; border-radius: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); transition: 0.2s; cursor: pointer; border: none; font-weight: bold; }
-        .btn-download:hover { background-color: #d35400; transform: scale(1.05); }
-        #preview-label { position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%); background: #2c3e5099; color: #1abc9c; font-size: 12px; font-weight: bold; padding: 4px 12px; border-radius: 20px; z-index: 400; white-space: nowrap; pointer-events: none; }
-        #mock-canvas { position: absolute; left: 50%; top: 50%; width: 375px; height: 667px; transform-origin: center center; background: white; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); overflow: hidden; border: 2px solid #333; }
-        iframe { width: 100%; height: 100%; border: none; background: #f4f7f6; pointer-events: none; }
+        /* ── PREVIEW PANE ── */
+        .download-container { position: absolute; top: 16px; left: 50%; transform: translateX(-50%); z-index: 500; text-align: center; }
+        .btn-download { background-color: #e67e22; color: white; padding: 10px 22px; font-size: 14px; border-radius: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.4); transition: 0.2s; cursor: pointer; border: none; font-weight: bold; white-space: nowrap; }
+        .btn-download:hover { background-color: #d35400; transform: scale(1.04); }
+
+        /* ── LIVE INTERACTIVE CANVAS ── */
+        #mock-canvas-wrap { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); transform-origin: center center; }
+        #live-canvas { width: 375px; height: 667px; position: relative; border-radius: 10px; overflow: hidden; box-shadow: 0 12px 40px rgba(0,0,0,0.6); border: 2px solid #444; background: white; }
+
+        /* canvas element hover/drag styles */
+        .c-el { position: absolute; transform: translate(-50%, -50%); cursor: grab; transition: outline 0.1s; }
+        .c-el:hover { outline: 2px dashed #1abc9c; outline-offset: 4px; }
+        .c-el:hover .c-badge { opacity: 1 !important; }
+        .c-el.dragging-el { cursor: grabbing; z-index: 999 !important; outline: 2px solid #1abc9c; outline-offset: 4px; opacity: 0.88; }
+        .c-badge { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); background: #1abc9c; color: #fff; font-size: 9px; font-weight: bold; padding: 2px 6px; border-radius: 3px; white-space: nowrap; opacity: 0; transition: opacity 0.12s; pointer-events: none; z-index: 50; font-family: 'Segoe UI', sans-serif; }
+
+        #preview-label { position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.5); color: #1abc9c; font-size: 11px; font-weight: bold; padding: 4px 12px; border-radius: 20px; z-index: 400; white-space: nowrap; pointer-events: none; }
+        #drag-hint { position: absolute; top: 68px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.45); color: #ecf0f1; font-size: 10px; padding: 3px 10px; border-radius: 12px; z-index: 400; pointer-events: none; opacity: 0.8; white-space: nowrap; }
     </style>
 </head>
 <body>
 
+<!-- ══════════════════════════════ EDITOR PANE ══════════════════════════════ -->
 <div id="editor-pane">
     <h2>
-        🛠️ Advanced Layout Editor
+        🛠️ Revision Card Studio
         <label class="btn-load">
             📂 Load HTML
             <input type="file" id="html-upload" accept=".html" style="display:none;" onchange="loadHTML(event)">
@@ -77,45 +123,41 @@
     <div class="undo-bar">
         <button class="btn-undo" id="btn-undo" onclick="undo()" disabled>↩ Undo</button>
         <button class="btn-redo" id="btn-redo" onclick="redo()" disabled>↪ Redo</button>
-        <span class="kbd-hint">Ctrl+Z / Ctrl+Y &nbsp;|&nbsp; ← → Arrow keys to navigate cards</span>
+        <span class="kbd-hint">Ctrl+Z / Ctrl+Y &nbsp;|&nbsp; ← → keys navigate cards</span>
     </div>
 
     <div class="global-editor" id="global-settings">
-        <div class="section-title" style="color:#e1b12c;font-size:16px;">🌐 Global Settings</div>
-        <div class="control-group">
-            <div class="control-item"><label>Canvas BG Color</label><input type="color" value="#ffffff" oninput="updateGlobal('bg','color',this.value)"></div>
-            <div class="control-item" style="flex:2;"><label>Canvas BG Image (URL)</label><input type="text" placeholder="Optional..." value="" oninput="updateGlobal('bg','imgUrl',this.value)"></div>
-            <div class="control-item"><label>Top Progress Bar</label><select onchange="updateGlobal('progress','show',this.value==='true')"><option value="true">Show Bar</option><option value="false">Hide Bar</option></select></div>
+        <div class="section-toggle open" onclick="toggleGlobal(this)" style="background:transparent;padding:4px 0 10px 0;">
+            <span style="color:#e1b12c;font-size:15px;">🌐 Global Settings</span>
+            <span class="chevron">▶</span>
         </div>
-        <div class="control-group">
-            <div class="control-item" style="min-width:100%;"><label>Slide Transition</label>
-                <select onchange="updateGlobal('transition','type',this.value)">
-                    <option value="fade">Fade</option>
-                    <option value="slide">Slide</option>
-                    <option value="zoom">Zoom</option>
-                    <option value="none">None</option>
-                </select>
+        <div class="section-body" id="global-body">
+          <div class="section-body-inner">
+            <div class="control-group">
+                <div class="control-item"><label>Canvas BG Color</label><input type="color" id="g-bg-color" value="#ffffff" oninput="updateGlobal('bg','color',this.value)"></div>
+                <div class="control-item" style="flex:2;"><label>Canvas BG Image (URL)</label><input type="text" id="g-bg-img" placeholder="Optional..." value="" oninput="updateGlobal('bg','imgUrl',this.value)"></div>
+                <div class="control-item"><label>Progress Bar</label><select id="g-progress" onchange="updateGlobal('progress','show',this.value==='true')"><option value="true">Show</option><option value="false">Hide</option></select></div>
             </div>
-        </div>
-
-        <div class="section-title" style="font-size:13px;">Custom Fonts (Google Fonts URL)</div>
-        <div class="control-group">
-            <div class="control-item" style="min-width:100%;">
-                <label>Google Fonts @import URL (paste the full URL from fonts.google.com)</label>
-                <input type="text" placeholder="https://fonts.googleapis.com/css2?family=..." value="" oninput="updateGlobal('customFont','url',this.value); applyCustomFontPreview(this.value)">
+            <div class="control-group">
+                <div class="control-item"><label>Slide Transition</label>
+                    <select id="g-transition" onchange="updateGlobal('transition','type',this.value)">
+                        <option value="fade">Fade</option><option value="slide">Slide</option><option value="zoom">Zoom</option><option value="none">None</option>
+                    </select>
+                </div>
             </div>
-            <div class="control-item" style="min-width:100%;">
-                <label>Custom Font Name (as it appears in the font list)</label>
-                <input type="text" placeholder="e.g. Nunito" value="" oninput="updateGlobal('customFont','name',this.value); refreshFontLists()">
+            <div style="font-size:12px;color:#f1c40f;font-weight:bold;margin-bottom:8px;text-transform:uppercase;">Custom Font</div>
+            <div class="control-group">
+                <div class="control-item" style="min-width:100%;"><label>Google Fonts URL</label><input type="text" id="g-font-url" placeholder="https://fonts.googleapis.com/css2?family=..." value="" oninput="updateGlobal('customFont','url',this.value);applyCustomFontPreview(this.value)"></div>
+                <div class="control-item" style="min-width:100%;"><label>Font Name (exact, to appear in lists)</label><input type="text" id="g-font-name" placeholder="e.g. Nunito" value="" oninput="updateGlobal('customFont','name',this.value);renderEditor()"></div>
             </div>
-        </div>
-
-        <div class="section-title" style="font-size:13px;">Global Bottom Logo</div>
-        <div class="control-group">
-            <div class="control-item" style="min-width:100%;"><label>Logo Image URL</label><input type="text" placeholder="Paste Logo URL here..." value="" oninput="updateGlobal('logo','url',this.value)"></div>
-            <div class="control-item"><label>Width: 20%</label><input type="range" min="5" max="100" value="20" oninput="updateGlobal('logo','width',this.value);this.previousElementSibling.innerText='Width: '+this.value+'%'"></div>
-            <div class="control-item"><label>X Pos: 50%</label><input type="range" min="0" max="100" value="50" oninput="updateGlobal('logo','x',this.value);this.previousElementSibling.innerText='X Pos: '+this.value+'%'"></div>
-            <div class="control-item"><label>Y Pos: 95%</label><input type="range" min="0" max="100" value="95" oninput="updateGlobal('logo','y',this.value);this.previousElementSibling.innerText='Y Pos: '+this.value+'%'"></div>
+            <div style="font-size:12px;color:#f1c40f;font-weight:bold;margin-bottom:8px;text-transform:uppercase;">Global Logo</div>
+            <div class="control-group">
+                <div class="control-item" style="min-width:100%;"><label>Logo URL</label><input type="text" id="g-logo-url" placeholder="Paste Logo URL..." value="" oninput="updateGlobal('logo','url',this.value)"></div>
+                <div class="control-item"><label id="g-logo-w-lbl">Width: 20%</label><input type="range" id="g-logo-w" min="5" max="100" value="20" oninput="updateGlobal('logo','width',this.value);document.getElementById('g-logo-w-lbl').innerText='Width: '+this.value+'%'"></div>
+                <div class="control-item"><label id="g-logo-x-lbl">X: 50%</label><input type="range" id="g-logo-x" min="0" max="100" value="50" oninput="updateGlobal('logo','x',this.value);document.getElementById('g-logo-x-lbl').innerText='X: '+this.value+'%'"></div>
+                <div class="control-item"><label id="g-logo-y-lbl">Y: 95%</label><input type="range" id="g-logo-y" min="0" max="100" value="95" oninput="updateGlobal('logo','y',this.value);document.getElementById('g-logo-y-lbl').innerText='Y: '+this.value+'%'"></div>
+            </div>
+          </div>
         </div>
     </div>
 
@@ -123,51 +165,53 @@
     <button class="btn btn-add-card" onclick="addCard()">+ Add New Revision Card</button>
 </div>
 
+<!-- ══════════════════════════════ PREVIEW PANE ══════════════════════════════ -->
 <div id="preview-pane">
     <div class="download-container">
         <button class="btn-download" onclick="downloadHTML()">⬇️ Download Final HTML</button>
     </div>
-    <div id="mock-canvas">
-        <iframe id="live-preview"></iframe>
+    <div id="drag-hint">🖱 Drag any element on the card to reposition it</div>
+    <div id="mock-canvas-wrap">
+        <div id="live-canvas">
+            <div id="canvas-elements"></div>
+        </div>
     </div>
-    <div id="preview-label">Previewing Card <span id="preview-card-num">1</span> of <span id="preview-card-total">1</span></div>
+    <div id="preview-label">Card <span id="preview-card-num">1</span> / <span id="preview-card-total">1</span></div>
 </div>
 
 <script>
-// ─────────────────────────────────────────────────────────
-// CONSTANTS & STATE
-// ─────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════
 const DEFAULT_FONTS = ['Roboto','Montserrat','Poppins','Oswald','Lora','Comic Neue','Courier Prime'];
-const alignments = ['left','center','right','justify'];
+const ALIGNMENTS = ['left','center','right','justify'];
 let activeCardIndex = 0;
 let clipboard = { textStyle: null, cardStyle: null };
-let draggedCardIndex = null;
+let editorDraggedCard = null; // for reordering cards in editor
 
+// UI state (not part of undo history)
+let uiState = { cardCollapsed:{}, secCollapsed:{} };
+
+// globalConfig
 let globalConfig = {
-    bg: { color: '#ffffff', imgUrl: '' },
-    progress: { show: true },
-    transition: { type: 'fade' },
-    customFont: { url: '', name: '' },
-    logo: { url: '', width: 25, x: 50, y: 92 }
+    bg: { color:'#ffffff', imgUrl:'' },
+    progress: { show:true },
+    transition: { type:'fade' },
+    customFont: { url:'', name:'' },
+    logo: { url:'', width:25, x:50, y:92 }
 };
 
-let cardData = [
-    {
-        type: 'revision',
-        header: { text: 'Electrochemistry', font: 'Arial', size: 22, color: '#ffffff', bgColor: '#3498db', bgAlpha: 100, x: 50, y: 5, width: 90, borderW: 0, borderC: '#000000', borderR: 8, shadowBlur: 0, shadowAlpha: 50, shadowColor: '#000000' },
-        texts: [
-            { text: 'New content here...', font: 'Arial', size: 18, x: 50, y: 40, align: 'center', color: '#2c3e50', weight: 'normal', lineSpace: 1.4, width: 90 }
-        ],
-        imgs: [{ url: '', width: 40, x: 50, y: 70 }]
-    }
-];
+let cardData = [{
+    type:'revision',
+    header:{ text:'Electrochemistry', font:'Arial', size:22, color:'#ffffff', bgColor:'#3498db', bgAlpha:100, x:50, y:5, width:90, borderW:0, borderC:'#000000', borderR:8, shadowBlur:0, shadowAlpha:50, shadowColor:'#000000' },
+    texts:[{ text:'New content here...', font:'Arial', size:18, x:50, y:42, align:'center', color:'#2c3e50', weight:'normal', lineSpace:1.4, width:88 }],
+    imgs:[{ url:'', width:40, x:50, y:72 }]
+}];
 
-// ─────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════
 // UNDO / REDO
-// ─────────────────────────────────────────────────────────
-let history = [];
-let historyIndex = -1;
-let historyDebounce = null;
+// ═══════════════════════════════════════════════════════════
+let history = [], historyIndex = -1, historyDebounce = null;
 
 function pushHistory() {
     clearTimeout(historyDebounce);
@@ -177,26 +221,18 @@ function pushHistory() {
         if (history.length > 60) history.shift();
         historyIndex = history.length - 1;
         updateUndoButtons();
-    }, 500);
+    }, 400);
 }
 
 function undo() {
     clearTimeout(historyDebounce);
-    // flush any pending
-    if (historyIndex < 0) return;
     if (historyIndex === history.length - 1) {
-        // save current state if not already in history
-        history = history.slice(0, historyIndex + 1);
         history.push(JSON.parse(JSON.stringify({ cardData, globalConfig })));
         historyIndex = history.length - 1;
     }
     if (historyIndex > 0) {
         historyIndex--;
-        const s = history[historyIndex];
-        cardData = JSON.parse(JSON.stringify(s.cardData));
-        globalConfig = JSON.parse(JSON.stringify(s.globalConfig));
-        if (activeCardIndex >= cardData.length) activeCardIndex = Math.max(0, cardData.length - 1);
-        renderEditor();
+        restore(history[historyIndex]);
     }
     updateUndoButtons();
 }
@@ -205,531 +241,600 @@ function redo() {
     clearTimeout(historyDebounce);
     if (historyIndex < history.length - 1) {
         historyIndex++;
-        const s = history[historyIndex];
-        cardData = JSON.parse(JSON.stringify(s.cardData));
-        globalConfig = JSON.parse(JSON.stringify(s.globalConfig));
-        if (activeCardIndex >= cardData.length) activeCardIndex = Math.max(0, cardData.length - 1);
-        renderEditor();
+        restore(history[historyIndex]);
     }
     updateUndoButtons();
 }
 
+function restore(snap) {
+    cardData = JSON.parse(JSON.stringify(snap.cardData));
+    globalConfig = JSON.parse(JSON.stringify(snap.globalConfig));
+    if (activeCardIndex >= cardData.length) activeCardIndex = Math.max(0, cardData.length - 1);
+    renderEditor();
+}
+
 function updateUndoButtons() {
-    const u = document.getElementById('btn-undo');
-    const r = document.getElementById('btn-redo');
+    const u = document.getElementById('btn-undo'), r = document.getElementById('btn-redo');
     if (u) u.disabled = historyIndex <= 0;
     if (r) r.disabled = historyIndex >= history.length - 1;
 }
 
-// ─────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════
 // KEYBOARD SHORTCUTS
-// ─────────────────────────────────────────────────────────
-document.addEventListener('keydown', function(e) {
-    const tag = (document.activeElement || {}).tagName;
-    const isEditing = tag === 'INPUT' || tag === 'TEXTAREA' || (document.activeElement && document.activeElement.contentEditable === 'true');
-
+// ═══════════════════════════════════════════════════════════
+document.addEventListener('keydown', e => {
+    const isEditing = ['INPUT','TEXTAREA'].includes(document.activeElement?.tagName) || document.activeElement?.contentEditable === 'true';
     if ((e.ctrlKey || e.metaKey) && e.key === 'z') { e.preventDefault(); undo(); return; }
     if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.shiftKey && e.key === 'z'))) { e.preventDefault(); redo(); return; }
-
     if (!isEditing) {
-        if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
-            e.preventDefault();
-            if (activeCardIndex < cardData.length - 1) { activeCardIndex++; updatePreview(); scrollToActiveCard(); }
-        }
-        if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
-            e.preventDefault();
-            if (activeCardIndex > 0) { activeCardIndex--; updatePreview(); scrollToActiveCard(); }
-        }
+        if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { e.preventDefault(); if (activeCardIndex < cardData.length-1) { activeCardIndex++; renderLiveCanvas(); renderActiveHighlight(); scrollToActive(); } }
+        if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); if (activeCardIndex > 0) { activeCardIndex--; renderLiveCanvas(); renderActiveHighlight(); scrollToActive(); } }
     }
 });
 
-function scrollToActiveCard() {
+function scrollToActive() {
     const cards = document.querySelectorAll('.card-editor');
-    if (cards[activeCardIndex]) {
-        cards[activeCardIndex].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        renderActiveHighlight();
+    if (cards[activeCardIndex]) cards[activeCardIndex].scrollIntoView({ behavior:'smooth', block:'nearest' });
+}
+
+// ═══════════════════════════════════════════════════════════
+// COLLAPSIBLE HELPERS
+// ═══════════════════════════════════════════════════════════
+function toggleGlobal(toggleEl) {
+    toggleEl.classList.toggle('open');
+    const body = document.getElementById('global-body');
+    body.classList.toggle('collapsed');
+}
+
+function toggleCard(cIndex, e) {
+    if (e) e.stopPropagation();
+    uiState.cardCollapsed[cIndex] = !uiState.cardCollapsed[cIndex];
+    const body = document.getElementById(`card-body-${cIndex}`);
+    const chevron = document.getElementById(`card-chev-${cIndex}`);
+    if (body) body.classList.toggle('collapsed', !!uiState.cardCollapsed[cIndex]);
+    if (chevron) chevron.style.transform = uiState.cardCollapsed[cIndex] ? 'rotate(0deg)' : 'rotate(90deg)';
+}
+
+function toggleSec(key, toggleEl) {
+    uiState.secCollapsed[key] = !uiState.secCollapsed[key];
+    toggleEl.classList.toggle('open', !uiState.secCollapsed[key]);
+    const body = document.getElementById(`sec-${key}`);
+    if (body) body.classList.toggle('collapsed', !!uiState.secCollapsed[key]);
+}
+
+// ═══════════════════════════════════════════════════════════
+// CANVAS DRAG STATE
+// ═══════════════════════════════════════════════════════════
+let drag = { active:false, type:null, index:null, el:null, startMX:0, startMY:0, startX:0, startY:0, cW:375, cH:667, curX:null, curY:null };
+
+document.addEventListener('mousemove', e => {
+    if (!drag.active) return;
+    const dx = (e.clientX - drag.startMX) / drag.cW * 100;
+    const dy = (e.clientY - drag.startMY) / drag.cH * 100;
+    drag.curX = Math.max(0, Math.min(100, drag.startX + dx));
+    drag.curY = Math.max(0, Math.min(100, drag.startY + dy));
+    drag.el.style.left = drag.curX + '%';
+    drag.el.style.top = drag.curY + '%';
+});
+
+document.addEventListener('mouseup', e => {
+    if (!drag.active) return;
+    drag.active = false;
+    const newX = Math.round(drag.curX ?? drag.startX);
+    const newY = Math.round(drag.curY ?? drag.startY);
+    const card = cardData[activeCardIndex];
+    if (drag.type === 'header') { card.header.x = newX; card.header.y = newY; }
+    else if (drag.type === 'text') { card.texts[drag.index].x = newX; card.texts[drag.index].y = newY; }
+    else if (drag.type === 'img') { card.imgs[drag.index].x = newX; card.imgs[drag.index].y = newY; }
+    drag.el.classList.remove('dragging-el');
+    syncPositionSliders(drag.type, drag.index, newX, newY);
+    pushHistory();
+});
+
+function syncPositionSliders(type, index, x, y) {
+    const sel = type === 'header'
+        ? `[data-pslider][data-ci="${activeCardIndex}"][data-type="header"]`
+        : `[data-pslider][data-ci="${activeCardIndex}"][data-type="${type}"][data-idx="${index}"]`;
+    document.querySelectorAll(sel + '[data-axis="x"]').forEach(el => { el.value = x; if (el.previousElementSibling) el.previousElementSibling.innerText = 'X: ' + x + '%'; });
+    document.querySelectorAll(sel + '[data-axis="y"]').forEach(el => { el.value = y; if (el.previousElementSibling) el.previousElementSibling.innerText = 'Y: ' + y + '%'; });
+}
+
+// ═══════════════════════════════════════════════════════════
+// LIVE CANVAS RENDER
+// ═══════════════════════════════════════════════════════════
+function hexToRgba(hex, alpha) {
+    let r=parseInt(hex.slice(1,3),16), g=parseInt(hex.slice(3,5),16), b=parseInt(hex.slice(5,7),16);
+    return `rgba(${r},${g},${b},${alpha/100})`;
+}
+
+function convertDriveLink(url) {
+    if (!url) return '';
+    if (url.includes('drive.google.com')) {
+        const m = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
+        if (m && m[1]) return `https://drive.google.com/thumbnail?id=${m[1]}&sz=w1000`;
     }
+    return url;
 }
 
-function renderActiveHighlight() {
-    document.querySelectorAll('.card-editor').forEach((el, i) => {
-        el.classList.toggle('active-card', i === activeCardIndex);
+function makeCanvasEl(type, index, card) {
+    let item;
+    if (type === 'header') item = card.header;
+    else if (type === 'text') item = card.texts[index];
+    else item = card.imgs[index];
+
+    const wrap = document.createElement('div');
+    wrap.className = 'c-el';
+    wrap.style.cssText = `left:${item.x}%;top:${item.y}%;width:${item.width || (type==='img'?item.width:90)}%;z-index:${type==='header'?15:5};`;
+
+    // Inner content
+    if (type === 'header') {
+        const bg = hexToRgba(item.bgColor, item.bgAlpha);
+        const shadow = (item.shadowBlur||0)>0 ? `box-shadow:0 4px ${item.shadowBlur}px ${hexToRgba(item.shadowColor||'#000',item.shadowAlpha||50)};` : '';
+        const border = (item.borderW||0)>0 ? `border:${item.borderW}px solid ${item.borderC||'#000'};` : '';
+        wrap.innerHTML = `<div style="background:${bg};color:${item.color};font-family:'${item.font}';font-size:${item.size}px;font-weight:bold;text-align:center;padding:10px;border-radius:${item.borderR||8}px;${border}${shadow}">${item.text}</div>`;
+    } else if (type === 'text') {
+        wrap.innerHTML = `<div style="font-family:'${item.font}';font-size:${item.size}px;font-weight:${item.weight};color:${item.color};text-align:${item.align};line-height:${item.lineSpace};">${item.text}</div>`;
+    } else {
+        const url = convertDriveLink(item.url);
+        wrap.innerHTML = `<img src="${url}" style="width:100%;height:auto;border-radius:8px;box-shadow:0 4px 6px rgba(0,0,0,0.15);display:block;">`;
+    }
+
+    // Badge
+    const badge = document.createElement('div');
+    badge.className = 'c-badge';
+    const typeLabels = {header:'H ⠿', text:`T${index+1} ⠿`, img:`I${index+1} ⠿`};
+    badge.textContent = typeLabels[type];
+    wrap.appendChild(badge);
+
+    // Drag events
+    wrap.addEventListener('mousedown', e => {
+        e.preventDefault(); e.stopPropagation();
+        const canvasEl = document.getElementById('live-canvas');
+        const rect = canvasEl.getBoundingClientRect();
+        drag.active = true;
+        drag.type = type; drag.index = index;
+        drag.el = wrap;
+        drag.startMX = e.clientX; drag.startMY = e.clientY;
+        drag.startX = parseFloat(item.x)||0;
+        drag.startY = parseFloat(item.y)||0;
+        drag.cW = rect.width;   // visual (scaled) size
+        drag.cH = rect.height;
+        drag.curX = null; drag.curY = null;
+        wrap.classList.add('dragging-el');
     });
-    const num = document.getElementById('preview-card-num');
-    const tot = document.getElementById('preview-card-total');
-    if (num) num.textContent = activeCardIndex + 1;
-    if (tot) tot.textContent = cardData.length;
+
+    return wrap;
 }
 
-// ─────────────────────────────────────────────────────────
-// FONT UTILITIES
-// ─────────────────────────────────────────────────────────
+function renderLiveCanvas() {
+    const canvas = document.getElementById('live-canvas');
+    const content = document.getElementById('canvas-elements');
+    if (!canvas || !content || !cardData.length) return;
+
+    // Background
+    const bgUrl = convertDriveLink(globalConfig.bg.imgUrl);
+    if (bgUrl) { canvas.style.backgroundImage=`url('${bgUrl}')`; canvas.style.backgroundSize='cover'; canvas.style.backgroundPosition='center'; canvas.style.backgroundColor=''; }
+    else { canvas.style.backgroundImage='none'; canvas.style.backgroundColor = globalConfig.bg.color; }
+
+    content.innerHTML = '';
+
+    const card = cardData[activeCardIndex];
+    if (!card) return;
+
+    // Progress bar
+    if (globalConfig.progress.show) {
+        const p = document.createElement('div');
+        p.style.cssText = `position:absolute;top:0;left:0;height:6px;background:#3498db;z-index:200;width:${((activeCardIndex+1)/cardData.length)*100}%;pointer-events:none;`;
+        content.appendChild(p);
+    }
+
+    // Logo
+    const logoUrl = convertDriveLink(globalConfig.logo.url);
+    if (logoUrl) {
+        const ld = document.createElement('div');
+        ld.style.cssText = `position:absolute;left:${globalConfig.logo.x}%;top:${globalConfig.logo.y}%;width:${globalConfig.logo.width}%;transform:translate(-50%,-50%);z-index:10;pointer-events:none;`;
+        ld.innerHTML = `<img src="${logoUrl}" style="width:100%;height:auto;border-radius:0;box-shadow:none;display:block;">`;
+        content.appendChild(ld);
+    }
+
+    // Header
+    if (card.header && card.header.text) {
+        content.appendChild(makeCanvasEl('header', -1, card));
+    }
+    // Texts
+    card.texts.forEach((_, i) => content.appendChild(makeCanvasEl('text', i, card)));
+    // Images
+    card.imgs.forEach((img, i) => { if (img.url) content.appendChild(makeCanvasEl('img', i, card)); });
+
+    renderActiveHighlight();
+}
+
+function resizeMockCanvas() {
+    const wrap = document.getElementById('mock-canvas-wrap');
+    const pane = document.getElementById('preview-pane');
+    if (!wrap || !pane) return;
+    const scale = Math.min((pane.clientWidth - 40) / 375, (pane.clientHeight - 110) / 667);
+    wrap.style.transform = `translate(-50%,-50%) scale(${scale})`;
+    wrap.style.transformOrigin = 'center center';
+}
+window.addEventListener('resize', resizeMockCanvas);
+
+// ═══════════════════════════════════════════════════════════
+// FONTS
+// ═══════════════════════════════════════════════════════════
 function getFonts() {
     const f = [...DEFAULT_FONTS];
-    if (globalConfig.customFont && globalConfig.customFont.name && !f.includes(globalConfig.customFont.name)) {
-        f.push(globalConfig.customFont.name);
-    }
+    if (globalConfig.customFont?.name && !f.includes(globalConfig.customFont.name)) f.push(globalConfig.customFont.name);
     return f;
 }
 
 function getOptions(arr, selected) {
-    return arr.map(item => `<option value="${item}" ${item === selected ? 'selected' : ''}>${item.charAt(0).toUpperCase() + item.slice(1)}</option>`).join('');
+    return arr.map(v => `<option value="${v}" ${v===selected?'selected':''}>${v}</option>`).join('');
 }
 
 function applyCustomFontPreview(url) {
     if (!url) return;
-    let existing = document.getElementById('custom-font-link');
-    if (!existing) {
-        existing = document.createElement('link');
-        existing.id = 'custom-font-link';
-        existing.rel = 'stylesheet';
-        document.head.appendChild(existing);
-    }
-    existing.href = url;
+    let el = document.getElementById('custom-font-link');
+    if (!el) { el = document.createElement('link'); el.id='custom-font-link'; el.rel='stylesheet'; document.head.appendChild(el); }
+    el.href = url;
 }
 
-function refreshFontLists() {
-    // Re-render editor to update font dropdowns
-    renderEditor();
-}
-
-// ─────────────────────────────────────────────────────────
-// HELPERS
-// ─────────────────────────────────────────────────────────
-function hexToRgba(hex, alpha) {
-    let r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
-    return 'rgba('+r+','+g+','+b+','+(alpha/100)+')';
-}
-
+// ═══════════════════════════════════════════════════════════
+// UPDATE HELPERS
+// ═══════════════════════════════════════════════════════════
 function updateGlobal(section, field, value) {
     if (!globalConfig[section]) globalConfig[section] = {};
     globalConfig[section][field] = value;
     pushHistory();
-    updatePreview();
+    renderLiveCanvas();
 }
 
 function updateCardHeader(cIndex, field, value) {
     cardData[cIndex].header[field] = value;
     activeCardIndex = cIndex;
     pushHistory();
-    updatePreview();
+    renderLiveCanvas();
 }
 
-// ─────────────────────────────────────────────────────────
-// COPY / PASTE
-// ─────────────────────────────────────────────────────────
-function copyTextStyle(cIndex, tIndex) {
-    const t = cardData[cIndex].texts[tIndex];
-    clipboard.textStyle = { font:t.font, size:t.size, align:t.align, color:t.color, weight:t.weight, lineSpace:t.lineSpace, width:t.width, x:t.x, y:t.y };
-    alert("Text formatting copied!");
-}
-function pasteTextStyle(cIndex, tIndex) {
-    if (!clipboard.textStyle) return alert("Nothing copied yet!");
-    Object.keys(clipboard.textStyle).forEach(k => { cardData[cIndex].texts[tIndex][k] = clipboard.textStyle[k]; });
-    activeCardIndex = cIndex;
-    pushHistory();
-    renderEditor();
-}
-function copyCardStyle(cIndex) {
-    const c = cardData[cIndex];
-    clipboard.cardStyle = {
-        header: { ...c.header, text: undefined },
-        texts: c.texts.map(t => ({ font:t.font, size:t.size, align:t.align, color:t.color, weight:t.weight, lineSpace:t.lineSpace, width:t.width, x:t.x, y:t.y })),
-        imgs: c.imgs.map(i => ({ width:i.width, x:i.x, y:i.y }))
-    };
-    alert("Card layout copied!");
-}
-function pasteCardStyle(cIndex) {
-    if (!clipboard.cardStyle) return alert("No card layout copied yet!");
-    Object.keys(clipboard.cardStyle.header).forEach(k => { if (clipboard.cardStyle.header[k] !== undefined) cardData[cIndex].header[k] = clipboard.cardStyle.header[k]; });
-    clipboard.cardStyle.texts.forEach((style, i) => {
-        if (cardData[cIndex].texts[i]) Object.keys(style).forEach(k => cardData[cIndex].texts[i][k] = style[k]);
-        else cardData[cIndex].texts.push({ text:'Pasted format...', ...style });
-    });
-    clipboard.cardStyle.imgs.forEach((style, i) => {
-        if (cardData[cIndex].imgs[i]) Object.keys(style).forEach(k => cardData[cIndex].imgs[i][k] = style[k]);
-        else cardData[cIndex].imgs.push({ url:'', ...style });
-    });
-    activeCardIndex = cIndex;
-    pushHistory();
-    renderEditor();
-}
-
-// ─────────────────────────────────────────────────────────
-// TEXT BOX LOGIC
-// ─────────────────────────────────────────────────────────
-function addTextBox(cIndex) {
-    cardData[cIndex].texts.push({ text:'New text...', font:'Arial', size:16, x:50, y:50, align:'center', color:'#2c3e50', weight:'normal', lineSpace:1.4, width:90 });
-    activeCardIndex = cIndex;
-    pushHistory();
-    renderEditor();
-}
-function deleteTextBox(cIndex, tIndex) {
-    cardData[cIndex].texts.splice(tIndex, 1);
-    activeCardIndex = cIndex;
-    pushHistory();
-    renderEditor();
-}
 function updateTextData(cIndex, tIndex, field, value) {
     cardData[cIndex].texts[tIndex][field] = value;
     activeCardIndex = cIndex;
     pushHistory();
-    updatePreview();
+    renderLiveCanvas();
 }
 
-// ─────────────────────────────────────────────────────────
-// RICH TEXT — sync innerHTML from contenteditable
-// ─────────────────────────────────────────────────────────
-function syncRichText(el, cIndex, tIndex) {
-    cardData[cIndex].texts[tIndex].text = el.innerHTML;
-    activeCardIndex = cIndex;
-    pushHistory();
-    updatePreview();
-}
-
-function richCmd(cIndex, tIndex, cmd, value) {
-    const el = document.getElementById(`rich-${cIndex}-${tIndex}`);
-    if (!el) return;
-    el.focus();
-    document.execCommand(cmd, false, value || null);
-    syncRichText(el, cIndex, tIndex);
-}
-
-function richFontSize(cIndex, tIndex, size) {
-    // execCommand fontSize only accepts 1-7; we use a workaround
-    const el = document.getElementById(`rich-${cIndex}-${tIndex}`);
-    if (!el) return;
-    el.focus();
-    document.execCommand('fontSize', false, '7');
-    el.querySelectorAll('font[size="7"]').forEach(f => {
-        f.removeAttribute('size');
-        f.style.fontSize = size + 'px';
-    });
-    syncRichText(el, cIndex, tIndex);
-}
-
-// ─────────────────────────────────────────────────────────
-// IMAGE LAYERS
-// ─────────────────────────────────────────────────────────
-function addImgBox(cIndex) {
-    cardData[cIndex].imgs.push({ url:'', width:40, x:50, y:75 });
-    activeCardIndex = cIndex;
-    pushHistory();
-    renderEditor();
-}
-function deleteImgBox(cIndex, iIndex) {
-    cardData[cIndex].imgs.splice(iIndex, 1);
-    activeCardIndex = cIndex;
-    pushHistory();
-    renderEditor();
-}
 function updateImgDataArray(cIndex, iIndex, field, value) {
     cardData[cIndex].imgs[iIndex][field] = value;
     activeCardIndex = cIndex;
     pushHistory();
-    updatePreview();
+    renderLiveCanvas();
 }
 
-// ─────────────────────────────────────────────────────────
-// ADD / DELETE / DUPLICATE / REORDER CARDS
-// ─────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════
+// RICH TEXT
+// ═══════════════════════════════════════════════════════════
+function syncRichText(el, cIndex, tIndex) {
+    cardData[cIndex].texts[tIndex].text = el.innerHTML;
+    activeCardIndex = cIndex;
+    pushHistory();
+    renderLiveCanvas();
+}
+
+function richCmd(cIndex, tIndex, cmd, val) {
+    const el = document.getElementById(`rich-${cIndex}-${tIndex}`);
+    if (!el) return; el.focus();
+    document.execCommand(cmd, false, val || null);
+    syncRichText(el, cIndex, tIndex);
+}
+
+function richFontSize(cIndex, tIndex, size) {
+    const el = document.getElementById(`rich-${cIndex}-${tIndex}`);
+    if (!el) return; el.focus();
+    document.execCommand('fontSize', false, '7');
+    el.querySelectorAll('font[size="7"]').forEach(f => { f.removeAttribute('size'); f.style.fontSize = size + 'px'; });
+    syncRichText(el, cIndex, tIndex);
+}
+
+// ═══════════════════════════════════════════════════════════
+// CARD OPERATIONS
+// ═══════════════════════════════════════════════════════════
+function addTextBox(cIndex) {
+    cardData[cIndex].texts.push({ text:'New text...', font:'Arial', size:16, x:50, y:55, align:'center', color:'#2c3e50', weight:'normal', lineSpace:1.4, width:88 });
+    activeCardIndex = cIndex; pushHistory(); renderEditor();
+}
+function deleteTextBox(cIndex, tIndex) {
+    cardData[cIndex].texts.splice(tIndex, 1);
+    activeCardIndex = cIndex; pushHistory(); renderEditor();
+}
+function addImgBox(cIndex) {
+    cardData[cIndex].imgs.push({ url:'', width:40, x:50, y:75 });
+    activeCardIndex = cIndex; pushHistory(); renderEditor();
+}
+function deleteImgBox(cIndex, iIndex) {
+    cardData[cIndex].imgs.splice(iIndex, 1);
+    activeCardIndex = cIndex; pushHistory(); renderEditor();
+}
 function addCard() {
-    cardData.push({
-        type:'revision',
+    cardData.push({ type:'revision',
         header:{ text:'New Topic', font:'Arial', size:22, color:'#ffffff', bgColor:'#3498db', bgAlpha:100, x:50, y:5, width:90, borderW:0, borderC:'#000000', borderR:8, shadowBlur:0, shadowAlpha:50, shadowColor:'#000000' },
-        texts:[{ text:'New content here...', font:'Arial', size:18, x:50, y:50, align:'center', color:'#2c3e50', weight:'normal', lineSpace:1.4, width:90 }],
+        texts:[{ text:'Content here...', font:'Arial', size:18, x:50, y:45, align:'center', color:'#2c3e50', weight:'normal', lineSpace:1.4, width:88 }],
         imgs:[{ url:'', width:40, x:50, y:75 }]
     });
-    activeCardIndex = cardData.length - 1;
-    pushHistory();
-    renderEditor();
+    activeCardIndex = cardData.length - 1; pushHistory(); renderEditor();
 }
-
 function deleteCard(index) {
     cardData.splice(index, 1);
-    if (activeCardIndex >= cardData.length) activeCardIndex = Math.max(0, cardData.length - 1);
-    pushHistory();
-    renderEditor();
+    if (activeCardIndex >= cardData.length) activeCardIndex = Math.max(0, cardData.length-1);
+    pushHistory(); renderEditor();
 }
-
 function duplicateCard(index) {
     const clone = JSON.parse(JSON.stringify(cardData[index]));
-    clone.header.text = clone.header.text + ' (Copy)';
-    cardData.splice(index + 1, 0, clone);
-    activeCardIndex = index + 1;
-    pushHistory();
-    renderEditor();
+    clone.header.text += ' (Copy)';
+    cardData.splice(index+1, 0, clone);
+    activeCardIndex = index+1; pushHistory(); renderEditor();
 }
 
-// ─────────────────────────────────────────────────────────
-// DRAG & DROP REORDER
-// ─────────────────────────────────────────────────────────
-function onDragStart(e, index) {
-    draggedCardIndex = index;
-    e.dataTransfer.effectAllowed = 'move';
-    e.target.closest('.card-editor').classList.add('dragging');
+// ─── Copy/Paste ───
+function copyTextStyle(cIndex, tIndex) {
+    const t = cardData[cIndex].texts[tIndex];
+    clipboard.textStyle = { font:t.font, size:t.size, align:t.align, color:t.color, weight:t.weight, lineSpace:t.lineSpace, width:t.width, x:t.x, y:t.y };
+    alert('Text formatting copied!');
 }
-function onDragOver(e, index) {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-    document.querySelectorAll('.card-editor').forEach((el, i) => el.classList.toggle('drag-over', i === index && i !== draggedCardIndex));
+function pasteTextStyle(cIndex, tIndex) {
+    if (!clipboard.textStyle) return alert('Nothing copied yet!');
+    Object.assign(cardData[cIndex].texts[tIndex], clipboard.textStyle);
+    activeCardIndex = cIndex; pushHistory(); renderEditor();
 }
-function onDragLeave(e) {
-    e.currentTarget.classList.remove('drag-over');
+function copyCardStyle(cIndex) {
+    const c = cardData[cIndex];
+    clipboard.cardStyle = { header:{...c.header,text:undefined}, texts:c.texts.map(t=>({...t})), imgs:c.imgs.map(i=>({...i})) };
+    alert('Card layout copied!');
 }
-function onDrop(e, index) {
+function pasteCardStyle(cIndex) {
+    if (!clipboard.cardStyle) return alert('No card layout copied!');
+    Object.keys(clipboard.cardStyle.header).forEach(k => { if (clipboard.cardStyle.header[k]!==undefined) cardData[cIndex].header[k]=clipboard.cardStyle.header[k]; });
+    clipboard.cardStyle.texts.forEach((s,i) => { if (cardData[cIndex].texts[i]) Object.assign(cardData[cIndex].texts[i],s); else cardData[cIndex].texts.push({...s}); });
+    clipboard.cardStyle.imgs.forEach((s,i) => { if (cardData[cIndex].imgs[i]) Object.assign(cardData[cIndex].imgs[i],s); else cardData[cIndex].imgs.push({...s}); });
+    activeCardIndex = cIndex; pushHistory(); renderEditor();
+}
+
+// ─── Editor-panel card reorder drag ───
+function onEditorDragStart(e, index) { editorDraggedCard = index; e.dataTransfer.effectAllowed='move'; e.currentTarget.classList.add('dragging'); }
+function onEditorDragOver(e, index) { e.preventDefault(); document.querySelectorAll('.card-editor').forEach((el,i) => el.classList.toggle('drag-over', i===index && i!==editorDraggedCard)); }
+function onEditorDrop(e, index) {
     e.preventDefault();
     document.querySelectorAll('.card-editor').forEach(el => el.classList.remove('drag-over','dragging'));
-    if (draggedCardIndex === null || draggedCardIndex === index) return;
-    const moved = cardData.splice(draggedCardIndex, 1)[0];
+    if (editorDraggedCard===null || editorDraggedCard===index) return;
+    const moved = cardData.splice(editorDraggedCard, 1)[0];
     cardData.splice(index, 0, moved);
-    activeCardIndex = index;
-    draggedCardIndex = null;
-    pushHistory();
-    renderEditor();
+    activeCardIndex = index; editorDraggedCard = null;
+    pushHistory(); renderEditor();
 }
-function onDragEnd() {
-    draggedCardIndex = null;
-    document.querySelectorAll('.card-editor').forEach(el => el.classList.remove('drag-over','dragging'));
+function onEditorDragEnd() { editorDraggedCard=null; document.querySelectorAll('.card-editor').forEach(el=>el.classList.remove('drag-over','dragging')); }
+
+// ═══════════════════════════════════════════════════════════
+// RENDER EDITOR (left panel)
+// ═══════════════════════════════════════════════════════════
+function renderActiveHighlight() {
+    document.querySelectorAll('.card-editor').forEach((el,i) => el.classList.toggle('active-card', i===activeCardIndex));
+    document.querySelectorAll('.card-header-bar').forEach((el,i) => el.classList.toggle('active', i===activeCardIndex));
+    const n = document.getElementById('preview-card-num'), t = document.getElementById('preview-card-total');
+    if (n) n.textContent = activeCardIndex+1; if (t) t.textContent = cardData.length;
 }
 
-// ─────────────────────────────────────────────────────────
-// RENDER EDITOR
-// ─────────────────────────────────────────────────────────
 function renderEditor() {
     const container = document.getElementById('cards-container');
     container.innerHTML = '';
 
-    // Sync global settings UI
-    const gs = document.getElementById('global-settings');
-    if (gs) {
-        gs.querySelector("input[oninput*=\"'bg','color'\"]") && (gs.querySelector("input[oninput*=\"'bg','color'\"]").value = globalConfig.bg.color);
-    }
+    // Sync global UI
+    const syncG = (id, val) => { const el=document.getElementById(id); if (el) el.value=val; };
+    syncG('g-bg-color', globalConfig.bg.color);
+    syncG('g-bg-img', globalConfig.bg.imgUrl);
+    if (document.getElementById('g-progress')) document.getElementById('g-progress').value = String(globalConfig.progress.show);
+    if (document.getElementById('g-transition')) document.getElementById('g-transition').value = globalConfig.transition?.type||'fade';
+    syncG('g-font-url', globalConfig.customFont?.url||'');
+    syncG('g-font-name', globalConfig.customFont?.name||'');
+    syncG('g-logo-url', globalConfig.logo.url);
+    syncG('g-logo-w', globalConfig.logo.width); document.getElementById('g-logo-w-lbl').innerText = `Width: ${globalConfig.logo.width}%`;
+    syncG('g-logo-x', globalConfig.logo.x); document.getElementById('g-logo-x-lbl').innerText = `X: ${globalConfig.logo.x}%`;
+    syncG('g-logo-y', globalConfig.logo.y); document.getElementById('g-logo-y-lbl').innerText = `Y: ${globalConfig.logo.y}%`;
 
     const fonts = getFonts();
+    const isC = k => !!uiState.secCollapsed[k];
 
-    cardData.forEach((card, cIndex) => {
-        let textBlocksHTML = card.texts.map((txt, tIndex) => {
-            // Build rich text toolbar
-            const toolbarHTML = `
-            <div class="rich-toolbar">
-                <button title="Bold" onclick="richCmd(${cIndex},${tIndex},'bold')"><b>B</b></button>
-                <button title="Italic" onclick="richCmd(${cIndex},${tIndex},'italic')"><i>I</i></button>
-                <button title="Underline" onclick="richCmd(${cIndex},${tIndex},'underline')"><u>U</u></button>
-                <button title="Strikethrough" onclick="richCmd(${cIndex},${tIndex},'strikeThrough')"><s>S</s></button>
-                <button title="Superscript" onclick="richCmd(${cIndex},${tIndex},'superscript')">x²</button>
-                <button title="Subscript" onclick="richCmd(${cIndex},${tIndex},'subscript')">x₂</button>
-                <input type="color" title="Text colour" value="#000000" onchange="richCmd(${cIndex},${tIndex},'foreColor',this.value)">
-                <input type="color" title="Highlight colour" value="#ffff00" style="width:28px;" onchange="richCmd(${cIndex},${tIndex},'hiliteColor',this.value)">
-                <select title="Inline font size" onchange="richFontSize(${cIndex},${tIndex},this.value)">
-                    <option value="">Size</option>
-                    ${[10,12,14,16,18,20,24,28,32,36,40,48].map(s=>`<option value="${s}">${s}px</option>`).join('')}
-                </select>
-                <button title="Clear formatting" onclick="richCmd(${cIndex},${tIndex},'removeFormat')" style="color:#e74c3c;">✕fmt</button>
-            </div>`;
+    cardData.forEach((card, ci) => {
+        const collapsed = !!uiState.cardCollapsed[ci];
+        const cardEl = document.createElement('div');
+        cardEl.className = 'card-editor' + (ci===activeCardIndex ? ' active-card' : '');
+        cardEl.draggable = true;
+        cardEl.addEventListener('dragstart', e=>onEditorDragStart(e,ci));
+        cardEl.addEventListener('dragover', e=>onEditorDragOver(e,ci));
+        cardEl.addEventListener('dragleave', ()=>document.querySelectorAll('.card-editor').forEach(el=>el.classList.remove('drag-over')));
+        cardEl.addEventListener('drop', e=>onEditorDrop(e,ci));
+        cardEl.addEventListener('dragend', onEditorDragEnd);
 
-            return `
-            <div class="text-layer">
-                <div style="position:absolute;top:10px;right:10px;display:flex;">
-                    <button class="btn-action btn-copy" onclick="copyTextStyle(${cIndex},${tIndex})">Copy Fmt</button>
-                    <button class="btn-action btn-paste" onclick="pasteTextStyle(${cIndex},${tIndex})">Paste</button>
-                    <button class="btn-action btn-delete" onclick="deleteTextBox(${cIndex},${tIndex})">✕</button>
+        // Build text layers HTML
+        const textLayersHTML = card.texts.map((txt, ti) => {
+            const richContent = txt.text || '';
+            return `<div class="text-layer">
+                <div style="position:absolute;top:8px;right:8px;display:flex;">
+                    <button class="btn-action btn-copy" onclick="copyTextStyle(${ci},${ti})">Copy</button>
+                    <button class="btn-action btn-paste" onclick="pasteTextStyle(${ci},${ti})">Paste</button>
+                    <button class="btn-action btn-delete" onclick="deleteTextBox(${ci},${ti})">✕</button>
                 </div>
-                <div class="control-group">
-                    <div class="control-item" style="min-width:100%;margin-top:20px;">
-                        <label>Text Layer ${tIndex + 1} (supports rich formatting)</label>
-                        ${toolbarHTML}
-                        <div id="rich-${cIndex}-${tIndex}" class="rich-editor" contenteditable="true"
-                            onfocus="activeCardIndex=${cIndex};updatePreview();"
-                            oninput="syncRichText(this,${cIndex},${tIndex})">${txt.text}</div>
+                <div class="control-group" style="margin-top:26px;">
+                    <div class="control-item" style="min-width:100%;">
+                        <label>Text Layer ${ti+1} — click & type, use toolbar for rich formatting</label>
+                        <div class="rich-toolbar">
+                            <button title="Bold" onclick="richCmd(${ci},${ti},'bold')"><b>B</b></button>
+                            <button title="Italic" onclick="richCmd(${ci},${ti},'italic')"><i>I</i></button>
+                            <button title="Underline" onclick="richCmd(${ci},${ti},'underline')"><u>U</u></button>
+                            <button title="Strike" onclick="richCmd(${ci},${ti},'strikeThrough')"><s>S</s></button>
+                            <button title="Superscript" onclick="richCmd(${ci},${ti},'superscript')">x²</button>
+                            <button title="Subscript" onclick="richCmd(${ci},${ti},'subscript')">x₂</button>
+                            <input type="color" title="Text color" value="#000000" onchange="richCmd(${ci},${ti},'foreColor',this.value)">
+                            <input type="color" title="Highlight" value="#ffff00" style="width:26px;" onchange="richCmd(${ci},${ti},'hiliteColor',this.value)">
+                            <select title="Inline size" onchange="richFontSize(${ci},${ti},this.value)">
+                                <option value="">Size</option>
+                                ${[10,12,14,16,18,20,24,28,32,40].map(s=>`<option value="${s}">${s}</option>`).join('')}
+                            </select>
+                            <button title="Clear fmt" onclick="richCmd(${ci},${ti},'removeFormat')" style="color:#e74c3c;">✕fmt</button>
+                        </div>
+                        <div id="rich-${ci}-${ti}" class="rich-editor" contenteditable="true"
+                            onfocus="activeCardIndex=${ci};renderLiveCanvas();renderActiveHighlight();"
+                            oninput="syncRichText(this,${ci},${ti})">${richContent}</div>
                     </div>
-                    <div class="control-item"><label>Font</label><select onchange="updateTextData(${cIndex},${tIndex},'font',this.value)">${getOptions(fonts, txt.font)}</select></div>
-                    <div class="control-item"><label>Align</label><select onchange="updateTextData(${cIndex},${tIndex},'align',this.value)">${getOptions(alignments, txt.align)}</select></div>
-                    <div class="control-item"><label>Weight</label><select onchange="updateTextData(${cIndex},${tIndex},'weight',this.value)"><option value="normal" ${txt.weight==='normal'?'selected':''}>Normal</option><option value="bold" ${txt.weight==='bold'?'selected':''}>Bold</option></select></div>
-                    <div class="control-item"><label>Base Color</label><input type="color" value="${txt.color}" oninput="updateTextData(${cIndex},${tIndex},'color',this.value)"></div>
-                    <div class="control-item"><label>Line Space: ${txt.lineSpace}</label><input type="range" min="1" max="3" step="0.1" value="${txt.lineSpace}" oninput="updateTextData(${cIndex},${tIndex},'lineSpace',this.value);this.previousElementSibling.innerText='Line Space: '+this.value"></div>
-                    <div class="control-item"><label>Font Size: ${txt.size}px</label><input type="range" min="10" max="80" value="${txt.size}" oninput="updateTextData(${cIndex},${tIndex},'size',this.value);this.previousElementSibling.innerText='Font Size: '+this.value+'px'"></div>
-                    <div class="control-item"><label>Box Width: ${txt.width??90}%</label><input type="range" min="10" max="100" value="${txt.width??90}" oninput="updateTextData(${cIndex},${tIndex},'width',this.value);this.previousElementSibling.innerText='Box Width: '+this.value+'%'"></div>
-                    <div class="control-item"><label>X Pos: ${txt.x}%</label><input type="range" min="0" max="100" value="${txt.x}" oninput="updateTextData(${cIndex},${tIndex},'x',this.value);this.previousElementSibling.innerText='X Pos: '+this.value+'%'"></div>
-                    <div class="control-item"><label>Y Pos: ${txt.y}%</label><input type="range" min="0" max="100" value="${txt.y}" oninput="updateTextData(${cIndex},${tIndex},'y',this.value);this.previousElementSibling.innerText='Y Pos: '+this.value+'%'"></div>
+                    <div class="control-item"><label>Font</label><select onchange="updateTextData(${ci},${ti},'font',this.value)">${getOptions(fonts,txt.font)}</select></div>
+                    <div class="control-item"><label>Align</label><select onchange="updateTextData(${ci},${ti},'align',this.value)">${getOptions(ALIGNMENTS,txt.align)}</select></div>
+                    <div class="control-item"><label>Weight</label><select onchange="updateTextData(${ci},${ti},'weight',this.value)"><option value="normal" ${txt.weight==='normal'?'selected':''}>Normal</option><option value="bold" ${txt.weight==='bold'?'selected':''}>Bold</option></select></div>
+                    <div class="control-item"><label>Base Color</label><input type="color" value="${txt.color}" oninput="updateTextData(${ci},${ti},'color',this.value)"></div>
+                    <div class="control-item"><label>Line Space: ${txt.lineSpace}</label><input type="range" min="1" max="3" step="0.1" value="${txt.lineSpace}" oninput="updateTextData(${ci},${ti},'lineSpace',this.value);this.previousElementSibling.innerText='Line Space: '+this.value"></div>
+                    <div class="control-item"><label>Font Size: ${txt.size}px</label><input type="range" min="8" max="80" value="${txt.size}" oninput="updateTextData(${ci},${ti},'size',this.value);this.previousElementSibling.innerText='Font Size: '+this.value+'px'"></div>
+                    <div class="control-item"><label>Box Width: ${txt.width??88}%</label><input type="range" min="10" max="100" value="${txt.width??88}" oninput="updateTextData(${ci},${ti},'width',this.value);this.previousElementSibling.innerText='Box Width: '+this.value+'%'"></div>
+                    <div class="control-item"><label>X: ${txt.x}%</label><input type="range" min="0" max="100" value="${txt.x}" data-pslider data-ci="${ci}" data-type="text" data-idx="${ti}" data-axis="x" oninput="updateTextData(${ci},${ti},'x',this.value);this.previousElementSibling.innerText='X: '+this.value+'%'"></div>
+                    <div class="control-item"><label>Y: ${txt.y}%</label><input type="range" min="0" max="100" value="${txt.y}" data-pslider data-ci="${ci}" data-type="text" data-idx="${ti}" data-axis="y" oninput="updateTextData(${ci},${ti},'y',this.value);this.previousElementSibling.innerText='Y: '+this.value+'%'"></div>
                 </div>
             </div>`;
         }).join('');
 
-        let imgBlocksHTML = (card.imgs||[]).map((imgObj, iIndex) => `
+        // Build image layers HTML
+        const imgLayersHTML = (card.imgs||[]).map((img, ii) => `
             <div class="text-layer" style="border-color:#e67e22;">
-                <div style="position:absolute;top:10px;right:10px;display:flex;">
-                    <button class="btn-action btn-delete" onclick="deleteImgBox(${cIndex},${iIndex})">✕</button>
+                <div style="position:absolute;top:8px;right:8px;">
+                    <button class="btn-action btn-delete" onclick="deleteImgBox(${ci},${ii})">✕</button>
                 </div>
-                <div class="control-group">
-                    <div class="control-item" style="min-width:100%;margin-top:10px;">
-                        <label>Image Layer ${iIndex+1} Link</label>
-                        <input type="text" placeholder="Paste link here..." value="${imgObj.url}" oninput="updateImgDataArray(${cIndex},${iIndex},'url',this.value)">
+                <div class="control-group" style="margin-top:24px;">
+                    <div class="control-item" style="min-width:100%;"><label>Image ${ii+1} URL</label>
+                        <input type="text" placeholder="Paste link..." value="${img.url}" oninput="updateImgDataArray(${ci},${ii},'url',this.value)">
                     </div>
-                    <div class="control-item"><label>Width: ${imgObj.width}%</label><input type="range" min="10" max="100" value="${imgObj.width}" oninput="updateImgDataArray(${cIndex},${iIndex},'width',this.value);this.previousElementSibling.innerText='Width: '+this.value+'%'"></div>
-                    <div class="control-item"><label>X Pos: ${imgObj.x}%</label><input type="range" min="0" max="100" value="${imgObj.x}" oninput="updateImgDataArray(${cIndex},${iIndex},'x',this.value);this.previousElementSibling.innerText='X Pos: '+this.value+'%'"></div>
-                    <div class="control-item"><label>Y Pos: ${imgObj.y}%</label><input type="range" min="0" max="100" value="${imgObj.y}" oninput="updateImgDataArray(${cIndex},${iIndex},'y',this.value);this.previousElementSibling.innerText='Y Pos: '+this.value+'%'"></div>
+                    <div class="control-item"><label>Width: ${img.width}%</label><input type="range" min="10" max="100" value="${img.width}" oninput="updateImgDataArray(${ci},${ii},'width',this.value);this.previousElementSibling.innerText='Width: '+this.value+'%'"></div>
+                    <div class="control-item"><label>X: ${img.x}%</label><input type="range" min="0" max="100" value="${img.x}" data-pslider data-ci="${ci}" data-type="img" data-idx="${ii}" data-axis="x" oninput="updateImgDataArray(${ci},${ii},'x',this.value);this.previousElementSibling.innerText='X: '+this.value+'%'"></div>
+                    <div class="control-item"><label>Y: ${img.y}%</label><input type="range" min="0" max="100" value="${img.y}" data-pslider data-ci="${ci}" data-type="img" data-idx="${ii}" data-axis="y" oninput="updateImgDataArray(${ci},${ii},'y',this.value);this.previousElementSibling.innerText='Y: '+this.value+'%'"></div>
                 </div>
             </div>`).join('');
 
-        const cardEl = document.createElement('div');
-        cardEl.className = 'card-editor' + (cIndex === activeCardIndex ? ' active-card' : '');
-        cardEl.draggable = true;
-        cardEl.addEventListener('dragstart', e => onDragStart(e, cIndex));
-        cardEl.addEventListener('dragover', e => onDragOver(e, cIndex));
-        cardEl.addEventListener('dragleave', onDragLeave);
-        cardEl.addEventListener('drop', e => onDrop(e, cIndex));
-        cardEl.addEventListener('dragend', onDragEnd);
-        cardEl.addEventListener('click', function(e) {
-            if (activeCardIndex !== cIndex) { activeCardIndex = cIndex; updatePreview(); renderActiveHighlight(); }
-        });
-
+        const hk=`h-${ci}`, tk=`t-${ci}`, ik=`i-${ci}`;
         cardEl.innerHTML = `
-        <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #34495e;padding-bottom:10px;margin-bottom:15px;">
-            <h3 style="margin:0;color:#3498db;display:flex;align-items:center;gap:8px;">
-                <span class="drag-handle" title="Drag to reorder">⠿</span>
-                Card ${cIndex + 1}
+        <div class="card-header-bar ${ci===activeCardIndex?'active':''}" id="card-hbar-${ci}" onclick="activeCardIndex=${ci};renderLiveCanvas();renderActiveHighlight();">
+            <h3>
+                <span class="drag-handle" onmousedown="event.stopPropagation()">⠿</span>
+                Card ${ci+1}: <em style="color:#7f8c8d;font-style:normal;font-weight:normal;font-size:12px;margin-left:4px;">${card.header.text||'(untitled)'}</em>
             </h3>
-            <div>
-                <button class="btn-action btn-duplicate" onclick="duplicateCard(${cIndex})">⧉ Duplicate</button>
-                <button class="btn-action btn-copy" onclick="copyCardStyle(${cIndex})">Copy Layout</button>
-                <button class="btn-action btn-paste" onclick="pasteCardStyle(${cIndex})">Paste Layout</button>
-                <button class="btn-action btn-delete" onclick="deleteCard(${cIndex})">Delete</button>
+            <div style="display:flex;align-items:center;gap:4px;">
+                <button class="btn-action btn-duplicate" onclick="event.stopPropagation();duplicateCard(${ci})">⧉</button>
+                <button class="btn-action btn-copy" onclick="event.stopPropagation();copyCardStyle(${ci})">Copy</button>
+                <button class="btn-action btn-paste" onclick="event.stopPropagation();pasteCardStyle(${ci})">Paste</button>
+                <button class="btn-action btn-delete" onclick="event.stopPropagation();deleteCard(${ci})">✕</button>
+                <button class="btn-collapse" onclick="event.stopPropagation();toggleCard(${ci},event)" title="Collapse/Expand">
+                    <span id="card-chev-${ci}" style="display:inline-block;transition:transform 0.25s;transform:${collapsed?'rotate(0deg)':'rotate(90deg)'}">▶</span>
+                </button>
             </div>
         </div>
 
-        <div class="section-title" style="font-size:13px;">Topic Header</div>
-        <div class="control-group">
-            <div class="control-item" style="min-width:100%;"><label>Header Text</label><input type="text" placeholder="Optional Header" value="${card.header.text}" oninput="updateCardHeader(${cIndex},'text',this.value)"></div>
-            <div class="control-item"><label>Font</label><select onchange="updateCardHeader(${cIndex},'font',this.value)">${getOptions(fonts, card.header.font)}</select></div>
-            <div class="control-item"><label>Text Color</label><input type="color" value="${card.header.color}" oninput="updateCardHeader(${cIndex},'color',this.value)"></div>
-            <div class="control-item"><label>Size: ${card.header.size}px</label><input type="range" min="10" max="60" value="${card.header.size}" oninput="updateCardHeader(${cIndex},'size',this.value);this.previousElementSibling.innerText='Size: '+this.value+'px'"></div>
-        </div>
-        <div class="control-group">
-            <div class="control-item"><label>BG Color</label><input type="color" value="${card.header.bgColor}" oninput="updateCardHeader(${cIndex},'bgColor',this.value)"></div>
-            <div class="control-item"><label>BG Opacity: ${card.header.bgAlpha}%</label><input type="range" min="0" max="100" value="${card.header.bgAlpha}" oninput="updateCardHeader(${cIndex},'bgAlpha',this.value);this.previousElementSibling.innerText='BG Opacity: '+this.value+'%'"></div>
-            <div class="control-item"><label>Width: ${card.header.width}%</label><input type="range" min="10" max="100" value="${card.header.width}" oninput="updateCardHeader(${cIndex},'width',this.value);this.previousElementSibling.innerText='Width: '+this.value+'%'"></div>
-            <div class="control-item"><label>Y Pos: ${card.header.y}%</label><input type="range" min="0" max="100" value="${card.header.y}" oninput="updateCardHeader(${cIndex},'y',this.value);this.previousElementSibling.innerText='Y Pos: '+this.value+'%'"></div>
-        </div>
-        <div class="control-group">
-            <div class="control-item"><label>Border Color</label><input type="color" value="${card.header.borderC??'#000000'}" oninput="updateCardHeader(${cIndex},'borderC',this.value)"></div>
-            <div class="control-item"><label>Border Width: ${card.header.borderW??0}px</label><input type="range" min="0" max="10" value="${card.header.borderW??0}" oninput="updateCardHeader(${cIndex},'borderW',this.value);this.previousElementSibling.innerText='Border Width: '+this.value+'px'"></div>
-            <div class="control-item"><label>Corners: ${card.header.borderR??8}px</label><input type="range" min="0" max="50" value="${card.header.borderR??8}" oninput="updateCardHeader(${cIndex},'borderR',this.value);this.previousElementSibling.innerText='Corners: '+this.value+'px'"></div>
-        </div>
-        <div class="control-group">
-            <div class="control-item"><label>Shadow Color</label><input type="color" value="${card.header.shadowColor??'#000000'}" oninput="updateCardHeader(${cIndex},'shadowColor',this.value)"></div>
-            <div class="control-item"><label>Shadow Opacity: ${card.header.shadowAlpha??50}%</label><input type="range" min="0" max="100" value="${card.header.shadowAlpha??50}" oninput="updateCardHeader(${cIndex},'shadowAlpha',this.value);this.previousElementSibling.innerText='Shadow Opacity: '+this.value+'%'"></div>
-            <div class="control-item"><label>Shadow Blur: ${card.header.shadowBlur??0}px</label><input type="range" min="0" max="30" value="${card.header.shadowBlur??0}" oninput="updateCardHeader(${cIndex},'shadowBlur',this.value);this.previousElementSibling.innerText='Shadow Blur: '+this.value+'px'"></div>
-        </div>
+        <div class="card-body ${collapsed?'collapsed':''}" id="card-body-${ci}">
 
-        <div class="section-title" style="margin-top:25px;">Text Layers</div>
-        ${textBlocksHTML}
-        <button class="btn btn-add" onclick="addTextBox(${cIndex})">+ Add Another Text Box</button>
+            <!-- HEADER SECTION -->
+            <div class="section-toggle ${isC(hk)?'':'open'}" onclick="toggleSec('${hk}',this)" style="margin-bottom:0;">
+                <span>📌 Topic Header</span><span class="chevron">▶</span>
+            </div>
+            <div class="section-body ${isC(hk)?'collapsed':''}" id="sec-${hk}">
+              <div class="section-body-inner">
+                <div class="control-group">
+                    <div class="control-item" style="min-width:100%;"><label>Header Text</label><input type="text" value="${card.header.text}" oninput="updateCardHeader(${ci},'text',this.value)"></div>
+                    <div class="control-item"><label>Font</label><select onchange="updateCardHeader(${ci},'font',this.value)">${getOptions(fonts,card.header.font)}</select></div>
+                    <div class="control-item"><label>Text Color</label><input type="color" value="${card.header.color}" oninput="updateCardHeader(${ci},'color',this.value)"></div>
+                    <div class="control-item"><label>Size: ${card.header.size}px</label><input type="range" min="10" max="60" value="${card.header.size}" oninput="updateCardHeader(${ci},'size',this.value);this.previousElementSibling.innerText='Size: '+this.value+'px'"></div>
+                    <div class="control-item"><label>BG Color</label><input type="color" value="${card.header.bgColor}" oninput="updateCardHeader(${ci},'bgColor',this.value)"></div>
+                    <div class="control-item"><label>BG Opacity: ${card.header.bgAlpha}%</label><input type="range" min="0" max="100" value="${card.header.bgAlpha}" oninput="updateCardHeader(${ci},'bgAlpha',this.value);this.previousElementSibling.innerText='BG Opacity: '+this.value+'%'"></div>
+                    <div class="control-item"><label>Width: ${card.header.width}%</label><input type="range" min="10" max="100" value="${card.header.width}" oninput="updateCardHeader(${ci},'width',this.value);this.previousElementSibling.innerText='Width: '+this.value+'%'"></div>
+                    <div class="control-item"><label>X: ${card.header.x}%</label><input type="range" min="0" max="100" value="${card.header.x}" data-pslider data-ci="${ci}" data-type="header" data-axis="x" oninput="updateCardHeader(${ci},'x',this.value);this.previousElementSibling.innerText='X: '+this.value+'%'"></div>
+                    <div class="control-item"><label>Y: ${card.header.y}%</label><input type="range" min="0" max="100" value="${card.header.y}" data-pslider data-ci="${ci}" data-type="header" data-axis="y" oninput="updateCardHeader(${ci},'y',this.value);this.previousElementSibling.innerText='Y: '+this.value+'%'"></div>
+                    <div class="control-item"><label>Border Color</label><input type="color" value="${card.header.borderC||'#000000'}" oninput="updateCardHeader(${ci},'borderC',this.value)"></div>
+                    <div class="control-item"><label>Border: ${card.header.borderW||0}px</label><input type="range" min="0" max="10" value="${card.header.borderW||0}" oninput="updateCardHeader(${ci},'borderW',this.value);this.previousElementSibling.innerText='Border: '+this.value+'px'"></div>
+                    <div class="control-item"><label>Radius: ${card.header.borderR||8}px</label><input type="range" min="0" max="50" value="${card.header.borderR||8}" oninput="updateCardHeader(${ci},'borderR',this.value);this.previousElementSibling.innerText='Radius: '+this.value+'px'"></div>
+                    <div class="control-item"><label>Shadow Color</label><input type="color" value="${card.header.shadowColor||'#000000'}" oninput="updateCardHeader(${ci},'shadowColor',this.value)"></div>
+                    <div class="control-item"><label>Shadow α: ${card.header.shadowAlpha||50}%</label><input type="range" min="0" max="100" value="${card.header.shadowAlpha||50}" oninput="updateCardHeader(${ci},'shadowAlpha',this.value);this.previousElementSibling.innerText='Shadow α: '+this.value+'%'"></div>
+                    <div class="control-item"><label>Shadow Blur: ${card.header.shadowBlur||0}px</label><input type="range" min="0" max="30" value="${card.header.shadowBlur||0}" oninput="updateCardHeader(${ci},'shadowBlur',this.value);this.previousElementSibling.innerText='Shadow Blur: '+this.value+'px'"></div>
+                </div>
+              </div>
+            </div>
 
-        <div class="section-title" style="margin-top:25px;">Image Layers</div>
-        ${imgBlocksHTML}
-        <button class="btn btn-add" style="background-color:#e67e22;" onclick="addImgBox(${cIndex})">+ Add Another Image Layer</button>`;
+            <!-- TEXT LAYERS SECTION -->
+            <div class="section-toggle ${isC(tk)?'':'open'}" onclick="toggleSec('${tk}',this)" style="margin-top:8px;">
+                <span>📝 Text Layers (${card.texts.length})</span><span class="chevron">▶</span>
+            </div>
+            <div class="section-body ${isC(tk)?'collapsed':''}" id="sec-${tk}">
+              <div class="section-body-inner">
+                ${textLayersHTML}
+                <button class="btn btn-add" onclick="addTextBox(${ci})">+ Add Text Box</button>
+              </div>
+            </div>
+
+            <!-- IMAGE LAYERS SECTION -->
+            <div class="section-toggle ${isC(ik)?'':'open'}" onclick="toggleSec('${ik}',this)" style="margin-top:8px;margin-bottom:8px;">
+                <span>🖼 Image Layers (${card.imgs.length})</span><span class="chevron">▶</span>
+            </div>
+            <div class="section-body ${isC(ik)?'collapsed':''}" id="sec-${ik}">
+              <div class="section-body-inner">
+                ${imgLayersHTML}
+                <button class="btn btn-add" style="background:#e67e22;" onclick="addImgBox(${ci})">+ Add Image Layer</button>
+              </div>
+            </div>
+
+        </div>`;
 
         container.appendChild(cardEl);
     });
 
-    updatePreview();
+    renderLiveCanvas();
+    resizeMockCanvas();
     updateUndoButtons();
-    const num = document.getElementById('preview-card-num');
-    const tot = document.getElementById('preview-card-total');
-    if (num) num.textContent = activeCardIndex + 1;
-    if (tot) tot.textContent = cardData.length;
 }
 
-// ─────────────────────────────────────────────────────────
-// DRIVE LINK CONVERTER
-// ─────────────────────────────────────────────────────────
-function convertDriveLink(url) {
-    if (!url) return '';
-    if (url.includes('drive.google.com')) {
-        const match = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
-        if (match && match[1]) return `https://drive.google.com/thumbnail?id=${match[1]}&sz=w1000`;
-    }
-    return url;
-}
-
-// ─────────────────────────────────────────────────────────
-// LOAD HTML
-// ─────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════
+// LOAD FILE
+// ═══════════════════════════════════════════════════════════
 function loadHTML(event) {
-    const file = event.target.files[0];
-    if (!file) return;
+    const file = event.target.files[0]; if (!file) return;
     const reader = new FileReader();
     reader.onload = function(e) {
-        const htmlStr = e.target.result;
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(htmlStr, 'text/html');
-        const metaTag = doc.getElementById('studio-save-data');
-        if (metaTag) {
+        const doc = new DOMParser().parseFromString(e.target.result, 'text/html');
+        const meta = doc.getElementById('studio-save-data');
+        if (meta) {
             try {
-                const decodedData = JSON.parse(decodeURIComponent(atob(metaTag.getAttribute('content'))));
-                cardData = decodedData.cardData.map(card => {
-                    if (card.img && !card.imgs) { card.imgs = [card.img]; delete card.img; }
-                    return card;
-                });
-                globalConfig = { ...{ bg:{color:'#ffffff',imgUrl:''}, progress:{show:true}, transition:{type:'fade'}, customFont:{url:'',name:''}, logo:{url:'',width:25,x:50,y:92} }, ...decodedData.globalConfig };
-                activeCardIndex = 0;
-                // Apply custom font if present
-                if (globalConfig.customFont && globalConfig.customFont.url) applyCustomFontPreview(globalConfig.customFont.url);
-                history = [];
-                historyIndex = -1;
-                renderEditor();
-                alert("File loaded successfully!");
-            } catch(err) {
-                alert("Error parsing the file. It may be corrupted.");
-            }
-        } else {
-            alert("No save data found in this file.");
-        }
+                const data = JSON.parse(decodeURIComponent(atob(meta.getAttribute('content'))));
+                cardData = data.cardData.map(card => { if (card.img && !card.imgs) { card.imgs=[card.img]; delete card.img; } return card; });
+                globalConfig = { bg:{color:'#fff',imgUrl:''}, progress:{show:true}, transition:{type:'fade'}, customFont:{url:'',name:''}, logo:{url:'',width:25,x:50,y:92}, ...data.globalConfig };
+                if (globalConfig.customFont?.url) applyCustomFontPreview(globalConfig.customFont.url);
+                activeCardIndex = 0; history=[]; historyIndex=-1;
+                renderEditor(); alert('Loaded successfully!');
+            } catch(err) { alert('Error parsing file.'); }
+        } else { alert('No save data found.'); }
     };
     reader.readAsText(file);
     event.target.value = '';
 }
 
-// ─────────────────────────────────────────────────────────
-// PREVIEW RESIZE
-// ─────────────────────────────────────────────────────────
-function resizeMockCanvas() {
-    const container = document.getElementById('preview-pane');
-    const mock = document.getElementById('mock-canvas');
-    const scale = Math.min((container.clientWidth - 40) / 375, (container.clientHeight - 100) / 667);
-    mock.style.transform = 'translate(-50%, -50%) scale(' + scale + ')';
-}
-window.addEventListener('resize', resizeMockCanvas);
-
-// ─────────────────────────────────────────────────────────
-// GENERATE TEMPLATE HTML
-// ─────────────────────────────────────────────────────────
-function getTemplateHTML(isDownload = false) {
+// ═══════════════════════════════════════════════════════════
+// DOWNLOAD — generate standalone HTML
+// ═══════════════════════════════════════════════════════════
+function getTemplateHTML() {
     const stateToSave = { cardData, globalConfig };
     const encodedSaveData = btoa(encodeURIComponent(JSON.stringify(stateToSave)));
 
     const processedContent = cardData.map(card => {
-        let newCard = JSON.parse(JSON.stringify(card));
-        if (newCard.imgs) newCard.imgs.forEach(img => { img.url = convertDriveLink(img.url); });
-        return newCard;
+        let c = JSON.parse(JSON.stringify(card));
+        c.imgs.forEach(img => img.url = convertDriveLink(img.url));
+        return c;
     });
 
-    const processedLogoUrl = convertDriveLink(globalConfig.logo.url);
-    let logoHTMLBlock = processedLogoUrl ? `<div class="element" style="left:${globalConfig.logo.x}%;top:${globalConfig.logo.y}%;width:${globalConfig.logo.width}%;z-index:10;"><img class="logo-img" src="${processedLogoUrl}"></div>` : '';
-
-    const processedBgUrl = convertDriveLink(globalConfig.bg.imgUrl);
-    let bgStyle = processedBgUrl ? `background-image:url('${processedBgUrl}');background-size:cover;background-position:center;` : `background-color:${globalConfig.bg.color};`;
-
-    let progressHTMLBlock = globalConfig.progress.show ? `<div id="progress" style="width:0%;"></div>` : '';
-    const startingIndex = isDownload ? 0 : activeCardIndex;
-    const transitionType = (globalConfig.transition && globalConfig.transition.type) || 'fade';
-
-    // Custom font link tag for output
-    let customFontLink = '';
-    if (globalConfig.customFont && globalConfig.customFont.url) {
-        customFontLink = `<link href="${globalConfig.customFont.url}" rel="stylesheet">`;
-    }
+    const logoUrl = convertDriveLink(globalConfig.logo.url);
+    const logoBlock = logoUrl ? `<div class="element" style="left:${globalConfig.logo.x}%;top:${globalConfig.logo.y}%;width:${globalConfig.logo.width}%;z-index:10;"><img class="logo-img" src="${logoUrl}"></div>` : '';
+    const bgUrl = convertDriveLink(globalConfig.bg.imgUrl);
+    const bgStyle = bgUrl ? `background-image:url('${bgUrl}');background-size:cover;background-position:center;` : `background-color:${globalConfig.bg.color};`;
+    const progressBlock = globalConfig.progress.show ? `<div id="progress" style="width:0%"></div>` : '';
+    const transType = globalConfig.transition?.type || 'fade';
+    const customFontLink = globalConfig.customFont?.url ? `<link href="${globalConfig.customFont.url}" rel="stylesheet">` : '';
 
     return `<!DOCTYPE html>
 <html lang="en">
@@ -741,137 +846,81 @@ function getTemplateHTML(isDownload = false) {
     <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&family=Courier+Prime:wght@400;700&family=Lora:ital,wght@0,400;0,700&family=Montserrat:wght@400;700;900&family=Oswald:wght@400;700&family=Poppins:wght@400;700;900&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
     ${customFontLink}
     <style>
-        * { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; outline:none; }
-        body { width:100vw; height:100vh; height:100dvh; overflow:hidden; background-color:#1a1a1a; position:relative; user-select:none; }
-        #canvas { position:absolute; left:50%; top:50%; width:375px; height:667px; ${bgStyle} transform-origin:center center; overflow:hidden; box-shadow:0 0 20px rgba(0,0,0,0.5); transform:translate(-50%,-50%); }
-        #left-tap, #right-tap { position:absolute; top:0; height:100%; width:50%; z-index:100; cursor:pointer; }
-        #left-tap { left:0; } #right-tap { right:0; }
-        .element { position:absolute; transform:translate(-50%,-50%); }
-        img { display:block; margin:0 auto; border-radius:8px; box-shadow:0 4px 6px rgba(0,0,0,0.1); width:100%; height:auto; }
-        .logo-img { border-radius:0; box-shadow:none; object-fit:contain; }
-        #progress { position:absolute; top:0; left:0; height:6px; background-color:#3498db; transition:width 0.3s ease; z-index:200; }
-        #card-content { position:absolute; inset:0; }
-
-        @keyframes anim-fade-in { from { opacity:0; } to { opacity:1; } }
-        @keyframes anim-slide-in-right { from { transform:translateX(100%); opacity:0; } to { transform:translateX(0); opacity:1; } }
-        @keyframes anim-slide-in-left { from { transform:translateX(-100%); opacity:0; } to { transform:translateX(0); opacity:1; } }
-        @keyframes anim-zoom-in { from { transform:scale(0.85); opacity:0; } to { transform:scale(1); opacity:1; } }
-
-        .trans-fade { animation: anim-fade-in 0.35s ease forwards; }
-        .trans-slide-right { animation: anim-slide-in-right 0.3s ease forwards; }
-        .trans-slide-left { animation: anim-slide-in-left 0.3s ease forwards; }
-        .trans-zoom { animation: anim-zoom-in 0.3s ease forwards; }
+        *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;outline:none;}
+        body{width:100vw;height:100vh;height:100dvh;overflow:hidden;background:#1a1a1a;position:relative;user-select:none;}
+        #canvas{position:absolute;left:50%;top:50%;width:375px;height:667px;${bgStyle}transform-origin:center center;overflow:hidden;box-shadow:0 0 20px rgba(0,0,0,0.5);transform:translate(-50%,-50%);}
+        #left-tap,#right-tap{position:absolute;top:0;height:100%;width:50%;z-index:100;cursor:pointer;}
+        #left-tap{left:0;}#right-tap{right:0;}
+        .element{position:absolute;transform:translate(-50%,-50%);}
+        img{display:block;margin:0 auto;border-radius:8px;box-shadow:0 4px 6px rgba(0,0,0,0.1);width:100%;height:auto;}
+        .logo-img{border-radius:0;box-shadow:none;object-fit:contain;}
+        #progress{position:absolute;top:0;left:0;height:6px;background:#3498db;transition:width .3s;z-index:200;}
+        #card-content{position:absolute;inset:0;}
+        @keyframes aFade{from{opacity:0}to{opacity:1}}
+        @keyframes aSlideR{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+        @keyframes aSlideL{from{transform:translateX(-100%);opacity:0}to{transform:translateX(0);opacity:1}}
+        @keyframes aZoom{from{transform:scale(.85);opacity:0}to{transform:scale(1);opacity:1}}
+        .t-fade{animation:aFade .35s ease forwards;}
+        .t-slide-r{animation:aSlideR .3s ease forwards;}
+        .t-slide-l{animation:aSlideL .3s ease forwards;}
+        .t-zoom{animation:aZoom .3s ease forwards;}
     </style>
 </head>
 <body>
-    <div id="canvas">
-        ${progressHTMLBlock}
-        <div id="left-tap" onclick="prevCard()"></div>
-        <div id="right-tap" onclick="nextCard()"></div>
-        ${logoHTMLBlock}
-        <div id="card-content"></div>
-    </div>
-    <script>
-        const content = ${JSON.stringify(processedContent)};
-        const TRANSITION = '${transitionType}';
-        let currentIndex = ${startingIndex};
-        let direction = 'right';
-        const container = document.getElementById('card-content');
-        const progressBar = document.getElementById('progress');
-
-        function resizeCanvas() {
-            const canvas = document.getElementById('canvas');
-            const scale = Math.min(window.innerWidth / 375, window.innerHeight / 667);
-            canvas.style.transform = 'translate(-50%,-50%) scale(' + scale + ')';
-        }
-        window.addEventListener('resize', resizeCanvas);
-        resizeCanvas();
-
-        function hexToRgba(hex, alpha) {
-            let r=parseInt(hex.slice(1,3),16), g=parseInt(hex.slice(3,5),16), b=parseInt(hex.slice(5,7),16);
-            return 'rgba('+r+','+g+','+b+','+(alpha/100)+')';
-        }
-
-        function getTransClass() {
-            if (TRANSITION === 'none') return '';
-            if (TRANSITION === 'fade') return 'trans-fade';
-            if (TRANSITION === 'slide') return direction === 'right' ? 'trans-slide-right' : 'trans-slide-left';
-            if (TRANSITION === 'zoom') return 'trans-zoom';
-            return '';
-        }
-
-        function renderCard() {
-            const data = content[currentIndex];
-            if (progressBar) progressBar.style.width = ((currentIndex + 1) / content.length) * 100 + '%';
-
-            let html = '';
-            if (data.header && data.header.text) {
-                const headerBg = hexToRgba(data.header.bgColor, data.header.bgAlpha);
-                const shadowRgba = hexToRgba(data.header.shadowColor||'#000000', data.header.shadowAlpha||50);
-                const borderW = data.header.borderW||0, borderC = data.header.borderC||'#000000', borderR = data.header.borderR||8, shadowBlur = data.header.shadowBlur||0;
-                const shadowStyle = shadowBlur > 0 ? 'box-shadow:0px 4px '+shadowBlur+'px '+shadowRgba+';' : '';
-                const borderStyle = borderW > 0 ? 'border:'+borderW+'px solid '+borderC+';' : '';
-                const formattedHeader = data.header.text.replace(/\\\\n/g,'<br>');
-                html += '<div class="element" style="left:'+data.header.x+'%;top:'+data.header.y+'%;width:'+data.header.width+'%;background-color:'+headerBg+';color:'+data.header.color+';font-family:\\''+data.header.font+'\\';font-size:'+data.header.size+'px;font-weight:bold;text-align:center;padding:10px;border-radius:'+borderR+'px;'+borderStyle+shadowStyle+'z-index:15;">'+formattedHeader+'</div>';
-            }
-            if (data.texts) {
-                data.texts.forEach(t => {
-                    const bw = t.width||90;
-                    html += '<div class="element" style="width:'+bw+'%;left:'+t.x+'%;top:'+t.y+'%;font-family:\\''+t.font+'\\';font-size:'+t.size+'px;font-weight:'+t.weight+';color:'+t.color+';text-align:'+t.align+';line-height:'+t.lineSpace+';">'+t.text+'</div>';
-                });
-            }
-            if (data.imgs) {
-                data.imgs.forEach(imgObj => {
-                    if (imgObj.url) html += '<div class="element" style="left:'+imgObj.x+'%;top:'+imgObj.y+'%;width:'+imgObj.width+'%;"><img src="'+imgObj.url+'"></div>';
-                });
-            }
-
-            container.className = '';
-            container.innerHTML = html;
-            void container.offsetWidth; // reflow for animation
-            const cls = getTransClass();
-            if (cls) container.className = cls;
-        }
-
-        function nextCard() { if (currentIndex < content.length-1) { direction='right'; currentIndex++; renderCard(); } }
-        function prevCard() { if (currentIndex > 0) { direction='left'; currentIndex--; renderCard(); } }
-        renderCard();
-    <\/script>
+<div id="canvas">
+    ${progressBlock}
+    <div id="left-tap" onclick="prevCard()"></div>
+    <div id="right-tap" onclick="nextCard()"></div>
+    ${logoBlock}
+    <div id="card-content"></div>
+</div>
+<script>
+const content=${JSON.stringify(processedContent)};
+const TRANS='${transType}';
+let idx=0,dir='r';
+const cont=document.getElementById('card-content'),prog=document.getElementById('progress');
+function resize(){const s=Math.min(innerWidth/375,innerHeight/667);document.getElementById('canvas').style.transform='translate(-50%,-50%) scale('+s+')';}
+window.addEventListener('resize',resize);resize();
+function h2r(h,a){const r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),b=parseInt(h.slice(5,7),16);return'rgba('+r+','+g+','+b+','+(a/100)+')';}
+function renderCard(){
+    const d=content[idx];
+    if(prog)prog.style.width=((idx+1)/content.length*100)+'%';
+    let html='';
+    if(d.header&&d.header.text){
+        const bg=h2r(d.header.bgColor,d.header.bgAlpha);
+        const sw=(d.header.shadowBlur||0)>0?'box-shadow:0 4px '+d.header.shadowBlur+'px '+h2r(d.header.shadowColor||'#000',d.header.shadowAlpha||50)+';':'';
+        const bdr=(d.header.borderW||0)>0?'border:'+d.header.borderW+'px solid '+(d.header.borderC||'#000')+';':'';
+        html+='<div class="element" style="left:'+d.header.x+'%;top:'+d.header.y+'%;width:'+d.header.width+'%;background:'+bg+';color:'+d.header.color+';font-family:\\''+d.header.font+'\\';font-size:'+d.header.size+'px;font-weight:bold;text-align:center;padding:10px;border-radius:'+(d.header.borderR||8)+'px;'+bdr+sw+'z-index:15;">'+d.header.text+'</div>';
+    }
+    if(d.texts)d.texts.forEach(t=>{html+='<div class="element" style="width:'+(t.width||88)+'%;left:'+t.x+'%;top:'+t.y+'%;font-family:\\''+t.font+'\\';font-size:'+t.size+'px;font-weight:'+t.weight+';color:'+t.color+';text-align:'+t.align+';line-height:'+t.lineSpace+';">'+t.text+'</div>';});
+    if(d.imgs)d.imgs.forEach(i=>{if(i.url)html+='<div class="element" style="left:'+i.x+'%;top:'+i.y+'%;width:'+i.width+'%;"><img src="'+i.url+'"></div>';});
+    cont.className='';cont.innerHTML=html;void cont.offsetWidth;
+    const cls=TRANS==='none'?'':TRANS==='fade'?'t-fade':TRANS==='slide'?(dir==='r'?'t-slide-r':'t-slide-l'):'t-zoom';
+    if(cls)cont.className=cls;
+}
+function nextCard(){if(idx<content.length-1){dir='r';idx++;renderCard();}}
+function prevCard(){if(idx>0){dir='l';idx--;renderCard();}}
+renderCard();
+<\/script>
 </body>
 </html>`;
 }
 
-// ─────────────────────────────────────────────────────────
-// UPDATE PREVIEW & DOWNLOAD
-// ─────────────────────────────────────────────────────────
-function updatePreview() {
-    const iframe = document.getElementById('live-preview');
-    iframe.srcdoc = getTemplateHTML(false);
-    renderActiveHighlight();
-    setTimeout(resizeMockCanvas, 50);
-}
-
 function downloadHTML() {
-    const finalCode = getTemplateHTML(true);
-    const blob = new Blob([finalCode], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
+    const code = getTemplateHTML();
     const a = document.createElement('a');
-    a.href = url;
-    a.download = 'Revision_Card_Final.html';
-    a.click();
-    URL.revokeObjectURL(url);
+    a.href = URL.createObjectURL(new Blob([code], {type:'text/html'}));
+    a.download = 'Revision_Card_Final.html'; a.click();
 }
 
-// ─────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════
 // INIT
-// ─────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════
 renderEditor();
-// Push initial state to history
 setTimeout(() => {
     history = [JSON.parse(JSON.stringify({ cardData, globalConfig }))];
-    historyIndex = 0;
-    updateUndoButtons();
-}, 600);
+    historyIndex = 0; updateUndoButtons();
+}, 500);
 </script>
 </body>
 </html>
