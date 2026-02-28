@@ -1037,7 +1037,7 @@ function makeEl(type,idx){
     if(editingEl&&editingEl!==el){exitEditMode();}
     if(!editingEl){
       selectEl(type,activeCardIdx,idx);
-      if(type!=='img')startMove(e,type,idx,el);
+      startMove(e,type,idx,el);
     }
   });
 
@@ -1373,3 +1373,4 @@ setTimeout(()=>{
 </script>
 </body>
 </html>
+
