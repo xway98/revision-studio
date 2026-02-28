@@ -105,6 +105,13 @@
               oninput="updateGlobal('logo','width',+this.value);document.getElementById('g-logo-w-v').textContent=this.value+'%'">
           </div>
           <div class="prop-sep"></div>
+          <div style="font-size:11px;color:#f1c40f;font-weight:bold;margin-bottom:8px;">APPS SCRIPT EXPORT</div>
+          <div class="prop-row">
+            <label>Web App URL</label>
+            <input type="text" id="g-script-url" placeholder="https://script.google.com/macros/s/..."
+              oninput="updateGlobal('export','scriptUrl',this.value)">
+          </div>
+          <div class="prop-sep"></div>
           <div style="font-size:11px;color:#f1c40f;font-weight:bold;margin-bottom:8px;">GOOGLE DRIVE UPLOAD</div>
           <div class="prop-row">
             <label>OAuth Client ID</label>
@@ -135,7 +142,9 @@
         <span id="card-counter">Card 1 / 1</span>
         <button class="nav-btn" onclick="nextCard()">›</button>
       </div>
-      <button class="ct-btn ct-download" onclick="downloadHTML()">⬇ Download</button>
+      <button class="ct-btn" style="background:#2ecc71;margin-left:auto;" id="btn-publish" onclick="publishToSheet()">☁️
+        Publish to Sheet</button>
+      <button class="ct-btn ct-download" style="margin-left:8px;" onclick="downloadHTML()">⬇ Download</button>
     </div>
 
     <div id="canvas-area">

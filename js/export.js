@@ -1,54 +1,51 @@
 // --- LOAD FILE ---
 
-function loadHTML(e){
-  const file=e.target.files[0];if(!file)return;
-  const reader=new FileReader();
-  reader.onload=ev=>{
-    const doc=new DOMParser().parseFromString(ev.target.result,'text/html');
-    const meta=doc.getElementById('studio-save-data');
-    if(meta){
-      try{
-        const data=JSON.parse(decodeURIComponent(atob(meta.getAttribute('content'))));
-        cardData=data.cardData.map(c=>{
-          if(c.img&&!c.imgs){c.imgs=[c.img];delete c.img;}
-          c.imgs=c.imgs.map(i=>({crop:{t:0,r:0,b:0,l:0},...i}));
+function loadHTML(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const doc = new DOMParser().parseFromString(ev.target.result, 'text/html');
+    const meta = doc.getElementById('studio-save-data');
+    if (meta) {
+      try {
+        const data = JSON.parse(decodeURIComponent(atob(meta.getAttribute('content'))));
+        cardData = data.cardData.map(c => {
+          if (c.img && !c.imgs) { c.imgs = [c.img]; delete c.img; }
+          c.imgs = c.imgs.map(i => ({ crop: { t: 0, r: 0, b: 0, l: 0 }, ...i }));
           return c;
         });
-        globalConfig={bg:{color:'#fff',imgUrl:''},progress:{show:true},transition:{type:'fade'},customFont:{url:'',name:''},logo:{url:'',width:25,x:50,y:92},drive:{clientId:'',folderId:''},...data.globalConfig};
-        if(globalConfig.customFont?.url)applyFontLink(globalConfig.customFont.url);
-        activeCardIdx=0;hist=[];histIdx=-1;deselectEl();renderAll();
+        globalConfig = { bg: { color: '#fff', imgUrl: '' }, progress: { show: true }, transition: { type: 'fade' }, customFont: { url: '', name: '' }, logo: { url: '', width: 25, x: 50, y: 92 }, export: { scriptUrl: '' }, drive: { clientId: '', folderId: '' }, ...data.globalConfig };
+        if (globalConfig.customFont?.url) applyFontLink(globalConfig.customFont.url);
+        activeCardIdx = 0; hist = []; histIdx = -1; deselectEl(); renderAll();
         alert('Loaded successfully!');
-      }catch(err){alert('Error parsing file.');}
-    }else alert('No save data found.');
+      } catch (err) { alert('Error parsing file.'); }
+    } else alert('No save data found.');
   };
-  reader.readAsText(file);e.target.value='';
+  reader.readAsText(file); e.target.value = '';
 }
 
 // --- GENERATE & DOWNLOAD HTML ---
 
-function downloadHTML(){
-  const saved={cardData,globalConfig};
-  const enc=btoa(encodeURIComponent(JSON.stringify(saved)));
+function getExportCode() {
+  const saved = { cardData, globalConfig };
+  const enc = btoa(encodeURIComponent(JSON.stringify(saved)));
 
-  // ── Sanitize all rich text before export to strip browser-injected font noise ──
-  const proc=cardData.map(c=>{
-    const nc=JSON.parse(JSON.stringify(c));
-    nc.imgs.forEach(i=>{i.url=convDrive(i.url);});
-    // Clean each text layer's HTML
-    nc.texts=nc.texts.map(t=>({...t, text: sanitizeRichHTML(t.text, t.font)}));
+  const proc = cardData.map(c => {
+    const nc = JSON.parse(JSON.stringify(c));
+    nc.imgs.forEach(i => { i.url = convDrive(i.url); });
+    nc.texts = nc.texts.map(t => ({ ...t, text: sanitizeRichHTML(t.text, t.font) }));
     return nc;
   });
 
-  const lUrl=convDrive(globalConfig.logo.url);
-  const logoBlk=lUrl?`<div class="element" style="left:${globalConfig.logo.x}%;top:${globalConfig.logo.y}%;width:${globalConfig.logo.width}%;z-index:10;"><img style="width:100%;height:auto;display:block;" src="${lUrl}"></div>`:'';
-  const bgUrl=convDrive(globalConfig.bg.imgUrl);
-  const bgStyle=bgUrl?`background-image:url('${bgUrl}');background-size:cover;background-position:center;`:`background-color:${globalConfig.bg.color};`;
-  const progBlk=globalConfig.progress.show?'<div id="prog"></div>':'';
-  const trans=globalConfig.transition?.type||'fade';
-  // ── Build a comprehensive font link covering every font actually used ──
-  const fontLinks=buildFontLink();
+  const lUrl = convDrive(globalConfig.logo.url);
+  const logoBlk = lUrl ? `<div class="element" style="left:${globalConfig.logo.x}%;top:${globalConfig.logo.y}%;width:${globalConfig.logo.width}%;z-index:10;"><img style="width:100%;height:auto;display:block;" src="${lUrl}"></div>` : '';
+  const bgUrl = convDrive(globalConfig.bg.imgUrl);
+  const bgStyle = bgUrl ? `background-image:url('${bgUrl}');background-size:cover;background-position:center;` : `background-color:${globalConfig.bg.color};`;
+  const progBlk = globalConfig.progress.show ? '<div id="prog"></div>' : '';
+  const trans = globalConfig.transition?.type || 'fade';
+  const fontLinks = buildFontLink();
 
-  const code=`<!DOCTYPE html>
+  return `<!DOCTYPE html>
 <html lang="en"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>Revision Card</title><meta id="studio-save-data" content="${enc}">
@@ -100,9 +97,54 @@ function render(){
 function n(){if(i<D.length-1){d='r';i++;render();}}
 function p(){if(i>0){d='l';i--;render();}}
 render();
-<\/script></body></html>`;
+<\\/script></body></html>`.replace(/<\\\/script>/g, '</script>');
+}
 
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob([code],{type:'text/html'}));
-  a.download='Revision_Card_Final.html';a.click();
+function downloadHTML() {
+  const code = getExportCode();
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([code], { type: 'text/html' }));
+  a.download = 'Revision_Card_Final.html'; a.click();
+}
+
+async function publishToSheet() {
+  const url = globalConfig.export?.scriptUrl;
+  if (!url) {
+    alert('Please enter your Apps Script Web App URL in Global Settings First.');
+    return;
+  }
+
+  const btn = document.getElementById('btn-publish');
+  const ogText = btn.textContent;
+  btn.textContent = '⏳ Publishing...';
+  btn.disabled = true;
+
+  try {
+    const htmlCode = getExportCode();
+    const title = cardData[0]?.header?.text || "Revision Card";
+
+    // We send a standard POST as plain text containing a JSON string.
+    // Apps Script doPost(e) easily reads e.postData.contents without triggering difficult CORS preflights.
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain" },
+      body: JSON.stringify({
+        html: htmlCode,
+        title: title
+      })
+    });
+
+    const data = await res.json();
+    if (data.status === 'success') {
+      alert('✅ Successfully published: ' + data.fileUrl);
+    } else {
+      alert('Error from Script: ' + (data.error || 'Unknown error'));
+    }
+  } catch (err) {
+    console.error(err);
+    alert('Failed to send. Ensure your Web App URL is correct. (Check console)');
+  } finally {
+    btn.textContent = ogText;
+    btn.disabled = false;
+  }
 }
