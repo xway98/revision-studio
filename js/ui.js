@@ -205,3 +205,133 @@ function syncGlobalUI(){
   s('drive-client-id',globalConfig.drive?.clientId||'');
   s('drive-folder-id',globalConfig.drive?.folderId||'');
 }
+
+
+// --- DASHBOARD LOGIC ---
+
+async function dbCall(action, params = {}) {
+  if(!globalConfig.export?.scriptUrl) { alert('Apps Script URL is missing in Global Settings!'); return null; }
+  try {
+    const res = await fetch(globalConfig.export.scriptUrl, {
+      method: 'POST',
+      headers: {'Content-Type': 'text/plain'},
+      body: JSON.stringify({ action, userId: currentUser, ...params })
+    });
+    const data = await res.json();
+    if(data.status === 'success') return data.data;
+    alert('Error: ' + data.error); return null;
+  } catch(e) { console.error(e); alert('Network connection failed.'); return null; }
+}
+
+async function verifyUser() {
+  const id = document.getElementById('user-id-input').value.trim();
+  if(!id) return;
+  const btn = event.target; const og = btn.textContent; btn.textContent = 'Verifying...'; btn.disabled=true;
+  
+  // Temporarily set currentUser for the request
+  const tempUser = currentUser; currentUser = id;
+  const res = await dbCall('verify_user');
+  
+  btn.textContent = og; btn.disabled=false;
+  if(res) {
+    currentUser = id;
+    localStorage.setItem('revStudioUser', id);
+    initHub();
+  } else {
+    currentUser = tempUser;
+  }
+}
+
+function logoutAdmin() {
+  currentUser = null; localStorage.removeItem('revStudioUser');
+  document.getElementById('hub-container').style.display='none';
+  document.getElementById('login-modal').style.display='flex';
+}
+
+async function initHub() {
+  appMode = 'dashboard';
+  document.getElementById('editor-view').style.display='none';
+  document.getElementById('dashboard-view').style.display='flex';
+  if(!currentUser) {
+    document.getElementById('login-modal').style.display='flex';
+    document.getElementById('hub-container').style.display='none';
+    return;
+  }
+  document.getElementById('login-modal').style.display='none';
+  document.getElementById('hub-container').style.display='flex';
+  document.getElementById('hub-user-disp').textContent = currentUser;
+  
+  if(!currentSubject) currentSubject = 'Physics';
+  
+  // Set active tab
+  document.querySelectorAll('.hub-tab').forEach(t=>t.classList.remove('active'));
+  const tabMatches = Array.from(document.querySelectorAll('.hub-tab')).filter(t=>t.textContent===currentSubject);
+  if(tabMatches.length) tabMatches[0].classList.add('active');
+
+  const tree = await dbCall('list');
+  if(!tree) return;
+
+  renderHubContent(tree[currentSubject] || {});
+}
+
+function setSubject(sub) { currentSubject = sub; initHub(); }
+
+function renderHubContent(chaptersObj) {
+  const cont = document.getElementById('hub-content');
+  let html = <div style=\"display:flex;justify-content:space-between;margin-bottom:20px;\"><h2 style=\"color:#ecf0f1;\">\ Chapters</h2> <button class=\"add-el-btn\" style=\"background:#2ecc71;padding:5px 15px;\" onclick=\"addChapter()\">+ New Chapter</button></div>;
+  
+  const chapters = Object.keys(chaptersObj).sort();
+  if(chapters.length===0) html += <div style=\"color:#95a5a6;text-align:center;padding:20px;\">No chapters yet. Create one!</div>;
+  
+  chapters.forEach(chap => {
+    html += <div class=\"hub-chapter\">
+      + <div class=\"hub-chapter-header\" onclick=\"this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'\">
+        + <strong>\</strong> <span style=\"font-size:12px;color:#95a5a6;\">\ Topics ?</span>
+      + </div>
+      + <div class=\"hub-topics-list\" style=\"display:none;\">;
+      
+    chaptersObj[chap].sort().forEach(top => {
+      html += <div class=\"hub-topic\" onclick=\"openTopic('\','\')\">?? \</div>;
+    });
+    
+    html += <div style=\"padding:10px;\"><button class=\"hub-add-btn\" onclick=\"addTopic('\')\">+ Add Topic to \</button></div></div></div>;
+  });
+  cont.innerHTML = html;
+}
+
+async function addChapter() {
+  const n = prompt('Enter new Chapter name:');
+  if(n && n.trim()) {
+    await dbCall('save', { subject: currentSubject, chapter: n.trim(), topic:'_placeholder', jsonData:'{}' });
+    initHub();
+  }
+}
+
+async function addTopic(chap) {
+  const n = prompt('Enter new Topic name:');
+  if(n && n.trim()) { openEditor(chap, n.trim(), true); }
+}
+
+async function openTopic(chap, top) {
+  const data = await dbCall('load', { subject: currentSubject, chapter: chap, topic: top });
+  if(data && data.json) {
+    try {
+      const p = JSON.parse(data.json);
+      cardData = p.cardData; globalConfig = p.globalConfig;
+      openEditor(chap, top, false);
+    } catch(e) { alert('Corrupt topc data'); }
+  }
+}
+
+function openEditor(chap, top, isNew) {
+  currentChapter = chap; currentTopic = top; appMode = 'editor';
+  if(isNew) {
+    cardData = [{type:'revision', header:{text:top,font:'Arial',size:22,color:'#ffffff',bgColor:'#3498db',bgAlpha:100,x:50,y:7,width:90,borderW:0,borderC:'#000',borderR:8,shadowBlur:0,shadowAlpha:50,shadowColor:'#000'},texts:[{text:'Tap to edit this text box',font:'Arial',size:17,x:50,y:44,align:'center',color:'#2c3e50',weight:'normal',lineSpace:1.5,width:85}],imgs:[]}];
+  }
+  document.getElementById('dashboard-view').style.display='none';
+  document.getElementById('editor-view').style.display='flex';
+  activeCardIdx = 0; hist=[]; histIdx=-1; deselectEl(); renderAll(); pushHist();
+}
+
+function closeEditor() { initHub(); }
+

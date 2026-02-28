@@ -108,9 +108,8 @@ function downloadHTML() {
 }
 
 async function publishToSheet() {
-  const url = globalConfig.export?.scriptUrl;
-  if (!url) {
-    alert('Please enter your Apps Script Web App URL in Global Settings First.');
+  if (appMode !== 'editor' || !currentTopic) {
+    alert("Please open a Topic from the Hub to publish.");
     return;
   }
 
@@ -121,24 +120,19 @@ async function publishToSheet() {
 
   try {
     const htmlCode = getExportCode();
-    const title = cardData[0]?.header?.text || "Revision Card";
 
-    // We send a standard POST as plain text containing a JSON string.
-    // Apps Script doPost(e) easily reads e.postData.contents without triggering difficult CORS preflights.
-    const res = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "text/plain" },
-      body: JSON.stringify({
-        html: htmlCode,
-        title: title
-      })
+    // We send payload to our new API using dbCall
+    const res = await dbCall('publish', {
+      subject: currentSubject,
+      chapter: currentChapter,
+      topic: currentTopic,
+      htmlData: htmlCode
     });
 
-    const data = await res.json();
-    if (data.status === 'success') {
-      alert('✅ Successfully published: ' + data.fileUrl);
+    if (res && res.fileUrl) {
+      alert('✅ Successfully published: ' + res.fileUrl);
     } else {
-      alert('Error from Script: ' + (data.error || 'Unknown error'));
+      alert('Error: Publishing failed.');
     }
   } catch (err) {
     console.error(err);

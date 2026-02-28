@@ -14,184 +14,227 @@
 
 <body>
 
-  <!-- ════════════════════════════ LEFT PANE ════════════════════════════ -->
-  <div id="left-pane">
-    <div id="left-top">
-      <h1>🎴 REVISION CARD STUDIO</h1>
-      <div class="top-btns">
-        <button class="tb tb-undo" id="btn-undo" onclick="undo()" disabled>↩</button>
-        <button class="tb tb-undo" id="btn-redo" onclick="redo()" disabled>↪</button>
-        <label class="tb tb-load" style="cursor:pointer;">📂 Load
-          <input type="file" accept=".html" style="display:none;" onchange="loadHTML(event)">
-        </label>
+  <!-- ════════════════════════════ HUB DASHBOARD ════════════════════════════ -->
+  <div id="dashboard-view" style="display:flex;">
+    <!-- Login Screen (Visible if no currentUser) -->
+    <div id="login-modal" class="modal-overlay" style="display:none;">
+      <div class="modal-content">
+        <h2>Enter User ID</h2>
+        <p style="margin-bottom:15px;color:#95a5a6;font-size:14px;">Please enter your ID to access your revision cards.
+        </p>
+        <input type="text" id="user-id-input" placeholder="User ID or Passcode..."
+          style="width:100%;margin-bottom:15px;padding:10px;font-size:16px;">
+        <button class="add-el-btn" style="background:#3498db;width:100%;padding:10px;font-size:16px;"
+          onclick="verifyUser()">Login</button>
       </div>
     </div>
 
-    <!-- Cards list -->
-    <div id="cards-list"></div>
-    <div style="padding:0 10px 8px;">
-      <button id="add-card-btn" onclick="addCard()">+ New Card</button>
-    </div>
-
-    <!-- Properties panel -->
-    <div id="props-panel">
-      <div class="prop-empty" id="prop-empty-state">
-        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#1abc9c" stroke-width="1.5">
-          <rect x="3" y="3" width="18" height="18" rx="2" />
-          <path d="M8 12h8M12 8v8" />
-        </svg>
-        <p>Click any element on the canvas to edit its properties here</p>
-        <div class="prop-add-btns">
-          <button class="add-el-btn" style="background:#2980b9;" onclick="addTextToActive()">+ Text</button>
-          <button class="add-el-btn" style="background:#e67e22;" onclick="addImgToActive()">+ Image</button>
-        </div>
+    <!-- Main Hub (Visible if currentUser exists) -->
+    <div id="hub-container"
+      style="display:none;width:100%;height:100%;padding:40px;flex-direction:column;align-items:center;background:#1e2836;overflow-y:auto;">
+      <h1 style="color:#f1c40f;margin-bottom:20px;font-size:32px;">🎴 Revision Hub</h1>
+      <div style="color:#bdc3c7;margin-bottom:30px;">Logged in as: <strong id="hub-user-disp"></strong> <button
+          onclick="logoutAdmin()"
+          style="margin-left:10px;background:none;border:none;color:#e74c3c;cursor:pointer;text-decoration:underline;">Logout</button>
       </div>
-      <div id="prop-content" style="display:none;"></div>
-    </div>
 
-    <!-- Global settings -->
-    <div id="global-section">
-      <div class="glob-toggle" id="glob-toggle" onclick="toggleGlobal()">
-        <span>🌐 Global Settings</span>
-        <span class="chev">▶</span>
+      <!-- Subject Tabs -->
+      <div class="hub-tabs" style="display:flex;gap:10px;margin-bottom:30px;">
+        <button class="hub-tab active" onclick="setSubject('Physics')">Physics</button>
+        <button class="hub-tab" onclick="setSubject('Chemistry')">Chemistry</button>
+        <button class="hub-tab" onclick="setSubject('Biology')">Biology</button>
       </div>
-      <div id="global-body">
-        <div id="global-body-inner">
-          <div class="prop-row">
-            <label>Canvas Background</label>
-            <input type="color" id="g-bg" value="#ffffff" oninput="updateGlobal('bg','color',this.value)">
-          </div>
-          <div class="prop-row">
-            <label>BG Image URL</label>
-            <input type="text" id="g-bgimg" placeholder="Optional URL..."
-              oninput="updateGlobal('bg','imgUrl',this.value)">
-          </div>
-          <div class="prop-row">
-            <label>Transition</label>
-            <select id="g-trans" onchange="updateGlobal('transition','type',this.value)">
-              <option value="fade">Fade</option>
-              <option value="slide">Slide</option>
-              <option value="zoom">Zoom</option>
-              <option value="none">None</option>
-            </select>
-          </div>
-          <div class="prop-row">
-            <label>Progress Bar</label>
-            <select id="g-prog" onchange="updateGlobal('progress','show',this.value==='true')">
-              <option value="true">Show</option>
-              <option value="false">Hide</option>
-            </select>
-          </div>
-          <div class="prop-sep"></div>
-          <div class="prop-row">
-            <label>Custom Font URL (Google Fonts)</label>
-            <input type="text" id="g-font-url" placeholder="https://fonts.googleapis.com/..."
-              oninput="updateGlobal('customFont','url',this.value);applyFontLink(this.value)">
-          </div>
-          <div class="prop-row">
-            <label>Custom Font Name</label>
-            <input type="text" id="g-font-name" placeholder="e.g. Nunito"
-              oninput="updateGlobal('customFont','name',this.value)">
-          </div>
-          <div class="prop-sep"></div>
-          <div class="prop-row">
-            <label>Logo URL</label>
-            <input type="text" id="g-logo-url" placeholder="Logo URL..."
-              oninput="updateGlobal('logo','url',this.value)">
-          </div>
-          <div class="prop-row">
-            <div class="prop-lbl"><span>Logo Width</span><span id="g-logo-w-v">25%</span></div>
-            <input type="range" id="g-logo-w" min="5" max="80" value="25"
-              oninput="updateGlobal('logo','width',+this.value);document.getElementById('g-logo-w-v').textContent=this.value+'%'">
-          </div>
-          <div class="prop-sep"></div>
-          <div style="font-size:11px;color:#f1c40f;font-weight:bold;margin-bottom:8px;">APPS SCRIPT EXPORT</div>
-          <div class="prop-row">
-            <label>Web App URL</label>
-            <input type="text" id="g-script-url" placeholder="https://script.google.com/macros/s/..."
-              oninput="updateGlobal('export','scriptUrl',this.value)">
-          </div>
-          <div class="prop-sep"></div>
-          <div style="font-size:11px;color:#f1c40f;font-weight:bold;margin-bottom:8px;">GOOGLE DRIVE UPLOAD</div>
-          <div class="prop-row">
-            <label>OAuth Client ID</label>
-            <input type="text" id="drive-client-id" placeholder="xxxx.apps.googleusercontent.com"
-              oninput="globalConfig.drive={...globalConfig.drive,clientId:this.value}">
-          </div>
-          <div class="prop-row">
-            <label>Target Folder ID (optional)</label>
-            <input type="text" id="drive-folder-id" placeholder="Drive folder ID..."
-              oninput="globalConfig.drive={...globalConfig.drive,folderId:this.value}">
-          </div>
-          <button class="add-el-btn" style="background:#4285f4;width:100%;padding:7px;" onclick="connectDrive()">
-            <span id="drive-btn-label">🔗 Connect Google Drive</span>
-          </button>
-        </div>
+
+      <!-- Content Area -->
+      <div id="hub-content"
+        style="width:100%;max-width:800px;background:#2c3e50;border-radius:12px;padding:20px;box-shadow:0 10px 30px rgba(0,0,0,0.5);min-height:300px;">
+        <!-- Chapters and Topics will be injected here via JS -->
       </div>
     </div>
   </div>
 
-  <!-- ════════════════════════════ RIGHT PANE ════════════════════════════ -->
-  <div id="right-pane">
-    <div id="canvas-toolbar">
-      <button class="ct-btn ct-text" onclick="addTextToActive()">＋ Text</button>
-      <button class="ct-btn ct-img" onclick="addImgToActive()">＋ Image</button>
-      <div class="ct-spacer"></div>
-      <div id="canvas-nav">
-        <button class="nav-btn" onclick="prevCard()">‹</button>
-        <span id="card-counter">Card 1 / 1</span>
-        <button class="nav-btn" onclick="nextCard()">›</button>
+  <!-- ════════════════════════════ EDITOR VIEW ════════════════════════════ -->
+  <div id="editor-view" style="display:none;width:100%;height:100%;">
+    <!-- ════════════════════════════ LEFT PANE ════════════════════════════ -->
+    <div id="left-pane">
+      <div id="left-top">
+        <h1>🎴 REVISION CARD STUDIO</h1>
+        <div class="top-btns">
+          <button class="tb tb-undo" id="btn-undo" onclick="undo()" disabled>↩</button>
+          <button class="tb tb-undo" id="btn-redo" onclick="redo()" disabled>↪</button>
+          <label class="tb tb-load" style="cursor:pointer;">📂 Load
+            <input type="file" accept=".html" style="display:none;" onchange="loadHTML(event)">
+          </label>
+        </div>
       </div>
-      <button class="ct-btn" style="background:#2ecc71;margin-left:auto;" id="btn-publish" onclick="publishToSheet()">☁️
-        Publish to Sheet</button>
-      <button class="ct-btn ct-download" style="margin-left:8px;" onclick="downloadHTML()">⬇ Download</button>
+
+      <!-- Cards list -->
+      <div id="cards-list"></div>
+      <div style="padding:0 10px 8px;">
+        <button id="add-card-btn" onclick="addCard()">+ New Card</button>
+      </div>
+
+      <!-- Properties panel -->
+      <div id="props-panel">
+        <div class="prop-empty" id="prop-empty-state">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#1abc9c" stroke-width="1.5">
+            <rect x="3" y="3" width="18" height="18" rx="2" />
+            <path d="M8 12h8M12 8v8" />
+          </svg>
+          <p>Click any element on the canvas to edit its properties here</p>
+          <div class="prop-add-btns">
+            <button class="add-el-btn" style="background:#2980b9;" onclick="addTextToActive()">+ Text</button>
+            <button class="add-el-btn" style="background:#e67e22;" onclick="addImgToActive()">+ Image</button>
+          </div>
+        </div>
+        <div id="prop-content" style="display:none;"></div>
+      </div>
+
+      <!-- Global settings -->
+      <div id="global-section">
+        <div class="glob-toggle" id="glob-toggle" onclick="toggleGlobal()">
+          <span>🌐 Global Settings</span>
+          <span class="chev">▶</span>
+        </div>
+        <div id="global-body">
+          <div id="global-body-inner">
+            <div class="prop-row">
+              <label>Canvas Background</label>
+              <input type="color" id="g-bg" value="#ffffff" oninput="updateGlobal('bg','color',this.value)">
+            </div>
+            <div class="prop-row">
+              <label>BG Image URL</label>
+              <input type="text" id="g-bgimg" placeholder="Optional URL..."
+                oninput="updateGlobal('bg','imgUrl',this.value)">
+            </div>
+            <div class="prop-row">
+              <label>Transition</label>
+              <select id="g-trans" onchange="updateGlobal('transition','type',this.value)">
+                <option value="fade">Fade</option>
+                <option value="slide">Slide</option>
+                <option value="zoom">Zoom</option>
+                <option value="none">None</option>
+              </select>
+            </div>
+            <div class="prop-row">
+              <label>Progress Bar</label>
+              <select id="g-prog" onchange="updateGlobal('progress','show',this.value==='true')">
+                <option value="true">Show</option>
+                <option value="false">Hide</option>
+              </select>
+            </div>
+            <div class="prop-sep"></div>
+            <div class="prop-row">
+              <label>Custom Font URL (Google Fonts)</label>
+              <input type="text" id="g-font-url" placeholder="https://fonts.googleapis.com/..."
+                oninput="updateGlobal('customFont','url',this.value);applyFontLink(this.value)">
+            </div>
+            <div class="prop-row">
+              <label>Custom Font Name</label>
+              <input type="text" id="g-font-name" placeholder="e.g. Nunito"
+                oninput="updateGlobal('customFont','name',this.value)">
+            </div>
+            <div class="prop-sep"></div>
+            <div class="prop-row">
+              <label>Logo URL</label>
+              <input type="text" id="g-logo-url" placeholder="Logo URL..."
+                oninput="updateGlobal('logo','url',this.value)">
+            </div>
+            <div class="prop-row">
+              <div class="prop-lbl"><span>Logo Width</span><span id="g-logo-w-v">25%</span></div>
+              <input type="range" id="g-logo-w" min="5" max="80" value="25"
+                oninput="updateGlobal('logo','width',+this.value);document.getElementById('g-logo-w-v').textContent=this.value+'%'">
+            </div>
+            <div class="prop-sep"></div>
+            <div style="font-size:11px;color:#f1c40f;font-weight:bold;margin-bottom:8px;">APPS SCRIPT EXPORT</div>
+            <div class="prop-row">
+              <label>Web App URL</label>
+              <input type="text" id="g-script-url" placeholder="https://script.google.com/macros/s/..."
+                oninput="updateGlobal('export','scriptUrl',this.value)">
+            </div>
+            <div class="prop-sep"></div>
+            <div style="font-size:11px;color:#f1c40f;font-weight:bold;margin-bottom:8px;">GOOGLE DRIVE UPLOAD</div>
+            <div class="prop-row">
+              <label>OAuth Client ID</label>
+              <input type="text" id="drive-client-id" placeholder="xxxx.apps.googleusercontent.com"
+                oninput="globalConfig.drive={...globalConfig.drive,clientId:this.value}">
+            </div>
+            <div class="prop-row">
+              <label>Target Folder ID (optional)</label>
+              <input type="text" id="drive-folder-id" placeholder="Drive folder ID..."
+                oninput="globalConfig.drive={...globalConfig.drive,folderId:this.value}">
+            </div>
+            <button class="add-el-btn" style="background:#4285f4;width:100%;padding:7px;" onclick="connectDrive()">
+              <span id="drive-btn-label">🔗 Connect Google Drive</span>
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <div id="canvas-area">
-      <div id="canvas-wrap">
-        <div id="live-canvas">
-          <div id="canvas-elements"></div>
-          <!-- Selection overlay -->
-          <div id="sel-overlay">
-            <div class="sel-border"></div>
-            <div class="sel-handle nw" data-h="nw"></div>
-            <div class="sel-handle n" data-h="n"></div>
-            <div class="sel-handle ne" data-h="ne"></div>
-            <div class="sel-handle e" data-h="e"></div>
-            <div class="sel-handle se" data-h="se"></div>
-            <div class="sel-handle s" data-h="s"></div>
-            <div class="sel-handle sw" data-h="sw"></div>
-            <div class="sel-handle w" data-h="w"></div>
-          </div>
-          <!-- Crop overlay (inside canvas so it scales with it) -->
-          <div id="crop-overlay">
-            <div id="crop-region" class="crop-region">
-              <div class="crop-handle c-nw" data-ch="nw"></div>
-              <div class="crop-handle c-ne" data-ch="ne"></div>
-              <div class="crop-handle c-sw" data-ch="sw"></div>
-              <div class="crop-handle c-se" data-ch="se"></div>
-              <div class="crop-confirm">
-                <button style="background:#1abc9c;color:#1e2836;" onclick="confirmCrop()">✓ Apply</button>
-                <button style="background:#e74c3c;color:#fff;" onclick="cancelCrop()">✕</button>
+    <!-- ════════════════════════════ RIGHT PANE ════════════════════════════ -->
+    <div id="right-pane">
+      <div id="canvas-toolbar">
+        <button class="ct-btn ct-text" onclick="addTextToActive()">＋ Text</button>
+        <button class="ct-btn ct-img" onclick="addImgToActive()">＋ Image</button>
+        <div class="ct-spacer"></div>
+        <div id="canvas-nav">
+          <button class="nav-btn" onclick="prevCard()">‹</button>
+          <span id="card-counter">Card 1 / 1</span>
+          <button class="nav-btn" onclick="nextCard()">›</button>
+        </div>
+        <button class="ct-btn" style="background:#e67e22;margin-left:auto;margin-right:8px;" onclick="closeEditor()">🏠
+          Hub</button>
+        <button class="ct-btn" style="background:#2ecc71;" id="btn-publish" onclick="publishToSheet()">☁️
+          Publish</button>
+        <button class="ct-btn ct-download" style="margin-left:8px;" onclick="downloadHTML()">⬇ DL</button>
+      </div>
+
+      <div id="canvas-area">
+        <div id="canvas-wrap">
+          <div id="live-canvas">
+            <div id="canvas-elements"></div>
+            <!-- Selection overlay -->
+            <div id="sel-overlay">
+              <div class="sel-border"></div>
+              <div class="sel-handle nw" data-h="nw"></div>
+              <div class="sel-handle n" data-h="n"></div>
+              <div class="sel-handle ne" data-h="ne"></div>
+              <div class="sel-handle e" data-h="e"></div>
+              <div class="sel-handle se" data-h="se"></div>
+              <div class="sel-handle s" data-h="s"></div>
+              <div class="sel-handle sw" data-h="sw"></div>
+              <div class="sel-handle w" data-h="w"></div>
+            </div>
+            <!-- Crop overlay (inside canvas so it scales with it) -->
+            <div id="crop-overlay">
+              <div id="crop-region" class="crop-region">
+                <div class="crop-handle c-nw" data-ch="nw"></div>
+                <div class="crop-handle c-ne" data-ch="ne"></div>
+                <div class="crop-handle c-sw" data-ch="sw"></div>
+                <div class="crop-handle c-se" data-ch="se"></div>
+                <div class="crop-confirm">
+                  <button style="background:#1abc9c;color:#1e2836;" onclick="confirmCrop()">✓ Apply</button>
+                  <button style="background:#e74c3c;color:#fff;" onclick="cancelCrop()">✕</button>
+                </div>
               </div>
             </div>
+            <div id="drop-overlay"><span>📸 Drop image here</span></div>
           </div>
-          <div id="drop-overlay"><span>📸 Drop image here</span></div>
+          <div id="canvas-hint">Click to select · Double-click text to edit · Drag to move · Drop image to add</div>
         </div>
-        <div id="canvas-hint">Click to select · Double-click text to edit · Drag to move · Drop image to add</div>
+        <div id="drive-status">Drive: Not connected</div>
       </div>
-      <div id="drive-status">Drive: Not connected</div>
-    </div>
-  </div>
+    </div> <!-- END EDITOR VIEW -->
 
-  <script src="js/state.js"></script>
-  <script src="js/utils.js"></script>
-  <script src="js/drive.js"></script>
-  <script src="js/cards.js"></script>
-  <script src="js/canvas.js"></script>
-  <script src="js/ui.js"></script>
-  <script src="js/export.js"></script>
-  <script src="js/app.js"></script>
+    <script src="js/state.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/drive.js"></script>
+    <script src="js/cards.js"></script>
+    <script src="js/canvas.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/export.js"></script>
+    <script src="js/app.js"></script>
 </body>
 
 </html>
