@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ultimate Revision Card Studio</title>
-<link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&family=Courier+Prime:wght@400;700&family=Lora:ital,wght@0,400;0,700&family=Montserrat:wght@400;700;900&family=Oswald:wght@400;700&family=Poppins:wght@400;700;900&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&family=Courier+Prime:wght@400;700&family=Lora:ital,wght@0,400;0,700&family=Montserrat:wght@400;700;900&family=Oswald:wght@400;700&family=Poppins:wght@400;700;900&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    
     <style>
         body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; display: flex; height: 100vh; background-color: #2c3e50; color: white; overflow: hidden; }
         
@@ -13,7 +14,7 @@
         
         h2 { margin-top: 0; color: #1abc9c; border-bottom: 2px solid #1abc9c; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center;}
         
-        .card-editor { background-color: #1a252f; padding: 20px; margin-bottom: 20px; border-radius: 8px; border-left: 5px solid #3498db; }
+        .card-editor { background-color: #1a252f; padding: 20px; margin-bottom: 20px; border-radius: 8px; border-left: 5px solid #3498db; transition: 0.3s; }
         .global-editor { background-color: #273c75; padding: 15px; margin-bottom: 25px; border-radius: 8px; border-left: 5px solid #e1b12c; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
         .text-layer { background-color: #2c3e50; padding: 15px; margin-bottom: 15px; border-radius: 6px; border: 1px dashed #7f8c8d; position: relative; }
         
@@ -23,7 +24,7 @@
         label { display: block; font-size: 11px; margin-bottom: 4px; color: #bdc3c7; font-weight: bold; text-transform: uppercase; }
         input[type="text"], input[type="color"], textarea, select { width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #7f8c8d; background: #ecf0f1; color: #2c3e50; box-sizing: border-box; }
         input[type="color"] { padding: 2px; height: 35px; cursor: pointer; }
-        textarea { resize: vertical; height: 50px; }
+        textarea { resize: vertical; height: 60px; font-family: 'Segoe UI', sans-serif;}
         input[type="range"] { width: 100%; cursor: pointer; }
         
         .section-title { font-size: 14px; color: #f1c40f; margin-bottom: 12px; font-weight: bold; width: 100%; border-bottom: 1px solid #34495e; padding-bottom: 5px;}
@@ -32,7 +33,7 @@
         .btn-add { background-color: #2ecc71; color: white; margin-top: 10px; width: 100%; padding: 12px; font-size: 14px;}
         .btn-add-card { background-color: #3498db; color: white; margin-bottom: 40px; width: 100%; padding: 15px; font-size: 16px;}
         
-        /* Utility Buttons */
+        /* Utility & Formatting Buttons */
         .btn-action { padding: 5px 10px; font-size: 12px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; color: white; margin-left: 5px; }
         .btn-delete { background-color: #e74c3c; }
         .btn-copy { background-color: #f39c12; }
@@ -40,19 +41,23 @@
         .btn-load { background-color: #9b59b6; color: white; padding: 8px 15px; font-size: 14px; border-radius: 5px; cursor: pointer; display: inline-block; }
         .btn-load:hover { background-color: #8e44ad; }
         
+        .toolbar-btn { background: #1a252f; color: #bdc3c7; border: 1px solid #7f8c8d; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 13px; font-family: serif;}
+        .toolbar-btn:hover { background: #34495e; color: white; }
+        
         .download-container { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); z-index: 500; text-align: center; width: 100%;}
         .btn-download { background-color: #e67e22; color: white; padding: 15px 30px; font-size: 16px; border-radius: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); transition: 0.2s; cursor: pointer; border: none; font-weight: bold;}
         .btn-download:hover { background-color: #d35400; transform: scale(1.05); }
         
+        /* Interactive Mock Canvas */
         #mock-canvas { position: absolute; left: 50%; top: 50%; width: 375px; height: 667px; transform-origin: center center; background: white; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); overflow: hidden; border: 2px solid #333; }
-        iframe { width: 100%; height: 100%; border: none; background: #f4f7f6; pointer-events: none; }
+        iframe { width: 100%; height: 100%; border: none; background: #f4f7f6; }
     </style>
 </head>
 <body>
 
     <div id="editor-pane">
         <h2>
-            🛠️ Advanced Layout Editor
+            🛠️ Visual Layout Editor
             <label class="btn-load">
                 📂 Load Existing HTML
                 <input type="file" id="html-upload" accept=".html" style="display: none;" onchange="loadHTML(event)">
@@ -60,7 +65,7 @@
         </h2>
         
         <div class="global-editor" id="global-settings">
-            <div class="section-title" style="color: #e1b12c; font-size: 16px;">🌐 Global Settings (Applies to all cards)</div>
+            <div class="section-title" style="color: #e1b12c; font-size: 16px;">🌐 Global Settings</div>
             <div class="control-group">
                 <div class="control-item"><label>Canvas BG Color</label><input type="color" value="#ffffff" oninput="updateGlobal('bg', 'color', this.value)"></div>
                 <div class="control-item" style="flex: 2;"><label>Canvas BG Image (URL)</label><input type="text" placeholder="Optional..." value="" oninput="updateGlobal('bg', 'imgUrl', this.value)"></div>
@@ -68,11 +73,10 @@
             </div>
 
             <div class="section-title" style="font-size: 13px;">Global Bottom Logo</div>
+            <p style="font-size: 11px; color: #bdc3c7; margin-top:-5px; margin-bottom: 10px;">(Drag logo in the Live Preview to reposition it)</p>
             <div class="control-group">
                 <div class="control-item" style="min-width: 100%;"><label>Logo Image URL</label><input type="text" placeholder="Paste Logo URL here..." value="" oninput="updateGlobal('logo', 'url', this.value)"></div>
-                <div class="control-item"><label>Width: 20%</label><input type="range" min="5" max="100" value="20" oninput="updateGlobal('logo', 'width', this.value); this.previousElementSibling.innerText='Width: '+this.value+'%'"></div>
-                <div class="control-item"><label>X Pos: 50%</label><input type="range" min="0" max="100" value="50" oninput="updateGlobal('logo', 'x', this.value); this.previousElementSibling.innerText='X Pos: '+this.value+'%'"></div>
-                <div class="control-item"><label>Y Pos: 95%</label><input type="range" min="0" max="100" value="95" oninput="updateGlobal('logo', 'y', this.value); this.previousElementSibling.innerText='Y Pos: '+this.value+'%'"></div>
+                <div class="control-item"><label>Logo Size: 20%</label><input type="range" min="5" max="100" value="20" oninput="updateGlobal('logo', 'width', this.value); this.previousElementSibling.innerText='Logo Size: '+this.value+'%'"></div>
             </div>
         </div>
 
@@ -94,8 +98,6 @@
         const alignments = ['left', 'center', 'right', 'justify'];
 
         let activeCardIndex = 0; 
-        
-        // CLIPBOARD FOR COPY/PASTE
         let clipboard = { textStyle: null, cardStyle: null };
 
         let globalConfig = { 
@@ -107,9 +109,10 @@
         let cardData = [
             { 
                 type: 'revision', 
-                header: { text: 'Electrochemistry', font: 'Arial', size: 22, color: '#ffffff', bgColor: '#3498db', bgAlpha: 100, x: 50, y: 5, width: 90, borderW: 0, borderC: '#000000', borderR: 8, shadowBlur: 0, shadowAlpha: 50, shadowColor: '#000000' },
+                isCollapsed: false,
+                header: { text: 'Electrochemistry', font: 'Montserrat', size: 22, color: '#ffffff', bgColor: '#3498db', bgAlpha: 100, x: 50, y: 5, width: 90, borderW: 0, borderC: '#000000', borderR: 8, shadowBlur: 0, shadowAlpha: 50, shadowColor: '#000000' },
                 texts: [
-                    { text: 'New content here...', font: 'Arial', size: 18, x: 50, y: 40, align: 'center', color: '#2c3e50', weight: 'normal', lineSpace: 1.4, width: 90 }
+                    { text: 'Highlight a word to apply <b>bold</b> or <mark style="background-color: yellow;">color</mark>. Drag me in the preview to move me!', font: 'Roboto', size: 18, x: 50, y: 40, align: 'center', color: '#2c3e50', weight: 'normal', lineSpace: 1.4, width: 90 }
                 ],
                 imgs: [
                     { url: '', width: 40, x: 50, y: 70 }
@@ -118,13 +121,33 @@
         ];
 
         function getOptions(arr, selected) {
-            return arr.map(item => `<option value="${item}" ${item === selected ? 'selected' : ''}>${item.charAt(0).toUpperCase() + item.slice(1)}</option>`).join('');
+            return arr.map(item => `<option value="${item}" ${item === selected ? 'selected' : ''}>${item}</option>`).join('');
         }
 
         function hexToRgba(hex, alpha) {
             let r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
             return 'rgba(' + r + ', ' + g + ', ' + b + ', ' + (alpha / 100) + ')';
         }
+
+        // --- UPDATING DATA & DRAGGING SYNC ---
+        window.updatePositionFromDrag = function(id, x, y) {
+            if (id === 'logo') {
+                globalConfig.logo.x = Math.round(x);
+                globalConfig.logo.y = Math.round(y);
+            } else if (id === 'header') {
+                cardData[activeCardIndex].header.x = Math.round(x);
+                cardData[activeCardIndex].header.y = Math.round(y);
+            } else if (id.startsWith('text-')) {
+                const tIndex = parseInt(id.split('-')[1]);
+                cardData[activeCardIndex].texts[tIndex].x = Math.round(x);
+                cardData[activeCardIndex].texts[tIndex].y = Math.round(y);
+            } else if (id.startsWith('img-')) {
+                const iIndex = parseInt(id.split('-')[1]);
+                cardData[activeCardIndex].imgs[iIndex].x = Math.round(x);
+                cardData[activeCardIndex].imgs[iIndex].y = Math.round(y);
+            }
+            // Silently update state without forcing a full UI redraw to prevent input interruption
+        };
 
         function updateGlobal(section, field, value) {
             globalConfig[section][field] = value; updatePreview();
@@ -133,6 +156,32 @@
         function updateCardHeader(cIndex, field, value) {
             cardData[cIndex].header[field] = value;
             activeCardIndex = cIndex; 
+            updatePreview();
+        }
+
+        function toggleCard(cIndex) {
+            cardData[cIndex].isCollapsed = !cardData[cIndex].isCollapsed;
+            activeCardIndex = cIndex;
+            renderEditor();
+        }
+
+        // --- RICH TEXT INLINE FORMATTING ---
+        function formatText(cIndex, tIndex, tagOpen, tagClose) {
+            const textarea = document.getElementById(`textarea-${cIndex}-${tIndex}`);
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            const text = textarea.value;
+            
+            if (start === end) {
+                alert("Please highlight a word in the text box first!");
+                return;
+            }
+            
+            const selected = text.substring(start, end);
+            const newText = text.substring(0, start) + tagOpen + selected + tagClose + text.substring(end);
+            
+            textarea.value = newText;
+            cardData[cIndex].texts[tIndex].text = newText;
             updatePreview();
         }
 
@@ -145,9 +194,7 @@
 
         function pasteTextStyle(cIndex, tIndex) {
             if(!clipboard.textStyle) return alert("Nothing copied yet!");
-            Object.keys(clipboard.textStyle).forEach(key => {
-                cardData[cIndex].texts[tIndex][key] = clipboard.textStyle[key];
-            });
+            Object.keys(clipboard.textStyle).forEach(key => { cardData[cIndex].texts[tIndex][key] = clipboard.textStyle[key]; });
             activeCardIndex = cIndex;
             renderEditor();
         }
@@ -164,64 +211,38 @@
 
         function pasteCardStyle(cIndex) {
             if(!clipboard.cardStyle) return alert("No card layout copied yet!");
-            
             Object.keys(clipboard.cardStyle.header).forEach(k => {
                 if(clipboard.cardStyle.header[k] !== undefined) cardData[cIndex].header[k] = clipboard.cardStyle.header[k];
             });
-
             clipboard.cardStyle.texts.forEach((style, i) => {
-                if(cardData[cIndex].texts[i]) {
-                    Object.keys(style).forEach(k => cardData[cIndex].texts[i][k] = style[k]);
-                } else {
-                    cardData[cIndex].texts.push({ text: 'Pasted format...', ...style });
-                }
+                if(cardData[cIndex].texts[i]) { Object.keys(style).forEach(k => cardData[cIndex].texts[i][k] = style[k]); } 
+                else { cardData[cIndex].texts.push({ text: 'Pasted format...', ...style }); }
             });
-
             clipboard.cardStyle.imgs.forEach((style, i) => {
-                if(cardData[cIndex].imgs[i]) {
-                    Object.keys(style).forEach(k => cardData[cIndex].imgs[i][k] = style[k]);
-                } else {
-                    cardData[cIndex].imgs.push({ url: '', ...style });
-                }
+                if(cardData[cIndex].imgs[i]) { Object.keys(style).forEach(k => cardData[cIndex].imgs[i][k] = style[k]); } 
+                else { cardData[cIndex].imgs.push({ url: '', ...style }); }
             });
-
             activeCardIndex = cIndex;
             renderEditor();
         }
 
-        // --- TEXT BOX LOGIC ---
         function addTextBox(cIndex) {
-            cardData[cIndex].texts.push({ text: 'New text...', font: 'Arial', size: 16, x: 50, y: 50, align: 'center', color: '#2c3e50', weight: 'normal', lineSpace: 1.4, width: 90 });
+            cardData[cIndex].texts.push({ text: 'New text...', font: 'Roboto', size: 16, x: 50, y: 50, align: 'center', color: '#2c3e50', weight: 'normal', lineSpace: 1.4, width: 90 });
+            cardData[cIndex].isCollapsed = false;
             activeCardIndex = cIndex;
             renderEditor();
         }
-        function deleteTextBox(cIndex, tIndex) {
-            cardData[cIndex].texts.splice(tIndex, 1);
-            activeCardIndex = cIndex;
-            renderEditor();
-        }
-        function updateTextData(cIndex, tIndex, field, value) {
-            cardData[cIndex].texts[tIndex][field] = value;
-            activeCardIndex = cIndex;
-            updatePreview();
-        }
+        function deleteTextBox(cIndex, tIndex) { cardData[cIndex].texts.splice(tIndex, 1); activeCardIndex = cIndex; renderEditor(); }
+        function updateTextData(cIndex, tIndex, field, value) { cardData[cIndex].texts[tIndex][field] = value; activeCardIndex = cIndex; updatePreview(); }
 
-        // --- MULTIPLE IMAGE LAYER LOGIC ---
         function addImgBox(cIndex) {
             cardData[cIndex].imgs.push({ url: '', width: 40, x: 50, y: 75 });
+            cardData[cIndex].isCollapsed = false;
             activeCardIndex = cIndex;
             renderEditor();
         }
-        function deleteImgBox(cIndex, iIndex) {
-            cardData[cIndex].imgs.splice(iIndex, 1);
-            activeCardIndex = cIndex;
-            renderEditor();
-        }
-        function updateImgDataArray(cIndex, iIndex, field, value) {
-            cardData[cIndex].imgs[iIndex][field] = value;
-            activeCardIndex = cIndex;
-            updatePreview();
-        }
+        function deleteImgBox(cIndex, iIndex) { cardData[cIndex].imgs.splice(iIndex, 1); activeCardIndex = cIndex; renderEditor(); }
+        function updateImgDataArray(cIndex, iIndex, field, value) { cardData[cIndex].imgs[iIndex][field] = value; activeCardIndex = cIndex; updatePreview(); }
 
         function renderEditor() {
             const container = document.getElementById('cards-container');
@@ -232,10 +253,11 @@
             document.querySelector("select[onchange*=\"'progress', 'show'\"]").value = globalConfig.progress.show.toString();
             document.querySelector("input[oninput*=\"'logo', 'url'\"]").value = globalConfig.logo.url;
             document.querySelector("input[oninput*=\"'logo', 'width'\"]").value = globalConfig.logo.width;
-            document.querySelector("input[oninput*=\"'logo', 'x'\"]").value = globalConfig.logo.x;
-            document.querySelector("input[oninput*=\"'logo', 'y'\"]").value = globalConfig.logo.y;
 
             cardData.forEach((card, cIndex) => {
+                // Ensure legacy saves get the toggle property
+                if(card.isCollapsed === undefined) card.isCollapsed = false;
+
                 let textBlocksHTML = card.texts.map((txt, tIndex) => `
                     <div class="text-layer">
                         <div style="position: absolute; top: 10px; right: 10px; display: flex;">
@@ -244,7 +266,17 @@
                             <button class="btn-action btn-delete" onclick="deleteTextBox(${cIndex}, ${tIndex})">X</button>
                         </div>
                         <div class="control-group">
-                            <div class="control-item" style="min-width: 100%; margin-top: 20px;"><label>Text Layer ${tIndex + 1}</label><textarea onfocus="activeCardIndex=${cIndex}; updatePreview();" oninput="updateTextData(${cIndex}, ${tIndex}, 'text', this.value)">${txt.text}</textarea></div>
+                            <div class="control-item" style="min-width: 100%; margin-top: 20px;">
+                                <label>Text Layer ${tIndex + 1}</label>
+                                <div style="background: #1a252f; padding: 6px; border-radius: 4px 4px 0 0; display: flex; gap: 5px; border: 1px solid #7f8c8d; border-bottom: none;">
+                                    <button class="toolbar-btn" style="font-weight: bold;" onclick="formatText(${cIndex}, ${tIndex}, '<b>', '</b>')">B</button>
+                                    <button class="toolbar-btn" style="font-style: italic;" onclick="formatText(${cIndex}, ${tIndex}, '<i>', '</i>')">I</button>
+                                    <button class="toolbar-btn" style="text-decoration: underline;" onclick="formatText(${cIndex}, ${tIndex}, '<u>', '</u>')">U</button>
+                                    <button class="toolbar-btn" style="background: #f1c40f; color: black; font-family: sans-serif;" onclick="formatText(${cIndex}, ${tIndex}, '<mark style=\\'background-color: yellow;\\'>', '</mark>')">Highlight</button>
+                                </div>
+                                <textarea id="textarea-${cIndex}-${tIndex}" style="border-radius: 0 0 4px 4px; margin-bottom: 5px;" onfocus="activeCardIndex=${cIndex}; updatePreview();" oninput="updateTextData(${cIndex}, ${tIndex}, 'text', this.value)">${txt.text}</textarea>
+                                <p style="font-size: 10px; color: #bdc3c7; margin-top:0;">👆 Drag the text on the right screen to move it.</p>
+                            </div>
                             <div class="control-item"><label>Font</label><select onchange="updateTextData(${cIndex}, ${tIndex}, 'font', this.value)">${getOptions(fonts, txt.font)}</select></div>
                             <div class="control-item"><label>Align</label><select onchange="updateTextData(${cIndex}, ${tIndex}, 'align', this.value)">${getOptions(alignments, txt.align)}</select></div>
                             <div class="control-item"><label>Weight</label><select onchange="updateTextData(${cIndex}, ${tIndex}, 'weight', this.value)"><option value="normal" ${txt.weight === 'normal' ? 'selected':''}>Normal</option><option value="bold" ${txt.weight === 'bold' ? 'selected':''}>Bold</option></select></div>
@@ -252,8 +284,6 @@
                             <div class="control-item"><label>Line Space: ${txt.lineSpace}</label><input type="range" min="1" max="3" step="0.1" value="${txt.lineSpace}" oninput="updateTextData(${cIndex}, ${tIndex}, 'lineSpace', this.value); this.previousElementSibling.innerText='Line Space: '+this.value"></div>
                             <div class="control-item"><label>Font Size: ${txt.size}px</label><input type="range" min="10" max="80" value="${txt.size}" oninput="updateTextData(${cIndex}, ${tIndex}, 'size', this.value); this.previousElementSibling.innerText='Font Size: '+this.value+'px'"></div>
                             <div class="control-item"><label>Box Width: ${txt.width ?? 90}%</label><input type="range" min="10" max="100" value="${txt.width ?? 90}" oninput="updateTextData(${cIndex}, ${tIndex}, 'width', this.value); this.previousElementSibling.innerText='Box Width: '+this.value+'%'"></div>
-                            <div class="control-item"><label>X Pos: ${txt.x}%</label><input type="range" min="0" max="100" value="${txt.x}" oninput="updateTextData(${cIndex}, ${tIndex}, 'x', this.value); this.previousElementSibling.innerText='X Pos: '+this.value+'%'"></div>
-                            <div class="control-item"><label>Y Pos: ${txt.y}%</label><input type="range" min="0" max="100" value="${txt.y}" oninput="updateTextData(${cIndex}, ${tIndex}, 'y', this.value); this.previousElementSibling.innerText='Y Pos: '+this.value+'%'"></div>
                         </div>
                     </div>
                 `).join('');
@@ -267,56 +297,54 @@
                             <div class="control-item" style="min-width: 100%; margin-top: 10px;">
                                 <label>Image Layer ${iIndex + 1} Link</label>
                                 <input type="text" placeholder="Paste link here..." value="${imgObj.url}" oninput="updateImgDataArray(${cIndex}, ${iIndex}, 'url', this.value)">
+                                <p style="font-size: 10px; color: #bdc3c7; margin-top:4px;">👆 Drag the image on the right screen to move it.</p>
                             </div>
-                            <div class="control-item"><label>Width: ${imgObj.width}%</label><input type="range" min="10" max="100" value="${imgObj.width}" oninput="updateImgDataArray(${cIndex}, ${iIndex}, 'width', this.value); this.previousElementSibling.innerText='Width: '+this.value+'%'"></div>
-                            <div class="control-item"><label>X Pos: ${imgObj.x}%</label><input type="range" min="0" max="100" value="${imgObj.x}" oninput="updateImgDataArray(${cIndex}, ${iIndex}, 'x', this.value); this.previousElementSibling.innerText='X Pos: '+this.value+'%'"></div>
-                            <div class="control-item"><label>Y Pos: ${imgObj.y}%</label><input type="range" min="0" max="100" value="${imgObj.y}" oninput="updateImgDataArray(${cIndex}, ${iIndex}, 'y', this.value); this.previousElementSibling.innerText='Y Pos: '+this.value+'%'"></div>
+                            <div class="control-item"><label>Size/Width: ${imgObj.width}%</label><input type="range" min="10" max="100" value="${imgObj.width}" oninput="updateImgDataArray(${cIndex}, ${iIndex}, 'width', this.value); this.previousElementSibling.innerText='Size/Width: '+this.value+'%'"></div>
                         </div>
                     </div>
                 `).join('');
 
                 let html = `
-                <div class="card-editor" onclick="if(activeCardIndex !== ${cIndex}) { activeCardIndex = ${cIndex}; updatePreview(); }">
-                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #34495e; padding-bottom: 10px; margin-bottom: 15px;">
-                        <h3 style="margin:0; color: #3498db;">Card ${cIndex + 1}</h3>
+                <div class="card-editor" style="border-left-color: ${activeCardIndex === cIndex ? '#e74c3c' : '#3498db'};">
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #34495e; padding-bottom: 10px; margin-bottom: 10px; cursor: pointer;" onclick="toggleCard(${cIndex})">
+                        <h3 style="margin:0; color: #3498db; display: flex; align-items: center; gap: 10px;">
+                            <span style="font-size: 12px; color: #7f8c8d;">${card.isCollapsed ? '▶' : '▼'}</span> Card ${cIndex + 1}
+                        </h3>
                         <div>
-                            <button class="btn-action btn-copy" onclick="copyCardStyle(${cIndex})">Copy Layout</button>
-                            <button class="btn-action btn-paste" onclick="pasteCardStyle(${cIndex})">Paste Layout</button>
-                            <button class="btn-action btn-delete" onclick="deleteCard(${cIndex})">Delete Card</button>
+                            <button class="btn-action btn-copy" onclick="event.stopPropagation(); copyCardStyle(${cIndex})">Copy Layout</button>
+                            <button class="btn-action btn-paste" onclick="event.stopPropagation(); pasteCardStyle(${cIndex})">Paste Layout</button>
+                            <button class="btn-action btn-delete" onclick="event.stopPropagation(); deleteCard(${cIndex})">Delete</button>
                         </div>
                     </div>
 
-                    <div class="section-title" style="font-size: 13px;">Topic Header (Specific to this card)</div>
-                    <div class="control-group">
-                        <div class="control-item" style="min-width: 100%;"><label>Header Text</label><input type="text" placeholder="Optional Header" value="${card.header.text}" oninput="updateCardHeader(${cIndex}, 'text', this.value)"></div>
-                        <div class="control-item"><label>Font</label><select onchange="updateCardHeader(${cIndex}, 'font', this.value)">${getOptions(fonts, card.header.font)}</select></div>
-                        <div class="control-item"><label>Text Color</label><input type="color" value="${card.header.color}" oninput="updateCardHeader(${cIndex}, 'color', this.value)"></div>
-                        <div class="control-item"><label>Size: ${card.header.size}px</label><input type="range" min="10" max="60" value="${card.header.size}" oninput="updateCardHeader(${cIndex}, 'size', this.value); this.previousElementSibling.innerText='Size: '+this.value+'px'"></div>
-                    </div>
-                    <div class="control-group">
-                        <div class="control-item"><label>BG Color</label><input type="color" value="${card.header.bgColor}" oninput="updateCardHeader(${cIndex}, 'bgColor', this.value)"></div>
-                        <div class="control-item"><label>BG Opacity: ${card.header.bgAlpha}%</label><input type="range" min="0" max="100" value="${card.header.bgAlpha}" oninput="updateCardHeader(${cIndex}, 'bgAlpha', this.value); this.previousElementSibling.innerText='BG Opacity: '+this.value+'%'"></div>
-                        <div class="control-item"><label>Width: ${card.header.width}%</label><input type="range" min="10" max="100" value="${card.header.width}" oninput="updateCardHeader(${cIndex}, 'width', this.value); this.previousElementSibling.innerText='Width: '+this.value+'%'"></div>
-                        <div class="control-item"><label>Y Pos: ${card.header.y}%</label><input type="range" min="0" max="100" value="${card.header.y}" oninput="updateCardHeader(${cIndex}, 'y', this.value); this.previousElementSibling.innerText='Y Pos: '+this.value+'%'"></div>
-                    </div>
-                    <div class="control-group">
-                        <div class="control-item"><label>Border Color</label><input type="color" value="${card.header.borderC ?? '#000000'}" oninput="updateCardHeader(${cIndex}, 'borderC', this.value)"></div>
-                        <div class="control-item"><label>Border Width: ${card.header.borderW ?? 0}px</label><input type="range" min="0" max="10" value="${card.header.borderW ?? 0}" oninput="updateCardHeader(${cIndex}, 'borderW', this.value); this.previousElementSibling.innerText='Border Width: '+this.value+'px'"></div>
-                        <div class="control-item"><label>Corners: ${card.header.borderR ?? 8}px</label><input type="range" min="0" max="50" value="${card.header.borderR ?? 8}" oninput="updateCardHeader(${cIndex}, 'borderR', this.value); this.previousElementSibling.innerText='Corners: '+this.value+'px'"></div>
-                    </div>
-                    <div class="control-group">
-                        <div class="control-item"><label>Shadow Color</label><input type="color" value="${card.header.shadowColor ?? '#000000'}" oninput="updateCardHeader(${cIndex}, 'shadowColor', this.value)"></div>
-                        <div class="control-item"><label>Shadow Opacity: ${card.header.shadowAlpha ?? 50}%</label><input type="range" min="0" max="100" value="${card.header.shadowAlpha ?? 50}" oninput="updateCardHeader(${cIndex}, 'shadowAlpha', this.value); this.previousElementSibling.innerText='Shadow Opacity: '+this.value+'%'"></div>
-                        <div class="control-item"><label>Shadow Blur: ${card.header.shadowBlur ?? 0}px</label><input type="range" min="0" max="30" value="${card.header.shadowBlur ?? 0}" oninput="updateCardHeader(${cIndex}, 'shadowBlur', this.value); this.previousElementSibling.innerText='Shadow Blur: '+this.value+'px'"></div>
-                    </div>
-                    
-                    <div class="section-title" style="margin-top: 25px;">Text Layers</div>
-                    ${textBlocksHTML}
-                    <button class="btn btn-add" onclick="addTextBox(${cIndex})">+ Add Another Text Box</button>
+                    <div style="display: ${card.isCollapsed ? 'none' : 'block'};">
+                        <div class="section-title" style="font-size: 13px;">Topic Header</div>
+                        <p style="font-size: 10px; color: #bdc3c7; margin-top:-5px;">👆 Drag the header on the right screen to move it.</p>
+                        <div class="control-group">
+                            <div class="control-item" style="min-width: 100%;"><label>Header Text</label><input type="text" placeholder="Optional Header" value="${card.header.text}" onfocus="activeCardIndex=${cIndex}; updatePreview();" oninput="updateCardHeader(${cIndex}, 'text', this.value)"></div>
+                            <div class="control-item"><label>Font</label><select onchange="updateCardHeader(${cIndex}, 'font', this.value)">${getOptions(fonts, card.header.font)}</select></div>
+                            <div class="control-item"><label>Text Color</label><input type="color" value="${card.header.color}" oninput="updateCardHeader(${cIndex}, 'color', this.value)"></div>
+                            <div class="control-item"><label>Size: ${card.header.size}px</label><input type="range" min="10" max="60" value="${card.header.size}" oninput="updateCardHeader(${cIndex}, 'size', this.value); this.previousElementSibling.innerText='Size: '+this.value+'px'"></div>
+                        </div>
+                        <div class="control-group">
+                            <div class="control-item"><label>BG Color</label><input type="color" value="${card.header.bgColor}" oninput="updateCardHeader(${cIndex}, 'bgColor', this.value)"></div>
+                            <div class="control-item"><label>BG Opacity: ${card.header.bgAlpha}%</label><input type="range" min="0" max="100" value="${card.header.bgAlpha}" oninput="updateCardHeader(${cIndex}, 'bgAlpha', this.value); this.previousElementSibling.innerText='BG Opacity: '+this.value+'%'"></div>
+                            <div class="control-item"><label>Width: ${card.header.width}%</label><input type="range" min="10" max="100" value="${card.header.width}" oninput="updateCardHeader(${cIndex}, 'width', this.value); this.previousElementSibling.innerText='Width: '+this.value+'%'"></div>
+                        </div>
+                        <div class="control-group">
+                            <div class="control-item"><label>Border Color</label><input type="color" value="${card.header.borderC ?? '#000000'}" oninput="updateCardHeader(${cIndex}, 'borderC', this.value)"></div>
+                            <div class="control-item"><label>Border W: ${card.header.borderW ?? 0}px</label><input type="range" min="0" max="10" value="${card.header.borderW ?? 0}" oninput="updateCardHeader(${cIndex}, 'borderW', this.value); this.previousElementSibling.innerText='Border W: '+this.value+'px'"></div>
+                            <div class="control-item"><label>Corners: ${card.header.borderR ?? 8}px</label><input type="range" min="0" max="50" value="${card.header.borderR ?? 8}" oninput="updateCardHeader(${cIndex}, 'borderR', this.value); this.previousElementSibling.innerText='Corners: '+this.value+'px'"></div>
+                        </div>
+                        
+                        <div class="section-title" style="margin-top: 25px;">Text Layers</div>
+                        ${textBlocksHTML}
+                        <button class="btn btn-add" onclick="addTextBox(${cIndex})">+ Add Another Text Box</button>
 
-                    <div class="section-title" style="margin-top: 25px;">Image Layers</div>
-                    ${imgBlocksHTML}
-                    <button class="btn btn-add" style="background-color: #e67e22;" onclick="addImgBox(${cIndex})">+ Add Another Image Layer</button>
+                        <div class="section-title" style="margin-top: 25px;">Image Layers</div>
+                        ${imgBlocksHTML}
+                        <button class="btn btn-add" style="background-color: #e67e22;" onclick="addImgBox(${cIndex})">+ Add Another Image Layer</button>
+                    </div>
                 </div>`;
                 container.innerHTML += html;
             });
@@ -324,10 +352,13 @@
         }
 
         function addCard() {
+            // Fold all other cards before adding a new one
+            cardData.forEach(c => c.isCollapsed = true);
             cardData.push({
                 type: 'revision',
-                header: { text: 'New Topic', font: 'Arial', size: 22, color: '#ffffff', bgColor: '#3498db', bgAlpha: 100, x: 50, y: 5, width: 90, borderW: 0, borderC: '#000000', borderR: 8, shadowBlur: 0, shadowAlpha: 50, shadowColor: '#000000' },
-                texts: [{ text: 'New content here...', font: 'Arial', size: 18, x: 50, y: 50, align: 'center', color: '#2c3e50', weight: 'normal', lineSpace: 1.4, width: 90 }],
+                isCollapsed: false,
+                header: { text: 'New Topic', font: 'Montserrat', size: 22, color: '#ffffff', bgColor: '#3498db', bgAlpha: 100, x: 50, y: 5, width: 90, borderW: 0, borderC: '#000000', borderR: 8, shadowBlur: 0, shadowAlpha: 50, shadowColor: '#000000' },
+                texts: [{ text: 'New content here...', font: 'Roboto', size: 18, x: 50, y: 50, align: 'center', color: '#2c3e50', weight: 'normal', lineSpace: 1.4, width: 90 }],
                 imgs: [{ url: '', width: 40, x: 50, y: 75 }]
             });
             activeCardIndex = cardData.length - 1;
@@ -337,6 +368,7 @@
         function deleteCard(index) { 
             cardData.splice(index, 1); 
             if(activeCardIndex >= cardData.length) activeCardIndex = Math.max(0, cardData.length - 1);
+            if(cardData[activeCardIndex]) cardData[activeCardIndex].isCollapsed = false;
             renderEditor(); 
         }
 
@@ -361,26 +393,17 @@
                 if (metaTag) {
                     try {
                         const decodedData = JSON.parse(decodeURIComponent(atob(metaTag.getAttribute('content'))));
-                        
-                        // Backwards compatibility for older saves that used a single 'img' object
                         cardData = decodedData.cardData.map(card => {
-                            if(card.img && !card.imgs) {
-                                card.imgs = [card.img];
-                                delete card.img;
-                            }
+                            if(card.img && !card.imgs) { card.imgs = [card.img]; delete card.img; }
+                            card.isCollapsed = true; // Fold loaded cards by default
                             return card;
                         });
-
+                        if(cardData[0]) cardData[0].isCollapsed = false;
                         globalConfig = decodedData.globalConfig;
                         activeCardIndex = 0;
                         renderEditor();
-                        alert("File loaded successfully!");
-                    } catch(err) {
-                        alert("Error parsing the file. It might be corrupted.");
-                    }
-                } else {
-                    alert("No save data found in this file.");
-                }
+                    } catch(err) { alert("Error parsing the file. It might be corrupted."); }
+                } else { alert("No save data found in this file."); }
             };
             reader.readAsText(file);
             event.target.value = ''; 
@@ -400,20 +423,65 @@
 
             const processedContent = cardData.map(card => {
                 let newCard = JSON.parse(JSON.stringify(card)); 
-                if(newCard.imgs) {
-                    newCard.imgs.forEach(img => { img.url = convertDriveLink(img.url); });
-                }
+                if(newCard.imgs) { newCard.imgs.forEach(img => { img.url = convertDriveLink(img.url); }); }
                 return newCard;
             });
             
             const processedLogoUrl = convertDriveLink(globalConfig.logo.url);
-            let logoHTMLBlock = processedLogoUrl !== '' ? `<div class="element" style="left: ${globalConfig.logo.x}%; top: ${globalConfig.logo.y}%; width: ${globalConfig.logo.width}%; z-index: 10;"><img class="logo-img" src="${processedLogoUrl}"></div>` : '';
+            let logoHTMLBlock = processedLogoUrl !== '' ? `<div class="element draggable" data-id="logo" style="left: ${globalConfig.logo.x}%; top: ${globalConfig.logo.y}%; width: ${globalConfig.logo.width}%; z-index: 10;"><img class="logo-img" src="${processedLogoUrl}"></div>` : '';
             
             const processedBgUrl = convertDriveLink(globalConfig.bg.imgUrl);
             let bgStyle = processedBgUrl !== '' ? `background-image: url('${processedBgUrl}'); background-size: cover; background-position: center;` : `background-color: ${globalConfig.bg.color};`;
 
             let progressHTMLBlock = globalConfig.progress.show ? `<div id="progress" style="width: 0%;"></div>` : '';
             const startingIndex = isDownload ? 0 : activeCardIndex;
+
+            // DRAG AND DROP LOGIC (Only injected during Studio editing, never in the downloaded file)
+            const dragScript = !isDownload ? `
+            <script>
+                let draggedEl = null;
+                let startX, startY, startLeft, startTop;
+
+                document.querySelectorAll('.draggable').forEach(el => {
+                    el.style.cursor = 'move';
+                    // Create a subtle hover outline so users know what can be dragged
+                    el.addEventListener('mouseenter', () => el.style.outline = '2px dashed #3498db');
+                    el.addEventListener('mouseleave', () => el.style.outline = 'none');
+                    
+                    el.addEventListener('mousedown', function(e) {
+                        draggedEl = this;
+                        startX = e.clientX;
+                        startY = e.clientY;
+                        startLeft = parseFloat(this.style.left) || 50;
+                        startTop = parseFloat(this.style.top) || 50;
+                        e.preventDefault();
+                    });
+                });
+
+                window.addEventListener('mousemove', function(e) {
+                    if (!draggedEl) return;
+                    const scale = document.getElementById('canvas').getBoundingClientRect().width / 375;
+                    const dx = (e.clientX - startX) / scale;
+                    const dy = (e.clientY - startY) / scale;
+                    
+                    draggedEl.style.left = (startLeft + (dx / 375 * 100)) + '%';
+                    draggedEl.style.top = (startTop + (dy / 667 * 100)) + '%';
+                });
+
+                window.addEventListener('mouseup', function() {
+                    if (draggedEl) {
+                        const id = draggedEl.getAttribute('data-id');
+                        window.parent.updatePositionFromDrag(id, parseFloat(draggedEl.style.left), parseFloat(draggedEl.style.top));
+                        draggedEl = null;
+                    }
+                });
+            <\/script>` : '';
+
+            // Turn off the invisible tap zones while in Studio so they don't block the mouse from grabbing elements
+            const tapZones = isDownload ? `
+                <div id="left-tap" onclick="prevCard()"></div>
+                <div id="right-tap" onclick="nextCard()"></div>
+            ` : '';
 
             return `
 <!DOCTYPE html>
@@ -423,27 +491,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Scaling Revision Card</title>
     <meta id="studio-save-data" content="${encodedSaveData}">
+    <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&family=Courier+Prime:wght@400;700&family=Lora:ital,wght@0,400;0,700&family=Montserrat:wght@400;700;900&family=Oswald:wght@400;700&family=Poppins:wght@400;700;900&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; outline: none; }
         body { width: 100vw; height: 100vh; height: 100dvh; overflow: hidden; background-color: #1a1a1a; position: relative; user-select: none; }
-        
         #canvas { position: absolute; left: 50%; top: 50%; width: 375px; height: 667px; ${bgStyle} transform-origin: center center; overflow: hidden; box-shadow: 0 0 20px rgba(0,0,0,0.5); transform: translate(-50%, -50%); }
-        
         #left-tap, #right-tap { position: absolute; top: 0; height: 100%; width: 50%; z-index: 100; cursor: pointer; }
         #left-tap { left: 0; } #right-tap { right: 0; }
-        
         .element { position: absolute; transform: translate(-50%, -50%); }
-        img { display: block; margin: 0 auto; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 100%; height: auto; }
+        img { display: block; margin: 0 auto; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 100%; height: auto; pointer-events: none;}
         .logo-img { border-radius: 0; box-shadow: none; object-fit: contain;}
-        
         #progress { position: absolute; top: 0; left: 0; height: 6px; background-color: #3498db; transition: width 0.3s ease; z-index: 200; }
     </style>
 </head>
 <body>
     <div id="canvas">
         ${progressHTMLBlock}
-        <div id="left-tap" onclick="prevCard()"></div>
-        <div id="right-tap" onclick="nextCard()"></div>
+        ${tapZones}
         ${logoHTMLBlock}
         <div id="card-content"></div>
     </div>
@@ -482,29 +546,26 @@
                 const borderC = data.header.borderC ?? '#000000';
                 const borderR = data.header.borderR ?? 8;
                 const shadowBlur = data.header.shadowBlur ?? 0;
-                
                 const shadowStyle = shadowBlur > 0 ? 'box-shadow: 0px 4px ' + shadowBlur + 'px ' + shadowRgba + ';' : '';
                 const borderStyle = borderW > 0 ? 'border: ' + borderW + 'px solid ' + borderC + ';' : '';
 
                 const formattedHeader = data.header.text.replace(/\\n/g, '<br>');
-                html += '<div class="element" style="left: ' + data.header.x + '%; top: ' + data.header.y + '%; width: ' + data.header.width + '%; background-color: ' + headerBgRgba + '; color: ' + data.header.color + '; font-family: \\'' + data.header.font + '\\'; font-size: ' + data.header.size + 'px; font-weight: bold; text-align: center; padding: 10px; border-radius: ' + borderR + 'px; ' + borderStyle + ' ' + shadowStyle + ' z-index: 15;">' + formattedHeader + '</div>';
+                html += '<div class="element draggable" data-id="header" style="left: ' + data.header.x + '%; top: ' + data.header.y + '%; width: ' + data.header.width + '%; background-color: ' + headerBgRgba + '; color: ' + data.header.color + '; font-family: \\'' + data.header.font + '\\'; font-size: ' + data.header.size + 'px; font-weight: bold; text-align: center; padding: 10px; border-radius: ' + borderR + 'px; ' + borderStyle + ' ' + shadowStyle + ' z-index: 15;">' + formattedHeader + '</div>';
             }
 
             if(data.texts) {
-                data.texts.forEach(t => {
+                data.texts.forEach((t, i) => {
                     const formattedText = t.text.replace(/\\n/g, '<br>');
-                    const boxWidth = t.width ?? 90;
-                    html += '<div class="element" style="width: ' + boxWidth + '%; left: ' + t.x + '%; top: ' + t.y + '%; font-family: \\'' + t.font + '\\'; font-size: ' + t.size + 'px; font-weight: ' + t.weight + '; color: ' + t.color + '; text-align: ' + t.align + '; line-height: ' + t.lineSpace + ';">' + formattedText + '</div>';
+                    html += '<div class="element draggable" data-id="text-' + i + '" style="width: ' + (t.width ?? 90) + '%; left: ' + t.x + '%; top: ' + t.y + '%; font-family: \\'' + t.font + '\\'; font-size: ' + t.size + 'px; font-weight: ' + t.weight + '; color: ' + t.color + '; text-align: ' + t.align + '; line-height: ' + t.lineSpace + ';">' + formattedText + '</div>';
                 });
             }
             if(data.imgs) {
-                data.imgs.forEach(imgObj => {
+                data.imgs.forEach((imgObj, i) => {
                     if(imgObj.url) {
-                        html += '<div class="element" style="left: ' + imgObj.x + '%; top: ' + imgObj.y + '%; width: ' + imgObj.width + '%;"><img src="' + imgObj.url + '"></div>';
+                        html += '<div class="element draggable" data-id="img-' + i + '" style="left: ' + imgObj.x + '%; top: ' + imgObj.y + '%; width: ' + imgObj.width + '%;"><img src="' + imgObj.url + '"></div>';
                     }
                 });
             }
-            
             container.innerHTML = html;
         }
 
@@ -512,6 +573,7 @@
         function prevCard() { if (currentIndex > 0) { currentIndex--; renderCard(); } }
         renderCard();
     <\/script>
+    ${dragScript}
 </body>
 </html>`;
         }
