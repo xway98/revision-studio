@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ultimate Revision Card Studio</title>
+<link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&family=Courier+Prime:wght@400;700&family=Lora:ital,wght@0,400;0,700&family=Montserrat:wght@400;700;900&family=Oswald:wght@400;700&family=Poppins:wght@400;700;900&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; display: flex; height: 100vh; background-color: #2c3e50; color: white; overflow: hidden; }
+        
+        #editor-pane { width: 55%; padding: 20px; overflow-y: auto; background-color: #34495e; border-right: 2px solid #1abc9c; position: relative;}
+        #preview-pane { width: 45%; position: relative; background-color: #ecf0f1; overflow: hidden;}
+        
+        h2 { margin-top: 0; color: #1abc9c; border-bottom: 2px solid #1abc9c; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center;}
+        
+        .card-editor { background-color: #1a252f; padding: 20px; margin-bottom: 20px; border-radius: 8px; border-left: 5px solid #3498db; }
+        .global-editor { background-color: #273c75; padding: 15px; margin-bottom: 25px; border-radius: 8px; border-left: 5px solid #e1b12c; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
+        .text-layer { background-color: #2c3e50; padding: 15px; margin-bottom: 15px; border-radius: 6px; border: 1px dashed #7f8c8d; position: relative; }
+        
+        .control-group { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; }
+        .control-item { flex: 1; min-width: 110px; }
+        
+        label { display: block; font-size: 11px; margin-bottom: 4px; color: #bdc3c7; font-weight: bold; text-transform: uppercase; }
+        input[type="text"], input[type="color"], textarea, select { width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #7f8c8d; background: #ecf0f1; color: #2c3e50; box-sizing: border-box; }
+        input[type="color"] { padding: 2px; height: 35px; cursor: pointer; }
+        textarea { resize: vertical; height: 50px; }
+        input[type="range"] { width: 100%; cursor: pointer; }
+        
+        .section-title { font-size: 14px; color: #f1c40f; margin-bottom: 12px; font-weight: bold; width: 100%; border-bottom: 1px solid #34495e; padding-bottom: 5px;}
+        
+        .btn { padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .btn-add { background-color: #2ecc71; color: white; margin-top: 10px; width: 100%; padding: 12px; font-size: 14px;}
+        .btn-add-card { background-color: #3498db; color: white; margin-bottom: 40px; width: 100%; padding: 15px; font-size: 16px;}
+        
+        /* Utility Buttons */
+        .btn-action { padding: 5px 10px; font-size: 12px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; color: white; margin-left: 5px; }
+        .btn-delete { background-color: #e74c3c; }
+        .btn-copy { background-color: #f39c12; }
+        .btn-paste { background-color: #27ae60; }
+        .btn-load { background-color: #9b59b6; color: white; padding: 8px 15px; font-size: 14px; border-radius: 5px; cursor: pointer; display: inline-block; }
+        .btn-load:hover { background-color: #8e44ad; }
+        
+        .download-container { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); z-index: 500; text-align: center; width: 100%;}
+        .btn-download { background-color: #e67e22; color: white; padding: 15px 30px; font-size: 16px; border-radius: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); transition: 0.2s; cursor: pointer; border: none; font-weight: bold;}
+        .btn-download:hover { background-color: #d35400; transform: scale(1.05); }
+        
+        #mock-canvas { position: absolute; left: 50%; top: 50%; width: 375px; height: 667px; transform-origin: center center; background: white; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); overflow: hidden; border: 2px solid #333; }
+        iframe { width: 100%; height: 100%; border: none; background: #f4f7f6; pointer-events: none; }
+    </style>
+</head>
+<body>
+
+    <div id="editor-pane">
+        <h2>
+            🛠️ Advanced Layout Editor
+            <label class="btn-load">
+                📂 Load Existing HTML
+                <input type="file" id="html-upload" accept=".html" style="display: none;" onchange="loadHTML(event)">
+            </label>
+        </h2>
+        
+        <div class="global-editor" id="global-settings">
+            <div class="section-title" style="color: #e1b12c; font-size: 16px;">🌐 Global Settings (Applies to all cards)</div>
+            <div class="control-group">
+                <div class="control-item"><label>Canvas BG Color</label><input type="color" value="#ffffff" oninput="updateGlobal('bg', 'color', this.value)"></div>
+                <div class="control-item" style="flex: 2;"><label>Canvas BG Image (URL)</label><input type="text" placeholder="Optional..." value="" oninput="updateGlobal('bg', 'imgUrl', this.value)"></div>
+                <div class="control-item"><label>Top Progress Bar</label><select onchange="updateGlobal('progress', 'show', this.value === 'true')"><option value="true">Show Bar</option><option value="false">Hide Bar</option></select></div>
+            </div>
+
+            <div class="section-title" style="font-size: 13px;">Global Bottom Logo</div>
+            <div class="control-group">
+                <div class="control-item" style="min-width: 100%;"><label>Logo Image URL</label><input type="text" placeholder="Paste Logo URL here..." value="" oninput="updateGlobal('logo', 'url', this.value)"></div>
+                <div class="control-item"><label>Width: 20%</label><input type="range" min="5" max="100" value="20" oninput="updateGlobal('logo', 'width', this.value); this.previousElementSibling.innerText='Width: '+this.value+'%'"></div>
+                <div class="control-item"><label>X Pos: 50%</label><input type="range" min="0" max="100" value="50" oninput="updateGlobal('logo', 'x', this.value); this.previousElementSibling.innerText='X Pos: '+this.value+'%'"></div>
+                <div class="control-item"><label>Y Pos: 95%</label><input type="range" min="0" max="100" value="95" oninput="updateGlobal('logo', 'y', this.value); this.previousElementSibling.innerText='Y Pos: '+this.value+'%'"></div>
+            </div>
+        </div>
+
+        <div id="cards-container"></div>
+        <button class="btn btn-add-card" onclick="addCard()">+ Add New Revision Card</button>
+    </div>
+
+    <div id="preview-pane">
+        <div class="download-container">
+            <button class="btn-download" onclick="downloadHTML()">⬇️ Download Final HTML</button>
+        </div>
+        <div id="mock-canvas">
+            <iframe id="live-preview"></iframe>
+        </div>
+    </div>
+
+    <script>
+        const fonts = ['Roboto', 'Montserrat', 'Poppins', 'Oswald', 'Lora', 'Comic Neue', 'Courier Prime'];
+        const alignments = ['left', 'center', 'right', 'justify'];
+
+        let activeCardIndex = 0; 
+        
+        // CLIPBOARD FOR COPY/PASTE
+        let clipboard = { textStyle: null, cardStyle: null };
+
+        let globalConfig = { 
+            bg: { color: '#ffffff', imgUrl: '' },
+            progress: { show: true },
+            logo: { url: '', width: 25, x: 50, y: 92 } 
+        };
+
+        let cardData = [
+            { 
+                type: 'revision', 
+                header: { text: 'Electrochemistry', font: 'Arial', size: 22, color: '#ffffff', bgColor: '#3498db', bgAlpha: 100, x: 50, y: 5, width: 90, borderW: 0, borderC: '#000000', borderR: 8, shadowBlur: 0, shadowAlpha: 50, shadowColor: '#000000' },
+                texts: [
+                    { text: 'New content here...', font: 'Arial', size: 18, x: 50, y: 40, align: 'center', color: '#2c3e50', weight: 'normal', lineSpace: 1.4, width: 90 }
+                ],
+                imgs: [
+                    { url: '', width: 40, x: 50, y: 70 }
+                ]
+            }
+        ];
+
+        function getOptions(arr, selected) {
+            return arr.map(item => `<option value="${item}" ${item === selected ? 'selected' : ''}>${item.charAt(0).toUpperCase() + item.slice(1)}</option>`).join('');
+        }
+
+        function hexToRgba(hex, alpha) {
+            let r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
+            return 'rgba(' + r + ', ' + g + ', ' + b + ', ' + (alpha / 100) + ')';
+        }
+
+        function updateGlobal(section, field, value) {
+            globalConfig[section][field] = value; updatePreview();
+        }
+
+        function updateCardHeader(cIndex, field, value) {
+            cardData[cIndex].header[field] = value;
+            activeCardIndex = cIndex; 
+            updatePreview();
+        }
+
+        // --- COPY & PASTE LOGIC ---
+        function copyTextStyle(cIndex, tIndex) {
+            const t = cardData[cIndex].texts[tIndex];
+            clipboard.textStyle = { font: t.font, size: t.size, align: t.align, color: t.color, weight: t.weight, lineSpace: t.lineSpace, width: t.width, x: t.x, y: t.y };
+            alert("Text formatting copied!");
+        }
+
+        function pasteTextStyle(cIndex, tIndex) {
+            if(!clipboard.textStyle) return alert("Nothing copied yet!");
+            Object.keys(clipboard.textStyle).forEach(key => {
+                cardData[cIndex].texts[tIndex][key] = clipboard.textStyle[key];
+            });
+            activeCardIndex = cIndex;
+            renderEditor();
+        }
+
+        function copyCardStyle(cIndex) {
+            const c = cardData[cIndex];
+            clipboard.cardStyle = {
+                header: { ...c.header, text: undefined },
+                texts: c.texts.map(t => ({ font: t.font, size: t.size, align: t.align, color: t.color, weight: t.weight, lineSpace: t.lineSpace, width: t.width, x: t.x, y: t.y })),
+                imgs: c.imgs.map(i => ({ width: i.width, x: i.x, y: i.y }))
+            };
+            alert("Card layout copied!");
+        }
+
+        function pasteCardStyle(cIndex) {
+            if(!clipboard.cardStyle) return alert("No card layout copied yet!");
+            
+            Object.keys(clipboard.cardStyle.header).forEach(k => {
+                if(clipboard.cardStyle.header[k] !== undefined) cardData[cIndex].header[k] = clipboard.cardStyle.header[k];
+            });
+
+            clipboard.cardStyle.texts.forEach((style, i) => {
+                if(cardData[cIndex].texts[i]) {
+                    Object.keys(style).forEach(k => cardData[cIndex].texts[i][k] = style[k]);
+                } else {
+                    cardData[cIndex].texts.push({ text: 'Pasted format...', ...style });
+                }
+            });
+
+            clipboard.cardStyle.imgs.forEach((style, i) => {
+                if(cardData[cIndex].imgs[i]) {
+                    Object.keys(style).forEach(k => cardData[cIndex].imgs[i][k] = style[k]);
+                } else {
+                    cardData[cIndex].imgs.push({ url: '', ...style });
+                }
+            });
+
+            activeCardIndex = cIndex;
+            renderEditor();
+        }
+
+        // --- TEXT BOX LOGIC ---
+        function addTextBox(cIndex) {
+            cardData[cIndex].texts.push({ text: 'New text...', font: 'Arial', size: 16, x: 50, y: 50, align: 'center', color: '#2c3e50', weight: 'normal', lineSpace: 1.4, width: 90 });
+            activeCardIndex = cIndex;
+            renderEditor();
+        }
+        function deleteTextBox(cIndex, tIndex) {
+            cardData[cIndex].texts.splice(tIndex, 1);
+            activeCardIndex = cIndex;
+            renderEditor();
+        }
+        function updateTextData(cIndex, tIndex, field, value) {
+            cardData[cIndex].texts[tIndex][field] = value;
+            activeCardIndex = cIndex;
+            updatePreview();
+        }
+
+        // --- MULTIPLE IMAGE LAYER LOGIC ---
+        function addImgBox(cIndex) {
+            cardData[cIndex].imgs.push({ url: '', width: 40, x: 50, y: 75 });
+            activeCardIndex = cIndex;
+            renderEditor();
+        }
+        function deleteImgBox(cIndex, iIndex) {
+            cardData[cIndex].imgs.splice(iIndex, 1);
+            activeCardIndex = cIndex;
+            renderEditor();
+        }
+        function updateImgDataArray(cIndex, iIndex, field, value) {
+            cardData[cIndex].imgs[iIndex][field] = value;
+            activeCardIndex = cIndex;
+            updatePreview();
+        }
+
+        function renderEditor() {
+            const container = document.getElementById('cards-container');
+            container.innerHTML = '';
+            
+            document.querySelector("input[oninput*=\"'bg', 'color'\"]").value = globalConfig.bg.color;
+            document.querySelector("input[oninput*=\"'bg', 'imgUrl'\"]").value = globalConfig.bg.imgUrl;
+            document.querySelector("select[onchange*=\"'progress', 'show'\"]").value = globalConfig.progress.show.toString();
+            document.querySelector("input[oninput*=\"'logo', 'url'\"]").value = globalConfig.logo.url;
+            document.querySelector("input[oninput*=\"'logo', 'width'\"]").value = globalConfig.logo.width;
+            document.querySelector("input[oninput*=\"'logo', 'x'\"]").value = globalConfig.logo.x;
+            document.querySelector("input[oninput*=\"'logo', 'y'\"]").value = globalConfig.logo.y;
+
+            cardData.forEach((card, cIndex) => {
+                let textBlocksHTML = card.texts.map((txt, tIndex) => `
+                    <div class="text-layer">
+                        <div style="position: absolute; top: 10px; right: 10px; display: flex;">
+                            <button class="btn-action btn-copy" onclick="copyTextStyle(${cIndex}, ${tIndex})">Copy Fmt</button>
+                            <button class="btn-action btn-paste" onclick="pasteTextStyle(${cIndex}, ${tIndex})">Paste</button>
+                            <button class="btn-action btn-delete" onclick="deleteTextBox(${cIndex}, ${tIndex})">X</button>
+                        </div>
+                        <div class="control-group">
+                            <div class="control-item" style="min-width: 100%; margin-top: 20px;"><label>Text Layer ${tIndex + 1}</label><textarea onfocus="activeCardIndex=${cIndex}; updatePreview();" oninput="updateTextData(${cIndex}, ${tIndex}, 'text', this.value)">${txt.text}</textarea></div>
+                            <div class="control-item"><label>Font</label><select onchange="updateTextData(${cIndex}, ${tIndex}, 'font', this.value)">${getOptions(fonts, txt.font)}</select></div>
+                            <div class="control-item"><label>Align</label><select onchange="updateTextData(${cIndex}, ${tIndex}, 'align', this.value)">${getOptions(alignments, txt.align)}</select></div>
+                            <div class="control-item"><label>Weight</label><select onchange="updateTextData(${cIndex}, ${tIndex}, 'weight', this.value)"><option value="normal" ${txt.weight === 'normal' ? 'selected':''}>Normal</option><option value="bold" ${txt.weight === 'bold' ? 'selected':''}>Bold</option></select></div>
+                            <div class="control-item"><label>Color</label><input type="color" value="${txt.color}" oninput="updateTextData(${cIndex}, ${tIndex}, 'color', this.value)"></div>
+                            <div class="control-item"><label>Line Space: ${txt.lineSpace}</label><input type="range" min="1" max="3" step="0.1" value="${txt.lineSpace}" oninput="updateTextData(${cIndex}, ${tIndex}, 'lineSpace', this.value); this.previousElementSibling.innerText='Line Space: '+this.value"></div>
+                            <div class="control-item"><label>Font Size: ${txt.size}px</label><input type="range" min="10" max="80" value="${txt.size}" oninput="updateTextData(${cIndex}, ${tIndex}, 'size', this.value); this.previousElementSibling.innerText='Font Size: '+this.value+'px'"></div>
+                            <div class="control-item"><label>Box Width: ${txt.width ?? 90}%</label><input type="range" min="10" max="100" value="${txt.width ?? 90}" oninput="updateTextData(${cIndex}, ${tIndex}, 'width', this.value); this.previousElementSibling.innerText='Box Width: '+this.value+'%'"></div>
+                            <div class="control-item"><label>X Pos: ${txt.x}%</label><input type="range" min="0" max="100" value="${txt.x}" oninput="updateTextData(${cIndex}, ${tIndex}, 'x', this.value); this.previousElementSibling.innerText='X Pos: '+this.value+'%'"></div>
+                            <div class="control-item"><label>Y Pos: ${txt.y}%</label><input type="range" min="0" max="100" value="${txt.y}" oninput="updateTextData(${cIndex}, ${tIndex}, 'y', this.value); this.previousElementSibling.innerText='Y Pos: '+this.value+'%'"></div>
+                        </div>
+                    </div>
+                `).join('');
+
+                let imgBlocksHTML = (card.imgs || []).map((imgObj, iIndex) => `
+                    <div class="text-layer" style="border-color: #e67e22;">
+                        <div style="position: absolute; top: 10px; right: 10px; display: flex;">
+                            <button class="btn-action btn-delete" onclick="deleteImgBox(${cIndex}, ${iIndex})">X</button>
+                        </div>
+                        <div class="control-group">
+                            <div class="control-item" style="min-width: 100%; margin-top: 10px;">
+                                <label>Image Layer ${iIndex + 1} Link</label>
+                                <input type="text" placeholder="Paste link here..." value="${imgObj.url}" oninput="updateImgDataArray(${cIndex}, ${iIndex}, 'url', this.value)">
+                            </div>
+                            <div class="control-item"><label>Width: ${imgObj.width}%</label><input type="range" min="10" max="100" value="${imgObj.width}" oninput="updateImgDataArray(${cIndex}, ${iIndex}, 'width', this.value); this.previousElementSibling.innerText='Width: '+this.value+'%'"></div>
+                            <div class="control-item"><label>X Pos: ${imgObj.x}%</label><input type="range" min="0" max="100" value="${imgObj.x}" oninput="updateImgDataArray(${cIndex}, ${iIndex}, 'x', this.value); this.previousElementSibling.innerText='X Pos: '+this.value+'%'"></div>
+                            <div class="control-item"><label>Y Pos: ${imgObj.y}%</label><input type="range" min="0" max="100" value="${imgObj.y}" oninput="updateImgDataArray(${cIndex}, ${iIndex}, 'y', this.value); this.previousElementSibling.innerText='Y Pos: '+this.value+'%'"></div>
+                        </div>
+                    </div>
+                `).join('');
+
+                let html = `
+                <div class="card-editor" onclick="if(activeCardIndex !== ${cIndex}) { activeCardIndex = ${cIndex}; updatePreview(); }">
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #34495e; padding-bottom: 10px; margin-bottom: 15px;">
+                        <h3 style="margin:0; color: #3498db;">Card ${cIndex + 1}</h3>
+                        <div>
+                            <button class="btn-action btn-copy" onclick="copyCardStyle(${cIndex})">Copy Layout</button>
+                            <button class="btn-action btn-paste" onclick="pasteCardStyle(${cIndex})">Paste Layout</button>
+                            <button class="btn-action btn-delete" onclick="deleteCard(${cIndex})">Delete Card</button>
+                        </div>
+                    </div>
+
+                    <div class="section-title" style="font-size: 13px;">Topic Header (Specific to this card)</div>
+                    <div class="control-group">
+                        <div class="control-item" style="min-width: 100%;"><label>Header Text</label><input type="text" placeholder="Optional Header" value="${card.header.text}" oninput="updateCardHeader(${cIndex}, 'text', this.value)"></div>
+                        <div class="control-item"><label>Font</label><select onchange="updateCardHeader(${cIndex}, 'font', this.value)">${getOptions(fonts, card.header.font)}</select></div>
+                        <div class="control-item"><label>Text Color</label><input type="color" value="${card.header.color}" oninput="updateCardHeader(${cIndex}, 'color', this.value)"></div>
+                        <div class="control-item"><label>Size: ${card.header.size}px</label><input type="range" min="10" max="60" value="${card.header.size}" oninput="updateCardHeader(${cIndex}, 'size', this.value); this.previousElementSibling.innerText='Size: '+this.value+'px'"></div>
+                    </div>
+                    <div class="control-group">
+                        <div class="control-item"><label>BG Color</label><input type="color" value="${card.header.bgColor}" oninput="updateCardHeader(${cIndex}, 'bgColor', this.value)"></div>
+                        <div class="control-item"><label>BG Opacity: ${card.header.bgAlpha}%</label><input type="range" min="0" max="100" value="${card.header.bgAlpha}" oninput="updateCardHeader(${cIndex}, 'bgAlpha', this.value); this.previousElementSibling.innerText='BG Opacity: '+this.value+'%'"></div>
+                        <div class="control-item"><label>Width: ${card.header.width}%</label><input type="range" min="10" max="100" value="${card.header.width}" oninput="updateCardHeader(${cIndex}, 'width', this.value); this.previousElementSibling.innerText='Width: '+this.value+'%'"></div>
+                        <div class="control-item"><label>Y Pos: ${card.header.y}%</label><input type="range" min="0" max="100" value="${card.header.y}" oninput="updateCardHeader(${cIndex}, 'y', this.value); this.previousElementSibling.innerText='Y Pos: '+this.value+'%'"></div>
+                    </div>
+                    <div class="control-group">
+                        <div class="control-item"><label>Border Color</label><input type="color" value="${card.header.borderC ?? '#000000'}" oninput="updateCardHeader(${cIndex}, 'borderC', this.value)"></div>
+                        <div class="control-item"><label>Border Width: ${card.header.borderW ?? 0}px</label><input type="range" min="0" max="10" value="${card.header.borderW ?? 0}" oninput="updateCardHeader(${cIndex}, 'borderW', this.value); this.previousElementSibling.innerText='Border Width: '+this.value+'px'"></div>
+                        <div class="control-item"><label>Corners: ${card.header.borderR ?? 8}px</label><input type="range" min="0" max="50" value="${card.header.borderR ?? 8}" oninput="updateCardHeader(${cIndex}, 'borderR', this.value); this.previousElementSibling.innerText='Corners: '+this.value+'px'"></div>
+                    </div>
+                    <div class="control-group">
+                        <div class="control-item"><label>Shadow Color</label><input type="color" value="${card.header.shadowColor ?? '#000000'}" oninput="updateCardHeader(${cIndex}, 'shadowColor', this.value)"></div>
+                        <div class="control-item"><label>Shadow Opacity: ${card.header.shadowAlpha ?? 50}%</label><input type="range" min="0" max="100" value="${card.header.shadowAlpha ?? 50}" oninput="updateCardHeader(${cIndex}, 'shadowAlpha', this.value); this.previousElementSibling.innerText='Shadow Opacity: '+this.value+'%'"></div>
+                        <div class="control-item"><label>Shadow Blur: ${card.header.shadowBlur ?? 0}px</label><input type="range" min="0" max="30" value="${card.header.shadowBlur ?? 0}" oninput="updateCardHeader(${cIndex}, 'shadowBlur', this.value); this.previousElementSibling.innerText='Shadow Blur: '+this.value+'px'"></div>
+                    </div>
+                    
+                    <div class="section-title" style="margin-top: 25px;">Text Layers</div>
+                    ${textBlocksHTML}
+                    <button class="btn btn-add" onclick="addTextBox(${cIndex})">+ Add Another Text Box</button>
+
+                    <div class="section-title" style="margin-top: 25px;">Image Layers</div>
+                    ${imgBlocksHTML}
+                    <button class="btn btn-add" style="background-color: #e67e22;" onclick="addImgBox(${cIndex})">+ Add Another Image Layer</button>
+                </div>`;
+                container.innerHTML += html;
+            });
+            updatePreview();
+        }
+
+        function addCard() {
+            cardData.push({
+                type: 'revision',
+                header: { text: 'New Topic', font: 'Arial', size: 22, color: '#ffffff', bgColor: '#3498db', bgAlpha: 100, x: 50, y: 5, width: 90, borderW: 0, borderC: '#000000', borderR: 8, shadowBlur: 0, shadowAlpha: 50, shadowColor: '#000000' },
+                texts: [{ text: 'New content here...', font: 'Arial', size: 18, x: 50, y: 50, align: 'center', color: '#2c3e50', weight: 'normal', lineSpace: 1.4, width: 90 }],
+                imgs: [{ url: '', width: 40, x: 50, y: 75 }]
+            });
+            activeCardIndex = cardData.length - 1;
+            renderEditor();
+        }
+
+        function deleteCard(index) { 
+            cardData.splice(index, 1); 
+            if(activeCardIndex >= cardData.length) activeCardIndex = Math.max(0, cardData.length - 1);
+            renderEditor(); 
+        }
+
+        function convertDriveLink(url) {
+            if (!url) return '';
+            if (url.includes('drive.google.com')) {
+                const match = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
+                if (match && match[1]) return `https://drive.google.com/thumbnail?id=${match[1]}&sz=w1000`;
+            }
+            return url;
+        }
+
+        function loadHTML(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const htmlStr = e.target.result;
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(htmlStr, 'text/html');
+                const metaTag = doc.getElementById('studio-save-data');
+                if (metaTag) {
+                    try {
+                        const decodedData = JSON.parse(decodeURIComponent(atob(metaTag.getAttribute('content'))));
+                        
+                        // Backwards compatibility for older saves that used a single 'img' object
+                        cardData = decodedData.cardData.map(card => {
+                            if(card.img && !card.imgs) {
+                                card.imgs = [card.img];
+                                delete card.img;
+                            }
+                            return card;
+                        });
+
+                        globalConfig = decodedData.globalConfig;
+                        activeCardIndex = 0;
+                        renderEditor();
+                        alert("File loaded successfully!");
+                    } catch(err) {
+                        alert("Error parsing the file. It might be corrupted.");
+                    }
+                } else {
+                    alert("No save data found in this file.");
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = ''; 
+        }
+
+        function resizeMockCanvas() {
+            const container = document.getElementById('preview-pane');
+            const mock = document.getElementById('mock-canvas');
+            const scale = Math.min((container.clientWidth - 40) / 375, (container.clientHeight - 100) / 667);
+            mock.style.transform = 'translate(-50%, -50%) scale(' + scale + ')';
+        }
+        window.addEventListener('resize', resizeMockCanvas);
+
+        function getTemplateHTML(isDownload = false) {
+            const stateToSave = { cardData, globalConfig };
+            const encodedSaveData = btoa(encodeURIComponent(JSON.stringify(stateToSave)));
+
+            const processedContent = cardData.map(card => {
+                let newCard = JSON.parse(JSON.stringify(card)); 
+                if(newCard.imgs) {
+                    newCard.imgs.forEach(img => { img.url = convertDriveLink(img.url); });
+                }
+                return newCard;
+            });
+            
+            const processedLogoUrl = convertDriveLink(globalConfig.logo.url);
+            let logoHTMLBlock = processedLogoUrl !== '' ? `<div class="element" style="left: ${globalConfig.logo.x}%; top: ${globalConfig.logo.y}%; width: ${globalConfig.logo.width}%; z-index: 10;"><img class="logo-img" src="${processedLogoUrl}"></div>` : '';
+            
+            const processedBgUrl = convertDriveLink(globalConfig.bg.imgUrl);
+            let bgStyle = processedBgUrl !== '' ? `background-image: url('${processedBgUrl}'); background-size: cover; background-position: center;` : `background-color: ${globalConfig.bg.color};`;
+
+            let progressHTMLBlock = globalConfig.progress.show ? `<div id="progress" style="width: 0%;"></div>` : '';
+            const startingIndex = isDownload ? 0 : activeCardIndex;
+
+            return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Scaling Revision Card</title>
+    <meta id="studio-save-data" content="${encodedSaveData}">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; outline: none; }
+        body { width: 100vw; height: 100vh; height: 100dvh; overflow: hidden; background-color: #1a1a1a; position: relative; user-select: none; }
+        
+        #canvas { position: absolute; left: 50%; top: 50%; width: 375px; height: 667px; ${bgStyle} transform-origin: center center; overflow: hidden; box-shadow: 0 0 20px rgba(0,0,0,0.5); transform: translate(-50%, -50%); }
+        
+        #left-tap, #right-tap { position: absolute; top: 0; height: 100%; width: 50%; z-index: 100; cursor: pointer; }
+        #left-tap { left: 0; } #right-tap { right: 0; }
+        
+        .element { position: absolute; transform: translate(-50%, -50%); }
+        img { display: block; margin: 0 auto; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 100%; height: auto; }
+        .logo-img { border-radius: 0; box-shadow: none; object-fit: contain;}
+        
+        #progress { position: absolute; top: 0; left: 0; height: 6px; background-color: #3498db; transition: width 0.3s ease; z-index: 200; }
+    </style>
+</head>
+<body>
+    <div id="canvas">
+        ${progressHTMLBlock}
+        <div id="left-tap" onclick="prevCard()"></div>
+        <div id="right-tap" onclick="nextCard()"></div>
+        ${logoHTMLBlock}
+        <div id="card-content"></div>
+    </div>
+
+    <script>
+        const content = ${JSON.stringify(processedContent)};
+        let currentIndex = ${startingIndex};
+        const container = document.getElementById('card-content');
+        const progressBar = document.getElementById('progress');
+
+        function resizeCanvas() {
+            const canvas = document.getElementById('canvas');
+            const scaleX = window.innerWidth / 375;
+            const scaleY = window.innerHeight / 667;
+            const scale = Math.min(scaleX, scaleY);
+            canvas.style.transform = 'translate(-50%, -50%) scale(' + scale + ')';
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        function hexToRgba(hex, alpha) {
+            let r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
+            return 'rgba(' + r + ', ' + g + ', ' + b + ', ' + (alpha / 100) + ')';
+        }
+
+        function renderCard() {
+            const data = content[currentIndex];
+            if(progressBar) progressBar.style.width = ((currentIndex + 1) / content.length) * 100 + '%';
+            
+            let html = '';
+            
+            if(data.header && data.header.text !== '') {
+                const headerBgRgba = hexToRgba(data.header.bgColor, data.header.bgAlpha);
+                const shadowRgba = hexToRgba(data.header.shadowColor ?? '#000000', data.header.shadowAlpha ?? 50);
+                const borderW = data.header.borderW ?? 0;
+                const borderC = data.header.borderC ?? '#000000';
+                const borderR = data.header.borderR ?? 8;
+                const shadowBlur = data.header.shadowBlur ?? 0;
+                
+                const shadowStyle = shadowBlur > 0 ? 'box-shadow: 0px 4px ' + shadowBlur + 'px ' + shadowRgba + ';' : '';
+                const borderStyle = borderW > 0 ? 'border: ' + borderW + 'px solid ' + borderC + ';' : '';
+
+                const formattedHeader = data.header.text.replace(/\\n/g, '<br>');
+                html += '<div class="element" style="left: ' + data.header.x + '%; top: ' + data.header.y + '%; width: ' + data.header.width + '%; background-color: ' + headerBgRgba + '; color: ' + data.header.color + '; font-family: \\'' + data.header.font + '\\'; font-size: ' + data.header.size + 'px; font-weight: bold; text-align: center; padding: 10px; border-radius: ' + borderR + 'px; ' + borderStyle + ' ' + shadowStyle + ' z-index: 15;">' + formattedHeader + '</div>';
+            }
+
+            if(data.texts) {
+                data.texts.forEach(t => {
+                    const formattedText = t.text.replace(/\\n/g, '<br>');
+                    const boxWidth = t.width ?? 90;
+                    html += '<div class="element" style="width: ' + boxWidth + '%; left: ' + t.x + '%; top: ' + t.y + '%; font-family: \\'' + t.font + '\\'; font-size: ' + t.size + 'px; font-weight: ' + t.weight + '; color: ' + t.color + '; text-align: ' + t.align + '; line-height: ' + t.lineSpace + ';">' + formattedText + '</div>';
+                });
+            }
+            if(data.imgs) {
+                data.imgs.forEach(imgObj => {
+                    if(imgObj.url) {
+                        html += '<div class="element" style="left: ' + imgObj.x + '%; top: ' + imgObj.y + '%; width: ' + imgObj.width + '%;"><img src="' + imgObj.url + '"></div>';
+                    }
+                });
+            }
+            
+            container.innerHTML = html;
+        }
+
+        function nextCard() { if (currentIndex < content.length - 1) { currentIndex++; renderCard(); } }
+        function prevCard() { if (currentIndex > 0) { currentIndex--; renderCard(); } }
+        renderCard();
+    <\/script>
+</body>
+</html>`;
+        }
+
+        function updatePreview() {
+            const iframe = document.getElementById('live-preview');
+            iframe.srcdoc = getTemplateHTML(false);
+            setTimeout(resizeMockCanvas, 50);
+        }
+
+        function downloadHTML() {
+            const finalCode = getTemplateHTML(true);
+            const blob = new Blob([finalCode], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'Revision_Card_Final.html';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        renderEditor();
+    </script>
+</body>
+</html>
