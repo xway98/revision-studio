@@ -210,12 +210,12 @@ function syncGlobalUI() {
 // --- DASHBOARD LOGIC ---
 
 async function dbCall(action, params = {}) {
-  if (!globalConfig.export?.scriptUrl) { alert('Apps Script URL is missing in Global Settings!'); return null; }
+  if (!globalConfig.export?.scriptUrl || globalConfig.export.scriptUrl === 'YOUR_APP_SCRIPT_URL_HERE') { alert('Apps Script URL is missing in js/state.js!'); return null; }
   try {
     const res = await fetch(globalConfig.export.scriptUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({ action, userId: currentUser, ...params })
+      body: JSON.stringify({ action, userId: currentUser, password: currentPassword, ...params })
     });
     const data = await res.json();
     if (data.status === 'success') return data.data;
@@ -224,39 +224,38 @@ async function dbCall(action, params = {}) {
 }
 
 async function verifyUser() {
-  const urlInput = document.getElementById('script-url-input').value.trim();
   const idInput = document.getElementById('user-id-input').value.trim();
+  const passInput = document.getElementById('password-input').value.trim();
 
-  if (!urlInput) { alert("Please enter your Google Apps Script URL."); return; }
   if (!idInput) { alert("Please enter a User ID."); return; }
+  if (!passInput) { alert("Please enter a Password."); return; }
 
   const btn = event.target; const og = btn.textContent; btn.textContent = 'Verifying...'; btn.disabled = true;
 
-  globalConfig.export.scriptUrl = urlInput;
-  localStorage.setItem('revStudioAppUrl', urlInput);
-
   // Temporarily set currentUser for the request
-  const tempUser = currentUser; currentUser = idInput;
+  const tempUser = currentUser; const tempPass = currentPassword;
+  currentUser = idInput; currentPassword = passInput;
   const res = await dbCall('verify_user');
 
   btn.textContent = og; btn.disabled = false;
   if (res) {
     currentUser = idInput;
+    currentPassword = passInput;
     localStorage.setItem('revStudioUser', idInput);
+    localStorage.setItem('revStudioPass', passInput);
     initHub();
   } else {
     currentUser = tempUser;
+    currentPassword = tempPass;
   }
 }
 
 function logoutAdmin() {
-  currentUser = null; localStorage.removeItem('revStudioUser');
+  currentUser = null; currentPassword = null;
+  localStorage.removeItem('revStudioUser');
+  localStorage.removeItem('revStudioPass');
   document.getElementById('hub-container').style.display = 'none';
   document.getElementById('login-modal').style.display = 'flex';
-
-  // Pre-fill URL if it exists
-  const savedUrl = localStorage.getItem('revStudioAppUrl');
-  if (savedUrl) document.getElementById('script-url-input').value = savedUrl;
 }
 
 async function initHub() {
@@ -267,8 +266,6 @@ async function initHub() {
   if (!currentUser) {
     document.getElementById('login-modal').style.display = 'flex';
     document.getElementById('hub-container').style.display = 'none';
-    const savedUrl = localStorage.getItem('revStudioAppUrl');
-    if (savedUrl) document.getElementById('script-url-input').value = savedUrl;
     return;
   }
   document.getElementById('login-modal').style.display = 'none';
@@ -298,9 +295,10 @@ function renderHubContent(chaptersObj) {
   if (chapters.length === 0) html += `<div style="color:#95a5a6;text-align:center;padding:20px;">No chapters yet. Create one!</div>`;
 
   chapters.forEach(chap => {
+    const visibleTopics = chaptersObj[chap].filter(t => t !== '_placeholder').length;
     html += `<div class="hub-chapter">`
       + `<div class="hub-chapter-header" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'">`
-      + `<strong>${chap}</strong> <span style="font-size:12px;color:#95a5a6;">${chaptersObj[chap].length} Topics ▾</span>`
+      + `<strong>${chap}</strong> <span style="font-size:12px;color:#95a5a6;">${visibleTopics} Topics ▾</span>`
       + `</div>`
       + `<div class="hub-topics-list" style="display:none;">`;
 

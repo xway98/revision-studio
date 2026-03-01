@@ -4,7 +4,7 @@
  * SETUP INSTRUCTIONS:
  * 1. Open your Google Sheet.
  * 2. Create 4 Tabs EXACTLY named: "Users", "Physics", "Chemistry", "Biology"
- *    - In the "Users" tab, put "User ID" in A1, and list valid IDs in column A.
+ *    - In the "Users" tab, put "User ID" in A1, "Password" in B1. List valid IDs in column A, and Passwords in column B.
  * 3. Go to Extensions > Apps Script.
  * 4. Paste this code.
  * 5. Change MASTER_ADMIN_ID below to your secret Admin passcode.
@@ -19,13 +19,15 @@ function doPost(e) {
         const p = JSON.parse(e.postData.contents);
         const action = p.action;
         const userId = p.userId;
+        const password = p.password;
 
         if (!userId) return err("Missing User ID");
+        if (!password) return err("Missing Password");
 
         // 1. VERIFY USER
-        const isAdmin = (userId === MASTER_ADMIN_ID);
-        if (!isAdmin && !isValidUser(userId)) {
-            return err("Invalid User ID");
+        const isAdmin = (userId === "admin" && password === MASTER_ADMIN_ID);
+        if (!isAdmin && !isValidUser(userId, password)) {
+            return err("Invalid User ID or Password");
         }
 
         // Process actions
@@ -72,12 +74,16 @@ function err(msg) {
         .setMimeType(ContentService.MimeType.JSON);
 }
 
-function isValidUser(userId) {
+function isValidUser(userId, password) {
     const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Users");
     if (!sheet) return false;
     const data = sheet.getDataRange().getValues();
     for (let i = 1; i < data.length; i++) { // Skip header
-        if (data[i][0] && data[i][0].toString().trim() === userId.trim()) return true;
+        if (data[i][0] && data[i][0].toString().trim() === userId.trim()) {
+            if (data[i][1] && data[i][1].toString().trim() === password.trim()) {
+                return true;
+            }
+        }
     }
     return false;
 }
