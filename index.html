@@ -262,14 +262,19 @@
           if (userId === 'admin' && password === 'admin123') return true;
 
           try {
-            const docRef = db.collection('User').doc(userId);
-            const docSnap = await docRef.get();
+            let docRef = db.collection('User').doc(userId);
+            let docSnap = await docRef.get();
+            if (!docSnap.exists) {
+              docRef = db.collection('Users').doc(userId);
+              docSnap = await docRef.get();
+            }
             if (docSnap.exists) {
               const data = docSnap.data();
-              if (data.password === password) {
+              const storedPwd = data.password !== undefined ? data.password : data.Password;
+              if (String(storedPwd).trim() === String(password).trim()) {
                 return true;
               } else {
-                console.warn("Password mismatch. Expected: ", data.password, " Got: ", password);
+                console.warn("Password mismatch. Expected: ", storedPwd, " Got: ", password);
               }
             } else {
               console.warn("User document not found in Firestore for ID: ", userId);

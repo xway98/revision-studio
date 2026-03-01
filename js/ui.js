@@ -262,6 +262,7 @@ async function verifyUser() {
   } else {
     currentUser = tempUser;
     currentPassword = tempPass;
+    alert("Invalid User ID or Password.");
   }
 }
 
