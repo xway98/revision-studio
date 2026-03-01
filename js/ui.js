@@ -210,6 +210,18 @@ function syncGlobalUI() {
 // --- DASHBOARD LOGIC ---
 
 async function dbCall(action, params = {}) {
+  // 1. High-frequency reads/writes go to Firebase Realtime Firestore
+  if (action !== 'publish') {
+    try {
+      const res = await window.firebaseDbCall(action, { userId: currentUser, password: currentPassword, ...params });
+      if (res && res.error) {
+        alert('Error: ' + res.error); return null;
+      }
+      return res;
+    } catch (e) { console.error(e); alert('Firebase database error.'); return null; }
+  }
+
+  // 2. ONLY Google Sheet HTML publishing goes to the slow Apps Script endpoint
   if (!globalConfig.export?.scriptUrl || globalConfig.export.scriptUrl === 'YOUR_APP_SCRIPT_URL_HERE') { alert('Apps Script URL is missing in js/state.js!'); return null; }
   try {
     const res = await fetch(globalConfig.export.scriptUrl, {

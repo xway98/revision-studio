@@ -240,6 +240,73 @@
 
   </div> <!-- END MAIN CONTAINER (if any) -->
 
+  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore-compat.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCwwxSKOOWntQb0Dj6WfZzoG2z6Ex6aWPc",
+      authDomain: "revision-cards-be66a.firebaseapp.com",
+      projectId: "revision-cards-be66a",
+      storageBucket: "revision-cards-be66a.firebasestorage.app",
+      messagingSenderId: "237109395340",
+      appId: "1:237109395340:web:0d81edd76245421d1460a9"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    window.firebaseDbCall = async function (action, params) {
+      try {
+        const { userId, password, subject, chapter, topic, jsonData } = params;
+
+        if (action === 'verify_user') {
+          if (userId === 'admin' && password === 'admin123') return true;
+
+          const docRef = db.collection('Users').doc(userId);
+          const docSnap = await docRef.get();
+          if (docSnap.exists && docSnap.data().password === password) {
+            return true;
+          }
+          return false;
+        }
+
+        if (action === 'list') {
+          const snapshot = await db.collection('user_topics').where('userId', '==', userId).get();
+          const tree = {};
+          snapshot.forEach(doc => {
+            const data = doc.data();
+            const s = data.subject, c = data.chapter, t = data.topic;
+            if (!tree[s]) tree[s] = {};
+            if (!tree[s][c]) tree[s][c] = [];
+            tree[s][c].push(t);
+          });
+          return tree;
+        }
+
+        if (action === 'save') {
+          const docId = `${userId}_${subject}_${chapter}_${topic}`.replace(/[\/\s\.]/g, '_');
+          await db.collection('user_topics').doc(docId).set({
+            userId, subject, chapter, topic, jsonData, updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+          return { message: "Saved successfully" };
+        }
+
+        if (action === 'load') {
+          const docId = `${userId}_${subject}_${chapter}_${topic}`.replace(/[\/\s\.]/g, '_');
+          const docSnap = await db.collection('user_topics').doc(docId).get();
+          if (docSnap.exists) {
+            return { json: docSnap.data().jsonData };
+          }
+          throw new Error("Topic not found");
+        }
+
+        throw new Error("Unknown action: " + action);
+      } catch (err) {
+        console.error("Firebase DB Call Error:", err);
+        return { error: err.message };
+      }
+    };
+  </script>
+
   <script src="js/state.js"></script>
   <script src="js/utils.js"></script>
   <script src="js/drive.js"></script>
