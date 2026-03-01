@@ -157,6 +157,13 @@
                 oninput="updateGlobal('logo','width',+this.value);document.getElementById('g-logo-w-v').textContent=this.value+'%'">
             </div>
             <div class="prop-sep"></div>
+            <div style="font-size:11px;color:#f1c40f;font-weight:bold;margin-bottom:8px;">APPS SCRIPT EXPORT</div>
+            <div class="prop-row">
+              <label>Web App URL</label>
+              <input type="text" id="g-script-url" placeholder="https://script.google.com/macros/s/..."
+                oninput="updateGlobal('export','scriptUrl',this.value)">
+            </div>
+            <div class="prop-sep"></div>
             <div style="font-size:11px;color:#f1c40f;font-weight:bold;margin-bottom:8px;">GOOGLE DRIVE UPLOAD</div>
             <div class="prop-row">
               <label>OAuth Client ID</label>
@@ -294,19 +301,6 @@
           return tree;
         }
 
-        if (action === 'list_published') {
-          const snapshot = await db.collection('published_cards').where('userId', '==', userId).get();
-          const tree = {};
-          snapshot.forEach(doc => {
-            const data = doc.data();
-            const s = data.subject, c = data.chapter, t = data.topic;
-            if (!tree[s]) tree[s] = {};
-            if (!tree[s][c]) tree[s][c] = [];
-            tree[s][c].push({ topic: t, url: data.fileUrl, date: data.publishedAt });
-          });
-          return tree;
-        }
-
         if (action === 'save') {
           const docId = `${userId}_${subject}_${chapter}_${topic}`.replace(/[\/\s\.]/g, '_');
           await db.collection('user_topics').doc(docId).set({
@@ -322,34 +316,6 @@
             return { json: docSnap.data().jsonData };
           }
           throw new Error("Topic not found");
-        }
-
-        if (action === 'publish') {
-          const { htmlData } = params;
-          if (!htmlData) throw new Error("Missing HTML data to publish.");
-
-          const timestamp = new Date().toISOString();
-          const cleanName = `${topic.replace(/[^a-z0-9]/gi, '_')}`;
-          const storagePath = `exports/${userId}/${subject}/${chapter}/${cleanName}_${Date.now()}.html`;
-
-          // 1. Upload HTML to Firebase Storage
-          const storageRef = storage.ref().child(storagePath);
-          const metadata = { contentType: 'text/html' };
-          await storageRef.putString(htmlData, 'raw', metadata);
-          const fileUrl = await storageRef.getDownloadURL();
-
-          // 2. Save Metadata to Firestore
-          const docId = `${userId}_${subject}_${chapter}_${topic}`.replace(/[\/\s\.]/g, '_');
-          await db.collection('published_cards').doc(docId).set({
-            userId,
-            subject,
-            chapter,
-            topic,
-            fileUrl,
-            publishedAt: timestamp
-          });
-
-          return { fileUrl };
         }
 
         throw new Error("Unknown action: " + action);
