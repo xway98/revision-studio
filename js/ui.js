@@ -247,10 +247,13 @@ async function verifyUser() {
   // Temporarily set currentUser for the request
   const tempUser = currentUser; const tempPass = currentPassword;
   currentUser = idInput; currentPassword = passInput;
+
+  console.log(`Attempting login with Firebase for User: ${idInput}`);
   const res = await dbCall('verify_user');
 
   btn.textContent = og; btn.disabled = false;
-  if (res) {
+  if (res === true) {
+    console.log("Login successful!");
     currentUser = idInput;
     currentPassword = passInput;
     localStorage.setItem('revStudioUser', idInput);
