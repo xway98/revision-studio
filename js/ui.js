@@ -210,29 +210,14 @@ function syncGlobalUI() {
 // --- DASHBOARD LOGIC ---
 
 async function dbCall(action, params = {}) {
-  // 1. High-frequency reads/writes go to Firebase Realtime Firestore
-  if (action !== 'publish') {
-    try {
-      const res = await window.firebaseDbCall(action, { userId: currentUser, password: currentPassword, ...params });
-      if (res && res.error) {
-        alert('Error: ' + res.error); return null;
-      }
-      return res;
-    } catch (e) { console.error(e); alert('Firebase database error.'); return null; }
-  }
-
-  // 2. ONLY Google Sheet HTML publishing goes to the slow Apps Script endpoint
-  if (!globalConfig.export?.scriptUrl || globalConfig.export.scriptUrl === 'YOUR_APP_SCRIPT_URL_HERE') { alert('Apps Script URL is missing in js/state.js!'); return null; }
+  // All actions now use Firebase Realtime Firestore & Storage
   try {
-    const res = await fetch(globalConfig.export.scriptUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({ action, userId: currentUser, password: currentPassword, ...params })
-    });
-    const data = await res.json();
-    if (data.status === 'success') return data.data;
-    alert('Error: ' + data.error); return null;
-  } catch (e) { console.error(e); alert('Network connection failed.'); return null; }
+    const res = await window.firebaseDbCall(action, { userId: currentUser, password: currentPassword, ...params });
+    if (res && res.error) {
+      alert('Error: ' + res.error); return null;
+    }
+    return res;
+  } catch (e) { console.error(e); alert('Firebase database error.'); return null; }
 }
 
 async function verifyUser() {
@@ -274,6 +259,8 @@ function logoutAdmin() {
   document.getElementById('login-modal').style.display = 'flex';
 }
 
+let currentViewMode = 'drafts'; // 'drafts' or 'published'
+
 async function initHub() {
   appMode = 'dashboard';
   document.getElementById('editor-view').style.display = 'none';
@@ -296,35 +283,67 @@ async function initHub() {
   if (tabMatches.length) tabMatches[0].classList.add('active');
 
   const tree = await dbCall('list');
+  const pubTree = await dbCall('list_published');
   if (!tree) return;
 
-  renderHubContent(tree[currentSubject] || {});
+  renderHubContent(tree[currentSubject] || {}, pubTree ? pubTree[currentSubject] || {} : {});
 }
 
 function setSubject(sub) { currentSubject = sub; initHub(); }
 
-function renderHubContent(chaptersObj) {
-  const cont = document.getElementById('hub-content');
-  let html = `<div style="display:flex;justify-content:space-between;margin-bottom:20px;"><h2 style="color:#ecf0f1;">${currentSubject} Chapters</h2> <button class="add-el-btn" style="background:#2ecc71;padding:5px 15px;" onclick="addChapter()">+ New Chapter</button></div>`;
+function setViewMode(mode) {
+  currentViewMode = mode;
+  initHub();
+}
 
-  const chapters = Object.keys(chaptersObj).sort();
-  if (chapters.length === 0) html += `<div style="color:#95a5a6;text-align:center;padding:20px;">No chapters yet. Create one!</div>`;
+function renderHubContent(chaptersObj, publishedObj) {
+  const cont = document.getElementById('hub-content');
+  let html = `<div style="display:flex;justify-content:space-between;margin-bottom:20px;">
+    <h2 style="color:#ecf0f1;">${currentSubject} Chapters</h2> 
+    <div>
+      <div style="display:inline-flex; background:#1e2836; border-radius:6px; overflow:hidden; margin-right: 15px;">
+        <button style="padding:5px 15px; border:none; background:${currentViewMode === 'drafts' ? '#3498db' : 'transparent'}; color:${currentViewMode === 'drafts' ? '#fff' : '#95a5a6'}; cursor:pointer;" onclick="setViewMode('drafts')">Drafts</button>
+        <button style="padding:5px 15px; border:none; background:${currentViewMode === 'published' ? '#f39c12' : 'transparent'}; color:${currentViewMode === 'published' ? '#fff' : '#95a5a6'}; cursor:pointer;" onclick="setViewMode('published')">Published</button>
+      </div>
+      ${currentViewMode === 'drafts' ? `<button class="add-el-btn" style="background:#2ecc71;padding:5px 15px;" onclick="addChapter()">+ New Chapter</button>` : ''}
+    </div>
+  </div>`;
+
+  const activeObj = currentViewMode === 'drafts' ? chaptersObj : publishedObj;
+  const chapters = Object.keys(activeObj).sort();
+  if (chapters.length === 0) {
+    html += `<div style="color:#95a5a6;text-align:center;padding:20px;">No ${currentViewMode} chapters yet.</div>`;
+  }
 
   chapters.forEach(chap => {
-    const visibleTopics = chaptersObj[chap].filter(t => t !== '_placeholder').length;
+    const isPub = currentViewMode === 'published';
+    const topics = activeObj[chap].filter(t => isPub || t !== '_placeholder');
     html += `<div class="hub-chapter">`
       + `<div class="hub-chapter-header" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'">`
-      + `<strong>${chap}</strong> <span style="font-size:12px;color:#95a5a6;">${visibleTopics} Topics ▾</span>`
+      + `<strong>${chap}</strong> <span style="font-size:12px;color:#95a5a6;">${topics.length} Topics ▾</span>`
       + `</div>`
       + `<div class="hub-topics-list" style="display:none;">`;
 
-    chaptersObj[chap].sort().forEach(top => {
-      if (top !== '_placeholder') {
-        html += `<div class="hub-topic" onclick="openTopic('${chap}','${top}')">📄 ${top}</div>`;
+    topics.sort((a, b) => {
+      const ta = isPub ? a.topic : a;
+      const tb = isPub ? b.topic : b;
+      return ta.localeCompare(tb);
+    }).forEach(item => {
+      if (isPub) {
+        const dateStr = new Date(item.date).toLocaleDateString();
+        html += `<div class="hub-topic" style="display:flex; justify-content:space-between; cursor:default;">
+                   <span>📄 ${item.topic} <span style="font-size:10px;color:#7f8c8d;margin-left:8px;">(${dateStr})</span></span>
+                   <a href="${item.url}" target="_blank" style="color:#3498db; text-decoration:none; font-size:12px;">Open Link ↗</a>
+                 </div>`;
+      } else {
+        html += `<div class="hub-topic" onclick="openTopic('${chap}','${item}')">📄 ${item}</div>`;
       }
     });
 
-    html += `<div style="padding:10px;"><button class="hub-add-btn" onclick="addTopic('${chap}')">+ Add Topic to ${chap}</button></div></div></div>`;
+    if (!isPub) {
+      html += `<div style="padding:10px;"><button class="hub-add-btn" onclick="addTopic('${chap}')">+ Add Topic to ${chap}</button></div>`;
+    }
+    html += `</div></div>`;
   });
   cont.innerHTML = html;
 }
