@@ -303,11 +303,21 @@
           const { htmlData } = params;
           if (!htmlData) throw new Error("No HTML data provided.");
 
-          const filename = `${subject}_${chapter}_${topic}.html`.replace(/[\/\s]/g, '_');
-          const storageRef = storage.ref(`published/${userId}/${filename}`);
+          // Create a random ID for the public link
+          const publicId = Math.random().toString(36).substring(2, 10) + Date.now().toString(36);
 
-          await storageRef.putString(htmlData, 'raw', { contentType: 'text/html' });
-          const url = await storageRef.getDownloadURL();
+          await db.collection('published_cards').doc(publicId).set({
+            userId,
+            subject,
+            chapter,
+            topic,
+            htmlData,
+            publishedAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+
+          // Return the URL to our new view.html page with the ID
+          const currentOrigin = window.location.origin;
+          const url = `${currentOrigin}/view.html?id=${publicId}`;
 
           return { fileUrl: url };
         }

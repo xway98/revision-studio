@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loading Revision Card...</title>
+    <style>
+        body {
+            background: #1e2836;
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: sans-serif;
+            margin: 0;
+        }
+
+        .loader {
+            text-align: center;
+        }
+
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-left-color: #1abc9c;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="loader">
+        <div class="spinner"></div>
+        <div>Loading Flashcard...</div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore-compat.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyCwwxSKOOWntQb0Dj6WfZzoG2z6Ex6aWPc",
+            authDomain: "revision-cards-be66a.firebaseapp.com",
+            projectId: "revision-cards-be66a",
+            storageBucket: "revision-cards-be66a.firebasestorage.app",
+            messagingSenderId: "237109395340",
+            appId: "1:237109395340:web:0d81edd76245421d1460a9"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        async function loadCard() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const id = urlParams.get('id');
+
+            if (!id) {
+                document.body.innerHTML = "<div style='text-align:center;'><h2>Error</h2><p>No card ID provided in URL.</p></div>";
+                return;
+            }
+
+            try {
+                const docRef = db.collection('published_cards').doc(id);
+                const docSnap = await docRef.get();
+
+                if (docSnap.exists) {
+                    const data = docSnap.data();
+                    if (data.htmlData) {
+                        document.open();
+                        document.write(data.htmlData);
+                        document.close();
+                    } else {
+                        document.body.innerHTML = "<div style='text-align:center;'><h2>Oof!</h2><p>This card exists but is missing HTML data.</p></div>";
+                    }
+                } else {
+                    document.body.innerHTML = "<div style='text-align:center;'><h2>404 Not Found</h2><p>This revision card could not be found or has been deleted.</p></div>";
+                }
+            } catch (err) {
+                console.error("Error fetching card:", err);
+                document.body.innerHTML = "<div style='text-align:center;'><h2>Error</h2><p>Failed to load the revision card. Please try again.</p></div>";
+            }
+        }
+
+        // Start loading immediately
+        loadCard();
+    </script>
+</body>
+
+</html>
