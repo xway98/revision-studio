@@ -438,9 +438,10 @@ function openCreateTopicModal(chap) {
 
   document.getElementById('input-modal-confirm').onclick = () => {
     const n = input.value;
-    if (n && n.trim()) {
+    const cleanName = n ? n.trim() : '';
+    if (cleanName) {
       document.getElementById('input-modal').style.display = 'none';
-      openEditor(chap, n.trim(), true);
+      openEditor(chap, cleanName, true);
     }
   };
 }

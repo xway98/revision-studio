@@ -93,7 +93,9 @@ setTimeout(() => {
 let autoSaveTimer = null;
 function triggerAutoSave(immediate = false) {
   if (appMode !== 'editor' || !currentTopic) return;
-  document.getElementById('drive-btn-label').textContent = '💾 Saving...';
+  const btn = document.getElementById('drive-btn-label');
+  if (btn) btn.textContent = '💾 Saving...';
+
   clearTimeout(autoSaveTimer);
   autoSaveTimer = setTimeout(async () => {
     const saved = { cardData, globalConfig };
@@ -103,9 +105,14 @@ function triggerAutoSave(immediate = false) {
       topic: currentTopic,
       jsonData: JSON.stringify(saved)
     });
-    if (res) { document.getElementById('drive-btn-label').textContent = '💾 Saved'; }
-    else { document.getElementById('drive-btn-label').textContent = '❌ Save Failed'; }
-    setTimeout(() => document.getElementById('drive-btn-label').textContent = '🔗 Connect Google Drive', 3000);
+
+    if (btn) {
+      btn.textContent = res ? '💾 Saved' : '❌ Save Failed';
+      setTimeout(() => {
+        const b = document.getElementById('drive-btn-label');
+        if (b) b.textContent = '🔗 Connect Google Drive';
+      }, 3000);
+    }
   }, immediate ? 0 : 2000);
 }
 
