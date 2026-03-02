@@ -178,7 +178,7 @@ function richCmd(cmd, val) {
 function renderCardsList() {
   const list = document.getElementById('cards-list');
   list.innerHTML = cardData.map((c, i) => `
-    <div class="card-pill${i === activeCardIdx ? ' active' : ''}" onclick="deselectEl();activeCardIdx=${i};renderAll();">
+    <div class="card-pill${i === activeCardIdx ? ' active' : ''}" onclick="deselectEl();activeCardIdx=${i};renderAll();pushHash();">
       <span class="card-pill-num">${i + 1}</span>
       <span class="card-pill-title">${c.header.text || '(untitled)'}</span>
       <span class="card-pill-btns">
@@ -258,7 +258,12 @@ async function verifyUser() {
     currentPassword = passInput;
     localStorage.setItem('revStudioUser', idInput);
     localStorage.setItem('revStudioPass', passInput);
-    initHub();
+    initHub().then(() => {
+      // After successfully logging in and loading the hub, check for a deep link
+      if (window.location.hash) {
+        parseHash();
+      }
+    });
   } else {
     currentUser = tempUser;
     currentPassword = tempPass;
@@ -282,6 +287,11 @@ async function initHub() {
   if (!currentUser) {
     document.getElementById('login-modal').style.display = 'flex';
     document.getElementById('hub-container').style.display = 'none';
+
+    // Check for deep link on first load even before login
+    if (window.location.hash) {
+      // The parseHash will execute AFTER login is successful inside verifyUser
+    }
     return;
   }
   document.getElementById('login-modal').style.display = 'none';
@@ -301,7 +311,7 @@ async function initHub() {
   renderHubContent(tree[currentSubject] || {});
 }
 
-function setSubject(sub) { currentSubject = sub; initHub(); }
+function setSubject(sub) { currentSubject = sub; appMode = 'dashboard'; pushHash(); initHub(); }
 
 function renderHubContent(chaptersObj) {
   const cont = document.getElementById('hub-content');
@@ -364,8 +374,68 @@ function openEditor(chap, top, isNew) {
   }
   document.getElementById('dashboard-view').style.display = 'none';
   document.getElementById('editor-view').style.display = 'flex';
-  activeCardIdx = 0; hist = []; histIdx = -1; deselectEl(); renderAll(); pushHist();
+  activeCardIdx = 0; hist = []; histIdx = -1; deselectEl(); renderAll(); pushHist(); pushHash();
 }
 
-function closeEditor() { initHub(); }
+function closeEditor() { appMode = 'dashboard'; pushHash(); initHub(); }
 
+// --- URL HASH ROUTING (DEEP LINKING) ---
+
+function pushHash() {
+  if (!currentUser) return;
+  const params = new URLSearchParams();
+  if (appMode === 'dashboard') {
+    if (currentSubject) params.set('subject', currentSubject);
+  } else if (appMode === 'editor') {
+    if (currentSubject) params.set('subject', currentSubject);
+    if (currentChapter) params.set('chapter', currentChapter);
+    if (currentTopic) params.set('topic', currentTopic);
+    params.set('card', activeCardIdx + 1);
+  }
+  const newHash = params.toString() ? '#' + params.toString() : '';
+  if (window.location.hash !== newHash) {
+    // replaceState prevents building up a massive back-button history
+    // when just clicking through flashcards rapidly.
+    window.history.replaceState(null, '', newHash || window.location.pathname);
+  }
+}
+
+async function parseHash() {
+  if (!currentUser) return;
+  const hash = window.location.hash.substring(1);
+  if (!hash) {
+    if (appMode === 'editor') closeEditor();
+    return;
+  }
+
+  const params = new URLSearchParams(hash);
+  const hSub = params.get('subject');
+  const hChap = params.get('chapter');
+  const hTop = params.get('topic');
+  const hCard = parseInt(params.get('card')) || 1;
+
+  if (hSub && hSub !== currentSubject) {
+    currentSubject = hSub;
+  }
+
+  // If we have chapter and topic, we should be in the editor
+  if (hChap && hTop) {
+    if (appMode !== 'editor' || currentChapter !== hChap || currentTopic !== hTop) {
+      await openTopic(hChap, hTop);
+    }
+    const targetIdx = hCard - 1;
+    if (activeCardIdx !== targetIdx && targetIdx >= 0 && targetIdx < cardData.length) {
+      activeCardIdx = targetIdx;
+      deselectEl();
+      renderAll();
+    }
+  } else {
+    // Otherwise we should be in the dashboard
+    if (appMode === 'editor') {
+      closeEditor();
+    } else {
+      // Re-trigger initHub to refresh the dashboard view for the subject
+      initHub();
+    }
+  }
+}
