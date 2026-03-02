@@ -54,6 +54,9 @@
         <button class="hub-tab active" onclick="setSubject('Physics')">Physics</button>
         <button class="hub-tab" onclick="setSubject('Chemistry')">Chemistry</button>
         <button class="hub-tab" onclick="setSubject('Biology')">Biology</button>
+        <div style="width:20px;"></div> <!-- Spacer -->
+        <button class="hub-tab" style="background:#2ecc71;color:#1e2836;font-weight:bold;"
+          onclick="setSubject('Published Links')">🔗 Published Links</button>
       </div>
 
       <!-- Content Area -->
@@ -278,6 +281,24 @@
             if (!tree[s]) tree[s] = {};
             if (!tree[s][c]) tree[s][c] = [];
             tree[s][c].push(t);
+          });
+          return tree;
+        }
+
+        if (action === 'list_published') {
+          const snapshot = await db.collection('published_cards').where('userId', '==', userId).get();
+          const tree = {};
+          snapshot.forEach(doc => {
+            const data = doc.data();
+            const s = data.subject, c = data.chapter, t = data.topic;
+            if (!tree[s]) tree[s] = {};
+            if (!tree[s][c]) tree[s][c] = [];
+
+            // Build the public link URL format we used in the publisher
+            const currentOrigin = window.location.origin;
+            const url = `${currentOrigin}/view.html?id=${doc.id}`;
+
+            tree[s][c].push({ topic: t, url: url, date: data.publishedAt });
           });
           return tree;
         }

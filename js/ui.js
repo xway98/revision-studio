@@ -293,16 +293,56 @@ async function initHub() {
   const tabMatches = Array.from(document.querySelectorAll('.hub-tab')).filter(t => t.textContent === currentSubject);
   if (tabMatches.length) tabMatches[0].classList.add('active');
 
-  const tree = await dbCall('list');
-  if (!tree) return;
-
-  renderHubContent(tree[currentSubject] || {});
+  if (currentSubject === 'Published Links') {
+    const pubList = await dbCall('list_published');
+    if (!pubList) return;
+    renderHubContent(pubList || {}, true);
+  } else {
+    const tree = await dbCall('list');
+    if (!tree) return;
+    renderHubContent(tree[currentSubject] || {}, false);
+  }
 }
 
 function setSubject(sub) { currentSubject = sub; appMode = 'dashboard'; pushHash(); initHub(); }
 
-function renderHubContent(chaptersObj) {
+function renderHubContent(chaptersObj, isPublishedObj = false) {
   const cont = document.getElementById('hub-content');
+
+  if (isPublishedObj) {
+    let html = `<div style="display:flex;justify-content:space-between;margin-bottom:20px;"><h2 style="color:#2ecc71;">Your Published Links</h2></div>`;
+    const subjects = Object.keys(chaptersObj).sort();
+
+    if (subjects.length === 0) {
+      html += `<div style="color:#95a5a6;text-align:center;padding:20px;">You haven't published any revision cards yet.</div>`;
+      cont.innerHTML = html;
+      return;
+    }
+
+    subjects.forEach(sub => {
+      html += `<h3 style="color:#f1c40f;margin-top:20px;border-bottom:1px solid #34495e;padding-bottom:5px;">${sub}</h3>`;
+      const chaps = Object.keys(chaptersObj[sub]).sort();
+      chaps.forEach(chap => {
+        html += `<div style="margin-top:10px;margin-bottom:5px;font-weight:bold;color:#ecf0f1;padding-left:10px;">${chap}</div>`;
+        html += `<div style="padding-left:15px;">`;
+        chaptersObj[sub][chap].sort((a, b) => a.topic.localeCompare(b.topic)).forEach(item => {
+          const d = new Date(item.date?.toDate?.() || Date.now());
+          const dStr = d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          html += `<div class="hub-topic" style="padding-left:10px;">
+                      <div style="display:flex;flex-direction:column;">
+                        <span style="color:#bdc3c7;">📄 ${item.topic}</span>
+                        <span style="font-size:10px;color:#7f8c8d;">Published: ${dStr}</span>
+                      </div>
+                      <a href="${item.url}" target="_blank" style="background:#2ecc71;color:#1e2836;padding:4px 10px;border-radius:4px;text-decoration:none;font-weight:bold;font-size:11px;">Open Link ↗</a>
+                    </div>`;
+        });
+        html += `</div>`;
+      });
+    });
+    cont.innerHTML = html;
+    return;
+  }
+
   let html = `<div style="display:flex;justify-content:space-between;margin-bottom:20px;"><h2 style="color:#ecf0f1;">${currentSubject} Chapters</h2> <button class="add-el-btn" style="background:#2ecc71;padding:5px 15px;" onclick="addChapter()">+ New Chapter</button></div>`;
 
   const chapters = Object.keys(chaptersObj).sort();
