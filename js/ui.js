@@ -295,7 +295,13 @@ async function initHub() {
 
   // Update header title
   const titleDisp = document.getElementById('hub-title-disp');
-  if (titleDisp) titleDisp.textContent = currentSubject + (currentSubject === 'Published Links' ? '' : ' Master Cards');
+  if (titleDisp) titleDisp.textContent = currentSubject;
+
+  // Hide Create Chapter button defensively on Published Links
+  const createBtn = document.getElementById('btn-create-chapter');
+  if (createBtn) {
+    createBtn.style.display = (currentSubject === 'Published Links') ? 'none' : 'block';
+  }
 
   if (currentSubject === 'Published Links') {
     const pubList = await dbCall('list_published');
@@ -314,7 +320,7 @@ function renderHubContent(chaptersObj, isPublishedObj = false) {
   const cont = document.getElementById('hub-content');
 
   if (isPublishedObj) {
-    let html = `<div class="chapter-grid">`;
+    let html = ``;
     const subjects = Object.keys(chaptersObj).sort();
 
     if (subjects.length === 0) {
@@ -323,6 +329,9 @@ function renderHubContent(chaptersObj, isPublishedObj = false) {
     }
 
     subjects.forEach(sub => {
+      html += `<h2 style="margin-top:20px; margin-bottom:15px; color:#1e293b; border-bottom:2px solid #e2e8f0; padding-bottom:5px;">${sub}</h2>`;
+      html += `<div class="chapter-grid">`;
+
       const chaps = Object.keys(chaptersObj[sub]).sort();
       chaps.forEach(chap => {
         const topics = chaptersObj[sub][chap].sort((a, b) => a.topic.localeCompare(b.topic));
@@ -330,26 +339,33 @@ function renderHubContent(chaptersObj, isPublishedObj = false) {
         html += `<div class="chapter-card">
                   <div class="card-title">${chap}</div>
                   <div class="card-tags">
-                    <span class="card-tag tag-subject">${sub}</span>
-                    <span class="card-tag tag-count">${topics.length} Published</span>
+                    <span class="card-tag tag-count">${topics.length} Published Links</span>
                   </div>
                   <div class="topics-list">`;
 
         topics.forEach(item => {
           const d = new Date(item.date?.toDate?.() || Date.now());
-          const dStr = d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-          html += `<div class="topic-item" onclick="window.open('${item.url}', '_blank')">
-                      <div class="topic-name">🔗 ${item.topic}</div>
-                      <div style="font-size:10px;color:#94a3b8;">${dStr}</div>
+          const dStr = d.toLocaleDateString();
+          html += `<div class="topic-item" style="cursor:default; display:flex; justify-content:space-between; align-items:center;">
+                      <div>
+                        <div class="topic-name" style="font-weight:bold;">📄 ${item.topic}</div>
+                        <div style="font-size:10px;color:#94a3b8;">${dStr}</div>
+                      </div>
+                      <div style="display:flex; gap:5px;">
+                        <button onclick="window.open('${item.url}', '_blank')" style="background:#e0f2fe; color:#0284c7; border:none; padding:4px 8px; border-radius:4px; font-size:11px; cursor:pointer; font-weight:bold;">View</button>
+                        <button onclick="editPublishedTopic('${sub}', '${chap}', '${item.topic}')" style="background:#fef3c7; color:#d97706; border:none; padding:4px 8px; border-radius:4px; font-size:11px; cursor:pointer; font-weight:bold;">Edit</button>
+                        <button onclick="downloadTopicHtml('${item.url}', '${item.topic}')" style="background:#dcfce7; color:#16a34a; border:none; padding:4px 8px; border-radius:4px; font-size:11px; cursor:pointer; font-weight:bold;">HTML</button>
+                      </div>
                     </div>`;
         });
 
         html += `  </div>
+                   <button class="card-add-btn" style="background:#f1f5f9; color:#475569; border:1px solid #cbd5e1; margin-top:10px;" onclick="downloadChapterZip('${sub}', '${chap}')">📦 Download Chapter ZIP</button>
                  </div>`;
       });
+      html += `</div>`;
     });
 
-    html += `</div>`;
     cont.innerHTML = html;
     return;
   }
@@ -380,7 +396,7 @@ function renderHubContent(chaptersObj, isPublishedObj = false) {
     });
 
     html += `  </div>
-               <button class="card-add-btn" onclick="addTopic('${chap}')">+ Add Topic</button>
+               <button class="card-add-btn" onclick="openCreateTopicModal('${chap}')">+ Add Topic</button>
              </div>`;
   });
 
@@ -388,17 +404,102 @@ function renderHubContent(chaptersObj, isPublishedObj = false) {
   cont.innerHTML = html;
 }
 
-async function addChapter() {
-  const n = prompt('Enter new Chapter name:');
-  if (n && n.trim()) {
-    await dbCall('save', { subject: currentSubject, chapter: n.trim(), topic: '_placeholder', jsonData: '{}' });
-    initHub();
+// --- MODAL CREATION LOGIC ---
+
+function openCreateChapterModal() {
+  document.getElementById('input-modal-title').textContent = 'Create New Chapter in ' + currentSubject;
+  const input = document.getElementById('input-modal-value');
+  input.value = '';
+  input.placeholder = 'e.g. Thermodynamics, Cell Biology...';
+  document.getElementById('input-modal').style.display = 'flex';
+
+  document.getElementById('input-modal-confirm').onclick = async () => {
+    const n = input.value;
+    if (n && n.trim()) {
+      document.getElementById('input-modal').style.display = 'none';
+      await dbCall('save', { subject: currentSubject, chapter: n.trim(), topic: '_placeholder', jsonData: '{}' });
+      initHub();
+    }
+  };
+}
+
+function openCreateTopicModal(chap) {
+  document.getElementById('input-modal-title').textContent = 'Add Topic to ' + chap;
+  const input = document.getElementById('input-modal-value');
+  input.value = '';
+  input.placeholder = 'e.g. Entropy, Ribosomes...';
+  document.getElementById('input-modal').style.display = 'flex';
+
+  document.getElementById('input-modal-confirm').onclick = () => {
+    const n = input.value;
+    if (n && n.trim()) {
+      document.getElementById('input-modal').style.display = 'none';
+      openEditor(chap, n.trim(), true);
+    }
+  };
+}
+
+// --- PUBLISHED LINKS ACTIONS ---
+
+function editPublishedTopic(sub, chap, top) {
+  // Switch to the correct subject silently, then open the editor
+  currentSubject = sub;
+  openTopic(chap, top);
+}
+
+async function downloadTopicHtml(url, top) {
+  try {
+    const response = await fetch(url);
+    const htmlBlob = await response.blob();
+    const cleanName = top.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(htmlBlob);
+    a.download = cleanName + '.html';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  } catch (err) {
+    alert('Failed to download HTML: ' + err.message);
   }
 }
 
-async function addTopic(chap) {
-  const n = prompt('Enter new Topic name:');
-  if (n && n.trim()) { openEditor(chap, n.trim(), true); }
+async function downloadChapterZip(sub, chap) {
+  try {
+    // 1. Fetch the published list to get URLs for the entire chapter
+    const pubList = await dbCall('list_published');
+    if (!pubList || !pubList[sub] || !pubList[sub][chap]) {
+      alert("No published topics found for this chapter."); return;
+    }
+
+    const topics = pubList[sub][chap];
+    if (topics.length === 0) return;
+
+    // 2. Initialize JSZip
+    const zip = new JSZip();
+    const folder = zip.folder(chap.replace(/[^a-z0-9]/gi, '_'));
+
+    // 3. Download each HTML file and add to ZIP
+    for (const item of topics) {
+      const response = await fetch(item.url);
+      const htmlText = await response.text();
+      const cleanName = item.topic.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+      folder.file(cleanName + '.html', htmlText);
+    }
+
+    // 4. Generate ZIP blob and trigger download
+    const zipBlob = await zip.generateAsync({ type: "blob" });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(zipBlob);
+    a.download = chap.replace(/[^a-z0-9]/gi, '_') + '_revision_cards.zip';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+
+  } catch (err) {
+    console.error(err);
+    alert('Failed to generate ZIP: ' + err.message);
+  }
 }
 
 async function openTopic(chap, top) {
