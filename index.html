@@ -62,8 +62,7 @@
       <!-- LEFT SIDEBAR -->
       <div id="hub-sidebar">
         <div class="sidebar-logo" style="flex-direction: column; align-items: flex-start; gap: 8px; font-size: 18px;">
-          <img src="https://lh3.googleusercontent.com/d/1t6B1qOkP-i9U_fXM_diVz9Bk31aqMitv" alt="UPRIO logo"
-            style="height: 35px;">
+          <img src="https://lh3.googleusercontent.com/d/1t6B1qOkP-i9U_fXM_diVz9Bk31aqMitv" style="height: 20px;">
           <span>Revision Card Studio</span>
         </div>
 
@@ -336,7 +335,7 @@
             const currentOrigin = window.location.origin;
             const url = `${currentOrigin}/view.html?id=${doc.id}`;
 
-            tree[s][c].push({ topic: t, url: url, date: data.publishedAt });
+            tree[s][c].push({ id: doc.id, topic: t, url: url, date: data.publishedAt });
           });
           return tree;
         }
@@ -379,6 +378,14 @@
           const url = `${currentOrigin}/view.html?id=${publicId}`;
 
           return { fileUrl: url };
+        }
+
+        if (action === 'get_published_html') {
+          const docSnap = await db.collection('published_cards').doc(params.id).get();
+          if (docSnap.exists) {
+            return { html: docSnap.data().htmlData };
+          }
+          throw new Error("Published card not found");
         }
 
         throw new Error("Unknown action: " + action);

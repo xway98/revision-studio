@@ -328,20 +328,25 @@ function renderHubContent(chaptersObj, isPublishedObj = false) {
       return;
     }
 
-    subjects.forEach(sub => {
-      html += `<h2 style="margin-top:20px; margin-bottom:15px; color:#1e293b; border-bottom:2px solid #e2e8f0; padding-bottom:5px;">${sub}</h2>`;
-      html += `<div class="chapter-grid">`;
+    subjects.forEach((sub, sIdx) => {
+      const subId = `pub-sub-${sIdx}`;
+      html += `<h2 style="margin-top:20px; margin-bottom:15px; color:#1e293b; border-bottom:2px solid #e2e8f0; padding-bottom:5px; cursor:pointer;" onclick="togglePubCollapse('${subId}')">
+                  <span style="font-size:14px; color:#64748b;">▼</span> ${sub}
+               </h2>`;
+      html += `<div id="${subId}" class="chapter-grid">`;
 
       const chaps = Object.keys(chaptersObj[sub]).sort();
-      chaps.forEach(chap => {
+      chaps.forEach((chap, cIdx) => {
         const topics = chaptersObj[sub][chap].sort((a, b) => a.topic.localeCompare(b.topic));
+        const chapId = `${subId}-chap-${cIdx}`;
 
         html += `<div class="chapter-card">
-                  <div class="card-title">${chap}</div>
+                  <div class="card-title" style="cursor:pointer;" onclick="togglePubCollapse('${chapId}')"><span style="font-size:12px; color:#64748b; margin-right:5px;">▼</span>${chap}</div>
                   <div class="card-tags">
                     <span class="card-tag tag-count">${topics.length} Published Links</span>
                   </div>
-                  <div class="topics-list">`;
+                  <div id="${chapId}" style="display:block;">
+                    <div class="topics-list">`;
 
         topics.forEach(item => {
           const d = new Date(item.date?.toDate?.() || Date.now());
@@ -353,14 +358,15 @@ function renderHubContent(chaptersObj, isPublishedObj = false) {
                       </div>
                       <div style="display:flex; gap:5px;">
                         <button onclick="window.open('${item.url}', '_blank')" style="background:#e0f2fe; color:#0284c7; border:none; padding:4px 8px; border-radius:4px; font-size:11px; cursor:pointer; font-weight:bold;">View</button>
-                        <button onclick="editPublishedTopic('${sub}', '${chap}', '${item.topic}')" style="background:#fef3c7; color:#d97706; border:none; padding:4px 8px; border-radius:4px; font-size:11px; cursor:pointer; font-weight:bold;">Edit</button>
-                        <button onclick="downloadTopicHtml('${item.url}', '${item.topic}')" style="background:#dcfce7; color:#16a34a; border:none; padding:4px 8px; border-radius:4px; font-size:11px; cursor:pointer; font-weight:bold;">HTML</button>
+                        <button onclick="editPublishedTopic('${sub}', '${chap}', '${item.topic}', '${item.id}')" style="background:#fef3c7; color:#d97706; border:none; padding:4px 8px; border-radius:4px; font-size:11px; cursor:pointer; font-weight:bold;">Edit</button>
+                        <button onclick="downloadTopicHtml('${item.topic}', '${item.id}')" style="background:#dcfce7; color:#16a34a; border:none; padding:4px 8px; border-radius:4px; font-size:11px; cursor:pointer; font-weight:bold;">HTML</button>
                       </div>
                     </div>`;
         });
 
-        html += `  </div>
-                   <button class="card-add-btn" style="background:#f1f5f9; color:#475569; border:1px solid #cbd5e1; margin-top:10px;" onclick="downloadChapterZip('${sub}', '${chap}')">📦 Download Chapter ZIP</button>
+        html += `   </div>
+                    <button class="card-add-btn" style="background:#f1f5f9; color:#475569; border:1px solid #cbd5e1; margin-top:10px;" onclick="downloadChapterZip('${sub}', '${chap}')">📦 Download Chapter ZIP</button>
+                  </div>
                  </div>`;
       });
       html += `</div>`;
@@ -439,18 +445,45 @@ function openCreateTopicModal(chap) {
   };
 }
 
-// --- PUBLISHED LINKS ACTIONS ---
-
-function editPublishedTopic(sub, chap, top) {
-  // Switch to the correct subject silently, then open the editor
-  currentSubject = sub;
-  openTopic(chap, top);
+function togglePubCollapse(id) {
+  const el = document.getElementById(id);
+  if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
 }
 
-async function downloadTopicHtml(url, top) {
+// --- PUBLISHED LINKS ACTIONS ---
+
+async function editPublishedTopic(sub, chap, top, pubId) {
+  currentSubject = sub;
+  openTopic(chap, top);
+
+  // If the user's local topic doesn't exist, try to recover from the published card's HTML metadata.
+  // Wait a tiny bit for openTopic to fail/execute
+  setTimeout(async () => {
+    if (!cardData || cardData.length === 0 || (cardData.length === 1 && cardData[0].texts[0].text === "Tap to edit this text box")) {
+      const res = await dbCall('get_published_html', { id: pubId });
+      if (res && res.html) {
+        try {
+          const doc = new DOMParser().parseFromString(res.html, 'text/html');
+          const meta = doc.getElementById('studio-save-data');
+          if (meta) {
+            const data = JSON.parse(decodeURIComponent(atob(meta.getAttribute('content'))));
+            cardData = data.cardData;
+            globalConfig = data.globalConfig;
+            openEditor(chap, top, false);
+            alert("Recovered topic data from published version.");
+          }
+        } catch (e) { console.error("Could not recover JSON from published HTML", e); }
+      }
+    }
+  }, 500);
+}
+
+async function downloadTopicHtml(top, pubId) {
   try {
-    const response = await fetch(url);
-    const htmlBlob = await response.blob();
+    const res = await dbCall('get_published_html', { id: pubId });
+    if (!res || !res.html) throw new Error("Could not fetch published HTML data from server.");
+
+    const htmlBlob = new Blob([res.html], { type: 'text/html' });
     const cleanName = top.replace(/[^a-z0-9]/gi, '_').toLowerCase();
 
     const a = document.createElement('a');
@@ -479,12 +512,14 @@ async function downloadChapterZip(sub, chap) {
     const zip = new JSZip();
     const folder = zip.folder(chap.replace(/[^a-z0-9]/gi, '_'));
 
-    // 3. Download each HTML file and add to ZIP
+    // 3. Download each HTML file directly from DB and add to ZIP
     for (const item of topics) {
-      const response = await fetch(item.url);
-      const htmlText = await response.text();
-      const cleanName = item.topic.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-      folder.file(cleanName + '.html', htmlText);
+      if (!item.id) continue;
+      const res = await dbCall('get_published_html', { id: item.id });
+      if (res && res.html) {
+        const cleanName = item.topic.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+        folder.file(cleanName + '.html', res.html);
+      }
     }
 
     // 4. Generate ZIP blob and trigger download
@@ -503,7 +538,13 @@ async function downloadChapterZip(sub, chap) {
 }
 
 async function openTopic(chap, top) {
-  const data = await dbCall('load', { subject: currentSubject, chapter: chap, topic: top });
+  let data;
+  try {
+    data = await dbCall('load', { subject: currentSubject, chapter: chap, topic: top });
+  } catch (e) {
+    console.warn("Topic load failed, initializing fresh:", e.message);
+  }
+
   if (data && data.json) {
     try {
       const p = JSON.parse(data.json);
@@ -514,6 +555,9 @@ async function openTopic(chap, top) {
       console.warn('Corrupt or empty topic data, initializing fresh:', data.json);
       openEditor(chap, top, true);
     }
+  } else {
+    // Topic metadata exists but no saved data, or load failed entirely (new topic)
+    openEditor(chap, top, true);
   }
 }
 
@@ -521,6 +565,7 @@ function openEditor(chap, top, isNew) {
   currentChapter = chap; currentTopic = top; appMode = 'editor';
   if (isNew) {
     cardData = [{ type: 'revision', header: { text: top, font: 'Arial', size: 22, color: '#ffffff', bgColor: '#3498db', bgAlpha: 100, x: 50, y: 7, width: 90, borderW: 0, borderC: '#000', borderR: 8, shadowBlur: 0, shadowAlpha: 50, shadowColor: '#000' }, texts: [{ text: 'Tap to edit this text box', font: 'Arial', size: 17, x: 50, y: 44, align: 'center', color: '#2c3e50', weight: 'normal', lineSpace: 1.5, width: 85 }], imgs: [] }];
+    if (typeof triggerAutoSave === 'function') triggerAutoSave(true);
   }
   document.getElementById('dashboard-view').style.display = 'none';
   document.getElementById('editor-view').style.display = 'flex';

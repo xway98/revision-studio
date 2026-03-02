@@ -91,7 +91,7 @@ setTimeout(() => {
 // --- AUTO SAVE ---
 
 let autoSaveTimer = null;
-function triggerAutoSave() {
+function triggerAutoSave(immediate = false) {
   if (appMode !== 'editor' || !currentTopic) return;
   document.getElementById('drive-btn-label').textContent = '💾 Saving...';
   clearTimeout(autoSaveTimer);
@@ -106,6 +106,6 @@ function triggerAutoSave() {
     if (res) { document.getElementById('drive-btn-label').textContent = '💾 Saved'; }
     else { document.getElementById('drive-btn-label').textContent = '❌ Save Failed'; }
     setTimeout(() => document.getElementById('drive-btn-label').textContent = '🔗 Connect Google Drive', 3000);
-  }, 2000);
+  }, immediate ? 0 : 2000);
 }
 
