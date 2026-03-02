@@ -34,18 +34,45 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 async function handleImageDrop(file, x, y) {
-  // Try Drive upload first, fall back to base64
-  if (driveToken) {
-    try {
-      const url = await uploadToDrive(file);
-      insertImage(url, x, y);
-      return;
-    } catch (e) { console.warn('Drive upload failed, using base64', e); }
+  if (!currentUser) {
+    alert("You must be logged in to upload images.");
+    return;
   }
-  // Base64 fallback
-  const reader = new FileReader();
-  reader.onload = ev => insertImage(ev.target.result, x, y);
-  reader.readAsDataURL(file);
+
+  // Show uploading state
+  const dropOverlay = document.getElementById('drop-overlay');
+  const ogHtml = dropOverlay.innerHTML;
+  dropOverlay.innerHTML = '<span>⏳ Uploading...</span>';
+  dropOverlay.classList.add('active');
+
+  try {
+    // 1. Create a unique filename for Firebase Storage
+    const timestamp = Date.now();
+    const ext = file.name.split('.').pop();
+    const fileName = `uploads/${currentUser}/${timestamp}_${Math.random().toString(36).substring(7)}.${ext}`;
+
+    // 2. Upload to Firebase Storage
+    const storageRef = storage.ref(fileName);
+    await storageRef.put(file);
+
+    // 3. Get the public download URL
+    const url = await storageRef.getDownloadURL();
+
+    // 4. Insert image into card
+    insertImage(url, x, y);
+
+  } catch (e) {
+    console.error('Firebase storage upload failed', e);
+    alert('Upload failed. Using base64 fallback.');
+
+    // Base64 fallback if Firebase fails
+    const reader = new FileReader();
+    reader.onload = ev => insertImage(ev.target.result, x, y);
+    reader.readAsDataURL(file);
+  } finally {
+    dropOverlay.innerHTML = ogHtml;
+    dropOverlay.classList.remove('active');
+  }
 }
 
 function insertImage(url, x, y) {

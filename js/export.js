@@ -121,7 +121,6 @@ async function publishToSheet() {
   try {
     const htmlCode = getExportCode();
 
-    // We send payload to our new API using dbCall
     const res = await dbCall('publish', {
       subject: currentSubject,
       chapter: currentChapter,
@@ -130,13 +129,13 @@ async function publishToSheet() {
     });
 
     if (res && res.fileUrl) {
-      alert('✅ Successfully published: ' + res.fileUrl);
+      alert('✅ Successfully published: \n\n' + res.fileUrl);
     } else {
       alert('Error: Publishing failed.');
     }
   } catch (err) {
     console.error(err);
-    alert('Failed to send. Ensure your Web App URL is correct. (Check console)');
+    alert('Failed to publish. (Check console)');
   } finally {
     btn.textContent = ogText;
     btn.disabled = false;

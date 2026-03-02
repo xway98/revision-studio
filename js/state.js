@@ -1,6 +1,5 @@
 // --- STATE ---
 
-const APP_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxJND20iY_QEJZ1q82n5fJ-T0QzPXy-l-YkT2Vzrees7vywFto_YgHwpNyB-7KZ8DEVbA/exec'; // User inserts their URL here
 
 const DEFAULT_FONTS = ['Arial', 'Roboto', 'Montserrat', 'Poppins', 'Oswald', 'Lora', 'Comic Neue', 'Courier Prime'];
 const ALIGNS = ['left', 'center', 'right', 'justify'];
@@ -22,9 +21,7 @@ let globalConfig = {
   progress: { show: true },
   transition: { type: 'fade' },
   customFont: { url: '', name: '' },
-  logo: { url: '', width: 25, x: 50, y: 92 },
-  export: { scriptUrl: APP_SCRIPT_URL },
-  drive: { clientId: '', folderId: '' }
+  logo: { url: '', width: 25, x: 50, y: 92 }
 };
 
 let cardData = [{

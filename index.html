@@ -157,27 +157,6 @@
                 oninput="updateGlobal('logo','width',+this.value);document.getElementById('g-logo-w-v').textContent=this.value+'%'">
             </div>
             <div class="prop-sep"></div>
-            <div style="font-size:11px;color:#f1c40f;font-weight:bold;margin-bottom:8px;">APPS SCRIPT EXPORT</div>
-            <div class="prop-row">
-              <label>Web App URL</label>
-              <input type="text" id="g-script-url" placeholder="https://script.google.com/macros/s/..."
-                oninput="updateGlobal('export','scriptUrl',this.value)">
-            </div>
-            <div class="prop-sep"></div>
-            <div style="font-size:11px;color:#f1c40f;font-weight:bold;margin-bottom:8px;">GOOGLE DRIVE UPLOAD</div>
-            <div class="prop-row">
-              <label>OAuth Client ID</label>
-              <input type="text" id="drive-client-id" placeholder="xxxx.apps.googleusercontent.com"
-                oninput="globalConfig.drive={...globalConfig.drive,clientId:this.value}">
-            </div>
-            <div class="prop-row">
-              <label>Target Folder ID (optional)</label>
-              <input type="text" id="drive-folder-id" placeholder="Drive folder ID..."
-                oninput="globalConfig.drive={...globalConfig.drive,folderId:this.value}">
-            </div>
-            <button class="add-el-btn" style="background:#4285f4;width:100%;padding:7px;" onclick="connectDrive()">
-              <span id="drive-btn-label">🔗 Connect Google Drive</span>
-            </button>
           </div>
         </div>
       </div>
@@ -234,9 +213,11 @@
           </div>
           <div id="canvas-hint">Click to select · Double-click text to edit · Drag to move · Drop image to add</div>
         </div>
-        <div id="drive-status">Drive: Not connected</div>
       </div>
-    </div> <!-- END EDITOR VIEW -->
+      <div id="drive-status" style="display:none;"></div>
+    </div>
+  </div>
+  </div> <!-- END EDITOR VIEW -->
 
   </div> <!-- END MAIN CONTAINER (if any) -->
 
@@ -318,6 +299,19 @@
           throw new Error("Topic not found");
         }
 
+        if (action === 'publish') {
+          const { htmlData } = params;
+          if (!htmlData) throw new Error("No HTML data provided.");
+
+          const filename = `${subject}_${chapter}_${topic}.html`.replace(/[\/\s]/g, '_');
+          const storageRef = storage.ref(`published/${userId}/${filename}`);
+
+          await storageRef.putString(htmlData, 'raw', { contentType: 'text/html' });
+          const url = await storageRef.getDownloadURL();
+
+          return { fileUrl: url };
+        }
+
         throw new Error("Unknown action: " + action);
       } catch (err) {
         console.error("Firebase DB Call Error:", err);
@@ -328,7 +322,6 @@
 
   <script src="js/state.js"></script>
   <script src="js/utils.js"></script>
-  <script src="js/drive.js"></script>
   <script src="js/cards.js"></script>
   <script src="js/canvas.js"></script>
   <script src="js/ui.js"></script>
