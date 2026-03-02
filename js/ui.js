@@ -288,10 +288,14 @@ async function initHub() {
 
   if (!currentSubject) currentSubject = 'Physics';
 
-  // Set active tab
-  document.querySelectorAll('.hub-tab').forEach(t => t.classList.remove('active'));
-  const tabMatches = Array.from(document.querySelectorAll('.hub-tab')).filter(t => t.textContent === currentSubject);
+  // Set active sidebar tab
+  document.querySelectorAll('.sidebar-tab').forEach(t => t.classList.remove('active'));
+  const tabMatches = Array.from(document.querySelectorAll('.sidebar-tab')).filter(t => t.textContent.includes(currentSubject));
   if (tabMatches.length) tabMatches[0].classList.add('active');
+
+  // Update header title
+  const titleDisp = document.getElementById('hub-title-disp');
+  if (titleDisp) titleDisp.textContent = currentSubject + (currentSubject === 'Published Links' ? '' : ' Master Cards');
 
   if (currentSubject === 'Published Links') {
     const pubList = await dbCall('list_published');
@@ -310,60 +314,77 @@ function renderHubContent(chaptersObj, isPublishedObj = false) {
   const cont = document.getElementById('hub-content');
 
   if (isPublishedObj) {
-    let html = `<div style="display:flex;justify-content:space-between;margin-bottom:20px;"><h2 style="color:#2ecc71;">Your Published Links</h2></div>`;
+    let html = `<div class="chapter-grid">`;
     const subjects = Object.keys(chaptersObj).sort();
 
     if (subjects.length === 0) {
-      html += `<div style="color:#95a5a6;text-align:center;padding:20px;">You haven't published any revision cards yet.</div>`;
-      cont.innerHTML = html;
+      cont.innerHTML = `<div style="color:#64748b;font-size:14px;">You haven't published any revision cards yet.</div>`;
       return;
     }
 
     subjects.forEach(sub => {
-      html += `<h3 style="color:#f1c40f;margin-top:20px;border-bottom:1px solid #34495e;padding-bottom:5px;">${sub}</h3>`;
       const chaps = Object.keys(chaptersObj[sub]).sort();
       chaps.forEach(chap => {
-        html += `<div style="margin-top:10px;margin-bottom:5px;font-weight:bold;color:#ecf0f1;padding-left:10px;">${chap}</div>`;
-        html += `<div style="padding-left:15px;">`;
-        chaptersObj[sub][chap].sort((a, b) => a.topic.localeCompare(b.topic)).forEach(item => {
+        const topics = chaptersObj[sub][chap].sort((a, b) => a.topic.localeCompare(b.topic));
+
+        html += `<div class="chapter-card">
+                  <div class="card-title">${chap}</div>
+                  <div class="card-tags">
+                    <span class="card-tag tag-subject">${sub}</span>
+                    <span class="card-tag tag-count">${topics.length} Published</span>
+                  </div>
+                  <div class="topics-list">`;
+
+        topics.forEach(item => {
           const d = new Date(item.date?.toDate?.() || Date.now());
           const dStr = d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-          html += `<div class="hub-topic" style="padding-left:10px;">
-                      <div style="display:flex;flex-direction:column;">
-                        <span style="color:#bdc3c7;">📄 ${item.topic}</span>
-                        <span style="font-size:10px;color:#7f8c8d;">Published: ${dStr}</span>
-                      </div>
-                      <a href="${item.url}" target="_blank" style="background:#2ecc71;color:#1e2836;padding:4px 10px;border-radius:4px;text-decoration:none;font-weight:bold;font-size:11px;">Open Link ↗</a>
+          html += `<div class="topic-item" onclick="window.open('${item.url}', '_blank')">
+                      <div class="topic-name">🔗 ${item.topic}</div>
+                      <div style="font-size:10px;color:#94a3b8;">${dStr}</div>
                     </div>`;
         });
-        html += `</div>`;
+
+        html += `  </div>
+                 </div>`;
       });
     });
+
+    html += `</div>`;
     cont.innerHTML = html;
     return;
   }
 
-  let html = `<div style="display:flex;justify-content:space-between;margin-bottom:20px;"><h2 style="color:#ecf0f1;">${currentSubject} Chapters</h2> <button class="add-el-btn" style="background:#2ecc71;padding:5px 15px;" onclick="addChapter()">+ New Chapter</button></div>`;
-
   const chapters = Object.keys(chaptersObj).sort();
-  if (chapters.length === 0) html += `<div style="color:#95a5a6;text-align:center;padding:20px;">No chapters yet. Create one!</div>`;
+  if (chapters.length === 0) {
+    cont.innerHTML = `<div style="color:#64748b;font-size:14px;">No chapters yet. Click '+ Create New Chapter' to begin.</div>`;
+    return;
+  }
+
+  let html = `<div class="chapter-grid">`;
 
   chapters.forEach(chap => {
-    const visibleTopics = chaptersObj[chap].filter(t => t !== '_placeholder').length;
-    html += `<div class="hub-chapter">`
-      + `<div class="hub-chapter-header" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'">`
-      + `<strong>${chap}</strong> <span style="font-size:12px;color:#95a5a6;">${visibleTopics} Topics ▾</span>`
-      + `</div>`
-      + `<div class="hub-topics-list" style="display:none;">`;
+    const topicsList = chaptersObj[chap].filter(t => t !== '_placeholder').sort();
 
-    chaptersObj[chap].sort().forEach(top => {
-      if (top !== '_placeholder') {
-        html += `<div class="hub-topic" onclick="openTopic('${chap}','${top}')">📄 ${top}</div>`;
-      }
+    html += `<div class="chapter-card">
+              <div class="card-title">${chap}</div>
+              <div class="card-tags">
+                <span class="card-tag tag-subject">${currentSubject}</span>
+                <span class="card-tag tag-count">${topicsList.length} Topics</span>
+              </div>
+              <div class="topics-list">`;
+
+    topicsList.forEach(top => {
+      html += `<div class="topic-item" onclick="openTopic('${chap}','${top}')">
+                 <div class="topic-name">📄 ${top}</div>
+               </div>`;
     });
 
-    html += `<div style="padding:10px;"><button class="hub-add-btn" onclick="addTopic('${chap}')">+ Add Topic to ${chap}</button></div></div></div>`;
+    html += `  </div>
+               <button class="card-add-btn" onclick="addTopic('${chap}')">+ Add Topic</button>
+             </div>`;
   });
+
+  html += `</div>`;
   cont.innerHTML = html;
 }
 
