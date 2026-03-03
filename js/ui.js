@@ -304,8 +304,10 @@ async function initHub() {
   }
 
   if (currentSubject === 'Published Links') {
-    const pubList = await dbCall('list_published') || {};
-    const tree = await dbCall('list') || {};
+    const [tree, pubList] = await Promise.all([
+      dbCall('list').then(r => r || {}),
+      dbCall('list_published').then(r => r || {})
+    ]);
     renderHubContent(tree, pubList);
   } else {
     const tree = await dbCall('list');
@@ -341,11 +343,11 @@ function renderHubContent(chaptersObj, pubList = null) {
       chaps.forEach((chap, cIdx) => {
         const topics = chaptersObj[sub][chap] ? chaptersObj[sub][chap].filter(t => t !== '_placeholder').sort() : [];
         const chapId = `${subId}-chap-${cIdx}`;
-        
+
         // Build a lookup map for published links of this chapter
         const pubMap = {};
         if (pubList[sub] && pubList[sub][chap]) {
-           pubList[sub][chap].forEach(pt => { pubMap[pt.topic] = pt; });
+          pubList[sub][chap].forEach(pt => { pubMap[pt.topic] = pt; });
         }
 
         html += `<div class="chapter-card" style="margin-bottom: 10px; padding: 10px; border: 1px solid #f1f5f9; background: #f8fafc; border-radius: 6px;">
@@ -360,27 +362,27 @@ function renderHubContent(chaptersObj, pubList = null) {
           const pubItem = pubMap[top];
           if (pubItem) {
             const d = new Date(pubItem.date?.toDate?.() || Date.now());
-            const dStr = d.toLocaleDateString();
-            html += `<div class="topic-item" style="cursor:default; padding: 8px; border: 1px solid #e2e8f0; border-radius: 6px; background: #f0fdf4;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 6px;">
-                          <div class="topic-name" style="font-weight:bold; font-size: 13px;">📄 ${top}</div>
-                          <div style="font-size:10px;color:#16a34a;">Published ${dStr}</div>
-                        </div>
-                        <div style="display:flex; gap:5px; flex-wrap: wrap;">
-                          <button onclick="window.open('${pubItem.url}', '_blank')" style="background:#e0f2fe; color:#0284c7; border:none; padding:4px 8px; border-radius:4px; font-size:11px; cursor:pointer; font-weight:bold; flex: 1;">View</button>
-                          <button onclick="editPublishedTopic('${sub}', '${chap}', '${pubItem.topic}', '${pubItem.id}')" style="background:#fef3c7; color:#d97706; border:none; padding:4px 8px; border-radius:4px; font-size:11px; cursor:pointer; font-weight:bold; flex: 1;">Edit</button>
-                          <button onclick="downloadTopicHtml('${pubItem.topic}', '${pubItem.id}')" style="background:#dcfce7; color:#16a34a; border:none; padding:4px 8px; border-radius:4px; font-size:11px; cursor:pointer; font-weight:bold; flex: 1;">HTML</button>
-                          ${currentUser === 'admin' ? `<button onclick="deletePublishedLink('${pubItem.id}')" style="background:#fee2e2; color:#ef4444; border:none; padding:4px 8px; border-radius:4px; font-size:11px; cursor:pointer; font-weight:bold; display:flex; justify-content:center; align-items:center;" title="Delete Published Link"><i style="pointer-events:none;">🗑</i></button>` : ''}
+            const dStr = d.toLocaleString(undefined, {
+              year: 'numeric', month: 'numeric', day: 'numeric',
+              hour: 'numeric', minute: '2-digit', timeZoneName: 'short'
+            });
+            html += `<div class="topic-item" style="cursor:default; padding: 10px; border: 1px solid #bbf7d0; border-radius: 6px; background: #f0fdf4; display: flex; flex-direction: column; gap: 6px;">
+                        <div class="topic-name" style="font-weight:bold; font-size: 13px; line-height: 1.3;" title="${top}">📄 ${top}</div>
+                        <div style="font-size:11px; color:#16a34a;">Published ${dStr}</div>
+                        <div style="display:flex; gap:5px; flex-wrap: wrap; margin-top: 2px;">
+                          <button onclick="window.open('${pubItem.url}', '_blank')" style="background:#e0f2fe; color:#0284c7; border:none; padding:6px 10px; border-radius:4px; font-size:11px; cursor:pointer; font-weight:bold; flex: 1;">View</button>
+                          <button onclick="editPublishedTopic('${sub}', '${chap}', '${pubItem.topic}', '${pubItem.id}')" style="background:#fef3c7; color:#d97706; border:none; padding:6px 10px; border-radius:4px; font-size:11px; cursor:pointer; font-weight:bold; flex: 1;">Edit</button>
+                          <button onclick="downloadTopicHtml('${pubItem.topic}', '${pubItem.id}')" style="background:#dcfce7; color:#16a34a; border:none; padding:6px 10px; border-radius:4px; font-size:11px; cursor:pointer; font-weight:bold; flex: 1;">HTML</button>
+                          ${currentUser === 'admin' ? `<button onclick="deletePublishedLink('${pubItem.id}')" style="background:#fee2e2; color:#ef4444; border:none; padding:6px 10px; border-radius:4px; font-size:11px; cursor:pointer; font-weight:bold; display:flex; justify-content:center; align-items:center; flex: 0.3;" title="Delete Published Link"><i style="pointer-events:none;">🗑</i></button>` : ''}
                         </div>
                       </div>`;
           } else {
-             // Not published yet case
-             html += `<div class="topic-item" style="cursor:default; padding: 8px; border: 1px solid #e2e8f0; border-radius: 6px; background: #fff;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 6px;">
-                          <div class="topic-name" style="font-weight:bold; font-size: 13px;">📄 ${top}</div>
-                        </div>
-                        <div style="display:flex; gap:5px; flex-wrap: wrap;">
-                          <button onclick="currentSubject='${sub}'; openTopic('${chap}', '${top}')" style="background:#f1f5f9; color:#475569; border:none; padding:4px 8px; border-radius:4px; font-size:11px; cursor:pointer; font-weight:bold; width: 100%;">Open in Editor to Publish</button>
+            // Not published yet case
+            html += `<div class="topic-item" style="cursor:default; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; background: #f8fafc; display: flex; flex-direction: column; gap: 6px;">
+                        <div class="topic-name" style="font-weight:bold; font-size: 13px; line-height: 1.3; color:#475569;" title="${top}">📄 ${top}</div>
+                        <div style="font-size:11px; color:#94a3b8;">Not published yet</div>
+                        <div style="display:flex; gap:5px; margin-top: 2px;">
+                          <button onclick="currentSubject='${sub}'; openTopic('${chap}', '${top}')" style="background:#e2e8f0; color:#334155; border:none; padding:6px 10px; border-radius:4px; font-size:11px; cursor:pointer; font-weight:bold; width: 100%;">Open in Editor to Publish</button>
                         </div>
                       </div>`;
           }
@@ -730,7 +732,7 @@ async function parseHash() {
 }
 
 
-window.togglePubChapter = function(id) {
+window.togglePubChapter = function (id) {
   const topicsDiv = document.getElementById(id);
   if (!topicsDiv) return;
   const isCurrentlyOpen = topicsDiv.style.display === 'block';
