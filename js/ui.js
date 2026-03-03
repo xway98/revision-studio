@@ -321,7 +321,7 @@ function renderHubContent(chaptersObj, isPublishedObj = false) {
   const cont = document.getElementById('hub-content');
 
   if (isPublishedObj) {
-    let html = ``;
+    let html = `<div class="published-grid" style="display:flex; gap:20px; overflow-x:auto; padding-bottom:10px; align-items:flex-start;">`;
     const subjects = Object.keys(chaptersObj).sort();
 
     if (subjects.length === 0) {
@@ -331,22 +331,21 @@ function renderHubContent(chaptersObj, isPublishedObj = false) {
 
     subjects.forEach((sub, sIdx) => {
       const subId = `pub-sub-${sIdx}`;
-      html += `<h2 style="margin-top:20px; margin-bottom:15px; color:#1e293b; border-bottom:2px solid #e2e8f0; padding-bottom:5px; cursor:pointer;" onclick="togglePubCollapse('${subId}')">
-                  <span style="font-size:14px; color:#64748b;">▼</span> ${sub}
-               </h2>`;
-      html += `<div id="${subId}" class="chapter-grid">`;
+      html += `<div style="flex: 0 0 320px; background: #fff; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0; max-height: 80vh; overflow-y: auto;">`;
+      html += `<h2 style="margin-top:0; margin-bottom:15px; color:#1e293b; border-bottom:2px solid #e2e8f0; padding-bottom:5px; font-size:18px;">${sub}</h2>`;
+      html += `<div id="${subId}" class="chapter-list">`;
 
       const chaps = Object.keys(chaptersObj[sub]).sort();
       chaps.forEach((chap, cIdx) => {
         const topics = chaptersObj[sub][chap].sort((a, b) => a.topic.localeCompare(b.topic));
         const chapId = `${subId}-chap-${cIdx}`;
 
-        html += `<div class="chapter-card">
-                  <div class="card-title" style="cursor:pointer;" onclick="togglePubCollapse('${chapId}')"><span style="font-size:12px; color:#64748b; margin-right:5px;">▼</span>${chap}</div>
-                  <div class="card-tags">
-                    <span class="card-tag tag-count">${topics.length} Published Links</span>
+        html += `<div class="chapter-card" style="margin-bottom: 10px; padding: 10px; border: 1px solid #f1f5f9; background: #f8fafc; border-radius: 6px;">
+                  <div class="card-title" style="cursor:pointer; font-weight: bold; font-size: 14px; margin-bottom: 0; display:flex; align-items:center;" onclick="togglePubChapter('${chapId}')">
+                    <span style="font-size:12px; color:#64748b; margin-right:5px;">▼</span>${chap} 
+                    <span style="font-size: 11px; font-weight: normal; color: #64748b; margin-left: auto; background:#e2e8f0; padding:2px 6px; border-radius:10px;">${topics.length}</span>
                   </div>
-                  <div id="${chapId}" style="display:block;">
+                  <div id="${chapId}" class="pub-chapter-topics" style="display:none; margin-top: 10px; border-top: 1px solid #e2e8f0; padding-top: 10px;">
                     <div class="topics-list">`;
 
         topics.forEach(item => {
@@ -371,9 +370,10 @@ function renderHubContent(chaptersObj, isPublishedObj = false) {
                   </div>
                  </div>`;
       });
-      html += `</div>`;
+      html += `</div></div>`; // End chapter-list and subject-col
     });
 
+    html += `</div>`; // End published-grid
     cont.innerHTML = html;
     return;
   }

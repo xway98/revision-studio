@@ -402,11 +402,23 @@
         }
 
         if (action === 'publish') {
-          const { htmlData } = params;
+          const { htmlData = '', subject = '', chapter = '', topic = '' } = params;
           if (!htmlData) throw new Error("No HTML data provided.");
 
-          // Create a random ID for the public link
-          const publicId = Math.random().toString(36).substring(2, 10) + Date.now().toString(36);
+          const querySnap = await db.collection('published_cards')
+            .where('userId', '==', userId)
+            .where('subject', '==', subject)
+            .where('chapter', '==', chapter)
+            .where('topic', '==', topic)
+            .get();
+
+          let publicId;
+          if (!querySnap.empty) {
+            publicId = querySnap.docs[0].id; // Overwrite exist link
+          } else {
+            // Create a random ID for the public link
+            publicId = Math.random().toString(36).substring(2, 10) + Date.now().toString(36);
+          }
 
           await db.collection('published_cards').doc(publicId).set({
             userId,
@@ -415,7 +427,7 @@
             topic,
             htmlData,
             publishedAt: firebase.firestore.FieldValue.serverTimestamp()
-          });
+          }, { merge: true });
 
           // Return the URL to our new view.html page with the ID
           const currentOrigin = window.location.origin;
