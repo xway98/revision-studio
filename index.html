@@ -323,7 +323,7 @@
         }
 
         if (action === 'list') {
-          const snapshot = await db.collection('user_topics').where('userId', '==', userId).get();
+          const snapshot = await db.collection('user_topics').get();
           const tree = {};
           snapshot.forEach(doc => {
             const data = doc.data();
@@ -336,7 +336,7 @@
         }
 
         if (action === 'list_published') {
-          const snapshot = await db.collection('published_cards').where('userId', '==', userId).get();
+          const snapshot = await db.collection('published_cards').get();
           const tree = {};
           snapshot.forEach(doc => {
             const data = doc.data();
@@ -354,32 +354,69 @@
         }
 
         if (action === 'save') {
-          const docId = `${userId}_${subject}_${chapter}_${topic}`.replace(/[\/\s\.]/g, '_');
-          await db.collection('user_topics').doc(docId).set({
-            userId, subject, chapter, topic, jsonData, updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-          });
+          const { htmlData } = params;
+          const snapshot = await db.collection('user_topics')
+            .where('subject', '==', subject)
+            .where('chapter', '==', chapter)
+            .where('topic', '==', topic)
+            .limit(1).get();
+
+          if (!snapshot.empty) {
+            await db.collection('user_topics').doc(snapshot.docs[0].id).set({
+              subject, chapter, topic, jsonData, updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            }, { merge: true });
+          } else {
+            const docId = `${userId}_${subject}_${chapter}_${topic}`.replace(/[\/\s\.]/g, '_');
+            await db.collection('user_topics').doc(docId).set({
+              userId, subject, chapter, topic, jsonData, updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+          }
+
+          if (htmlData) {
+            const pubSnap = await db.collection('published_cards')
+              .where('subject', '==', subject)
+              .where('chapter', '==', chapter)
+              .where('topic', '==', topic)
+              .limit(1).get();
+            if (!pubSnap.empty) {
+              await db.collection('published_cards').doc(pubSnap.docs[0].id).set({
+                htmlData,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+              }, { merge: true });
+            }
+          }
+
           return { message: "Saved successfully" };
         }
 
         if (action === 'load') {
-          const docId = `${userId}_${subject}_${chapter}_${topic}`.replace(/[\/\s\.]/g, '_');
-          const docSnap = await db.collection('user_topics').doc(docId).get();
-          if (docSnap.exists) {
-            return { json: docSnap.data().jsonData };
+          const snapshot = await db.collection('user_topics')
+            .where('subject', '==', subject)
+            .where('chapter', '==', chapter)
+            .where('topic', '==', topic)
+            .limit(1).get();
+
+          if (!snapshot.empty) {
+            return { json: snapshot.docs[0].data().jsonData };
           }
           throw new Error("Topic not found");
         }
 
         if (action === 'delete_topic') {
-          const docId = `${userId}_${subject}_${chapter}_${topic}`.replace(/[\/\s\.]/g, '_');
-          await db.collection('user_topics').doc(docId).delete();
+          const snapshot = await db.collection('user_topics')
+            .where('subject', '==', subject)
+            .where('chapter', '==', chapter)
+            .where('topic', '==', topic)
+            .limit(1).get();
+
+          if (!snapshot.empty) {
+            await db.collection('user_topics').doc(snapshot.docs[0].id).delete();
+          }
           return { message: "Topic deleted successfully" };
         }
 
         if (action === 'delete_chapter') {
-          // Find all topics for this chapter and delete them
           const snapshot = await db.collection('user_topics')
-            .where('userId', '==', userId)
             .where('subject', '==', subject)
             .where('chapter', '==', chapter)
             .get();
@@ -406,7 +443,6 @@
           if (!htmlData) throw new Error("No HTML data provided.");
 
           const querySnap = await db.collection('published_cards')
-            .where('userId', '==', userId)
             .where('subject', '==', subject)
             .where('chapter', '==', chapter)
             .where('topic', '==', topic)

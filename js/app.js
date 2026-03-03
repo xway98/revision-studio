@@ -99,11 +99,16 @@ function triggerAutoSave(immediate = false) {
   clearTimeout(autoSaveTimer);
   autoSaveTimer = setTimeout(async () => {
     const saved = { cardData, globalConfig };
+    let htmlData = '';
+    if (typeof getExportCode === 'function') {
+      try { htmlData = getExportCode(); } catch (e) { console.error(e); }
+    }
     const res = await dbCall('save', {
       subject: currentSubject,
       chapter: currentChapter,
       topic: currentTopic,
-      jsonData: JSON.stringify(saved)
+      jsonData: JSON.stringify(saved),
+      htmlData: htmlData
     });
 
     if (btn) {
