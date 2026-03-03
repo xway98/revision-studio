@@ -317,6 +317,7 @@ async function initHub() {
 function setSubject(sub) { currentSubject = sub; appMode = 'dashboard'; pushHash(); initHub(); }
 
 function renderHubContent(chaptersObj, isPublishedObj = false) {
+  window.currentChaptersObj = chaptersObj;
   const cont = document.getElementById('hub-content');
 
   if (isPublishedObj) {
@@ -356,10 +357,11 @@ function renderHubContent(chaptersObj, isPublishedObj = false) {
                         <div class="topic-name" style="font-weight:bold;">📄 ${item.topic}</div>
                         <div style="font-size:10px;color:#94a3b8;">${dStr}</div>
                       </div>
-                      <div style="display:flex; gap:5px;">
+                     <div style="display:flex; gap:5px;">
                         <button onclick="window.open('${item.url}', '_blank')" style="background:#e0f2fe; color:#0284c7; border:none; padding:4px 8px; border-radius:4px; font-size:11px; cursor:pointer; font-weight:bold;">View</button>
                         <button onclick="editPublishedTopic('${sub}', '${chap}', '${item.topic}', '${item.id}')" style="background:#fef3c7; color:#d97706; border:none; padding:4px 8px; border-radius:4px; font-size:11px; cursor:pointer; font-weight:bold;">Edit</button>
                         <button onclick="downloadTopicHtml('${item.topic}', '${item.id}')" style="background:#dcfce7; color:#16a34a; border:none; padding:4px 8px; border-radius:4px; font-size:11px; cursor:pointer; font-weight:bold;">HTML</button>
+                        ${currentUser === 'admin' ? `<button onclick="deletePublishedLink('${item.id}')" style="background:#fee2e2; color:#ef4444; border:none; padding:4px 8px; border-radius:4px; font-size:11px; cursor:pointer; font-weight:bold;" title="Delete Published Link"><i style="pointer-events:none;">🗑</i></button>` : ''}
                       </div>
                     </div>`;
         });
@@ -387,27 +389,94 @@ function renderHubContent(chaptersObj, isPublishedObj = false) {
   chapters.forEach(chap => {
     const topicsList = chaptersObj[chap].filter(t => t !== '_placeholder').sort();
 
-    html += `<div class="chapter-card">
-              <div class="card-title">${chap}</div>
+    // Add admin delete button if applicable
+    let delBtn = '';
+    if (currentUser === 'admin') {
+      delBtn = `<button class="admin-delete-btn chapter-delete-btn" onclick="event.stopPropagation(); deleteChapter('${chap}')" title="Delete Chapter">
+                  <i style="pointer-events:none;">🗑</i>
+                </button>`;
+    }
+
+    html += `<div class="chapter-card" style="cursor:pointer;" onclick="openTopicSidebar('${currentSubject}', '${chap}')">
+              <div class="card-title">${chap} ${delBtn}</div>
               <div class="card-tags">
                 <span class="card-tag tag-subject">${currentSubject}</span>
-                <span class="card-tag tag-count">${topicsList.length} Topics</span>
+                <span class="card-tag tag-count">${topicsList.length} Topic(s)</span>
               </div>
-              <div class="topics-list">`;
-
-    topicsList.forEach(top => {
-      html += `<div class="topic-item" onclick="openTopic('${chap}','${top}')">
-                 <div class="topic-name">📄 ${top}</div>
-               </div>`;
-    });
-
-    html += `  </div>
-               <button class="card-add-btn" onclick="openCreateTopicModal('${chap}')">+ Add Topic</button>
              </div>`;
   });
 
   html += `</div>`;
   cont.innerHTML = html;
+}
+
+// --- TOPIC SIDEBAR ---
+
+function openTopicSidebar(sub, chap) {
+  currentSubject = sub;
+  const topicsList = (window.currentChaptersObj[chap] || []).filter(t => t !== '_placeholder').sort();
+
+  document.getElementById('sidebar-chapter-title').textContent = chap;
+
+  let html = '';
+  if (topicsList.length === 0) {
+    html = `<div style="color:#64748b;font-size:14px;text-align:center;margin-top:20px;">No topics here yet.</div>`;
+  } else {
+    topicsList.forEach(top => {
+      let delBtn = '';
+      if (currentUser === 'admin') {
+        delBtn = `<button class="admin-delete-btn" onclick="event.stopPropagation(); deleteTopic('${chap}','${top}')" title="Delete Topic">
+                    <i style="pointer-events:none;">🗑</i>
+                  </button>`;
+      }
+
+      html += `<div class="topic-pill sidebar-pill" style="cursor:pointer;" onclick="openTopic('${chap}','${top}')">
+                 <span>📄 ${top}</span>
+                 ${delBtn}
+               </div>`;
+    });
+  }
+
+  document.getElementById('sidebar-topics-list').innerHTML = html;
+
+  // Bind the Add Topic button
+  document.getElementById('sidebar-add-topic-btn').onclick = () => openCreateTopicModal(chap);
+
+  // Slide out panels
+  document.getElementById('topic-sidebar').classList.add('open');
+  document.getElementById('topic-sidebar-overlay').classList.add('open');
+}
+
+function closeTopicSidebar() {
+  document.getElementById('topic-sidebar').classList.remove('open');
+  document.getElementById('topic-sidebar-overlay').classList.remove('open');
+}
+
+// --- ADMIN DELETION COMMANDS ---
+
+async function deleteChapter(chap) {
+  if (!confirm(`Are you sure you want to delete the chapter "${chap}" and ALL its topics?\n\nThis cannot be undone.`)) return;
+  const res = await dbCall('delete_chapter', { subject: currentSubject, chapter: chap });
+  if (res) initHub();
+}
+
+async function deleteTopic(chap, top) {
+  if (!confirm(`Are you sure you want to delete the topic "${top}"?`)) return;
+  const res = await dbCall('delete_topic', { subject: currentSubject, chapter: chap, topic: top });
+  if (res) {
+    // Refresh the sidebar immediately
+    await initHub();
+    // Assuming chaptersObj is updated synchronously by initHub (it is), re-open the sidebar to see changes
+    if (document.getElementById('topic-sidebar').classList.contains('open')) {
+      openTopicSidebar(currentSubject, chap);
+    }
+  }
+}
+
+async function deletePublishedLink(id) {
+  if (!confirm(`Are you sure you want to permanently delete this published link?`)) return;
+  const res = await dbCall('delete_published', { id });
+  if (res) initHub();
 }
 
 // --- MODAL CREATION LOGIC ---
@@ -430,6 +499,7 @@ function openCreateChapterModal() {
 }
 
 function openCreateTopicModal(chap) {
+  if (typeof closeTopicSidebar === 'function') closeTopicSidebar();
   document.getElementById('input-modal-title').textContent = 'Add Topic to ' + chap;
   const input = document.getElementById('input-modal-value');
   input.value = '';

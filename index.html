@@ -102,6 +102,19 @@
       </div>
 
     </div>
+
+    <!-- Topic Sidebar (Slide out panel) -->
+    <div id="topic-sidebar-overlay" class="topic-sidebar-overlay" onclick="closeTopicSidebar()"></div>
+    <div id="topic-sidebar" class="topic-sidebar">
+      <div class="sidebar-header">
+        <h2 id="sidebar-chapter-title">Chapter Name</h2>
+        <div class="sidebar-close" onclick="closeTopicSidebar()">&times;</div>
+      </div>
+      <div id="sidebar-topics-list" class="sidebar-topics-list">
+        <!-- Topics populated here via JS -->
+      </div>
+      <button id="sidebar-add-topic-btn" class="sidebar-add-topic-btn">+ Add Topic</button>
+    </div>
   </div>
 
   <!-- ════════════════════════════ EDITOR VIEW ════════════════════════════ -->
@@ -357,6 +370,37 @@
           throw new Error("Topic not found");
         }
 
+        if (action === 'delete_topic') {
+          const docId = `${userId}_${subject}_${chapter}_${topic}`.replace(/[\/\s\.]/g, '_');
+          await db.collection('user_topics').doc(docId).delete();
+          return { message: "Topic deleted successfully" };
+        }
+
+        if (action === 'delete_chapter') {
+          // Find all topics for this chapter and delete them
+          const snapshot = await db.collection('user_topics')
+            .where('userId', '==', userId)
+            .where('subject', '==', subject)
+            .where('chapter', '==', chapter)
+            .get();
+
+          if (snapshot.empty) return { message: "No topics found to delete" };
+
+          const batch = db.batch();
+          snapshot.docs.forEach(doc => {
+            batch.delete(doc.ref);
+          });
+          await batch.commit();
+          return { message: "Chapter and all associated topics deleted successfully" };
+        }
+
+        if (action === 'delete_published') {
+          const { id } = params;
+          if (!id) throw new Error("No published ID provided.");
+          await db.collection('published_cards').doc(id).delete();
+          return { message: "Published link deleted successfully" };
+        }
+
         if (action === 'publish') {
           const { htmlData } = params;
           if (!htmlData) throw new Error("No HTML data provided.");
@@ -396,13 +440,13 @@
     };
   </script>
 
-  <script src="js/state.js"></script>
-  <script src="js/utils.js"></script>
-  <script src="js/cards.js"></script>
-  <script src="js/canvas.js"></script>
-  <script src="js/ui.js"></script>
-  <script src="js/export.js"></script>
-  <script src="js/app.js"></script>
+  <script src="js/state.js?v=sidebar_alpha"></script>
+  <script src="js/utils.js?v=sidebar_alpha"></script>
+  <script src="js/cards.js?v=sidebar_alpha"></script>
+  <script src="js/canvas.js?v=sidebar_alpha"></script>
+  <script src="js/ui.js?v=sidebar_alpha"></script>
+  <script src="js/export.js?v=sidebar_alpha"></script>
+  <script src="js/app.js?v=sidebar_alpha"></script>
 </body>
 
 </html>
