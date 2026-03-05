@@ -42,22 +42,24 @@ async function handleImageDrop(file, x, y) {
   // Show uploading state
   const dropOverlay = document.getElementById('drop-overlay');
   const ogHtml = dropOverlay.innerHTML;
-  dropOverlay.innerHTML = '<span>⏳ Uploading...</span>';
+  dropOverlay.innerHTML = '<span>⏳ Uploading to Firebase...</span>';
   dropOverlay.classList.add('active');
 
-  // Base64 image reading
-  const reader = new FileReader();
-  reader.onload = ev => {
-    insertImage(ev.target.result, x, y);
+  try {
+    const ext = file.name.split('.').pop() || 'png';
+    const filename = `uploads/${currentUser}/${Date.now()}.${ext}`;
+    const storageRef = firebase.storage().ref();
+    const fileRef = storageRef.child(filename);
+    const snapshot = await fileRef.put(file);
+    const downloadURL = await snapshot.ref.getDownloadURL();
+    insertImage(downloadURL, x, y);
+  } catch (err) {
+    console.error("Image upload failed:", err);
+    alert("Failed to upload image.");
+  } finally {
     dropOverlay.innerHTML = ogHtml;
     dropOverlay.classList.remove('active');
-  };
-  reader.onerror = () => {
-    alert("Failed to read image.");
-    dropOverlay.innerHTML = ogHtml;
-    dropOverlay.classList.remove('active');
-  };
-  reader.readAsDataURL(file);
+  }
 }
 
 function insertImage(url, x, y) {

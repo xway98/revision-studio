@@ -818,6 +818,53 @@ body {
     margin: 10px 0;
 }
 
+/* ----- UI ALERTS & MODALS ----- */
+
+.context-menu {
+    position: absolute;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border-radius: 6px;
+    padding: 4px 0;
+    z-index: 9999;
+    min-width: 160px;
+    display: none;
+    font-family: 'Inter', sans-serif;
+}
+
+.context-menu.active {
+    display: block;
+}
+
+.context-item {
+    padding: 8px 16px;
+    font-size: 13px;
+    color: #1e293b;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.context-item:hover {
+    background: #f1f5f9;
+}
+
+.context-item.danger {
+    color: #ef4444;
+}
+
+.context-item.danger:hover {
+    background: #fef2f2;
+}
+
+.context-divider {
+    height: 1px;
+    background: #e2e8f0;
+    margin: 4px 0;
+}
+
 /* ----- HUB DASHBOARD ----- */
 .modal-overlay {
     position: fixed;

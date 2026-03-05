@@ -105,10 +105,6 @@ function renderPropsPanel() {
     <div class="prop-row"><div class="prop-lbl"><span>Box Width</span><span>${t.width}%</span></div>
       <input type="range" min="10" max="100" value="${t.width}" oninput="getCard().texts[${sel.idx}].width=+this.value;this.previousElementSibling.querySelector('span:last-child').textContent=this.value+'%';renderCanvas();updateSelOverlay();" onchange="pushHist()"></div>
     <div class="prop-sep"></div>
-    <div class="prop-row"><div class="prop-lbl"><span>Position X</span><span>${t.x}%</span></div>
-      <input type="range" min="0" max="100" value="${t.x}" oninput="getCard().texts[${sel.idx}].x=+this.value;this.previousElementSibling.querySelector('span:last-child').textContent=this.value+'%';renderCanvas();updateSelOverlay();" onchange="pushHist()"></div>
-    <div class="prop-row"><div class="prop-lbl"><span>Position Y</span><span>${t.y}%</span></div>
-      <input type="range" min="0" max="100" value="${t.y}" oninput="getCard().texts[${sel.idx}].y=+this.value;this.previousElementSibling.querySelector('span:last-child').textContent=this.value+'%';renderCanvas();updateSelOverlay();" onchange="pushHist()"></div>
     <div class="prop-sep"></div>
     <div class="fmt-btns">
       <button class="fmt-btn danger" onclick="deleteSelected()">🗑 Delete Box</button>
@@ -126,10 +122,6 @@ function renderPropsPanel() {
     <div style="font-size:10px;color:#556677;margin-top:-6px;margin-bottom:8px;">💡 Drop an image file directly onto the canvas to upload automatically</div>
     <div class="prop-row"><div class="prop-lbl"><span>Width</span><span>${img.width}%</span></div>
       <input type="range" min="5" max="100" value="${img.width}" oninput="getCard().imgs[${sel.idx}].width=+this.value;this.previousElementSibling.querySelector('span:last-child').textContent=this.value+'%';renderCanvas();updateSelOverlay();" onchange="pushHist()"></div>
-    <div class="prop-row"><div class="prop-lbl"><span>Position X</span><span>${img.x}%</span></div>
-      <input type="range" min="0" max="100" value="${img.x}" oninput="getCard().imgs[${sel.idx}].x=+this.value;this.previousElementSibling.querySelector('span:last-child').textContent=this.value+'%';renderCanvas();updateSelOverlay();" onchange="pushHist()"></div>
-    <div class="prop-row"><div class="prop-lbl"><span>Position Y</span><span>${img.y}%</span></div>
-      <input type="range" min="0" max="100" value="${img.y}" oninput="getCard().imgs[${sel.idx}].y=+this.value;this.previousElementSibling.querySelector('span:last-child').textContent=this.value+'%';renderCanvas();updateSelOverlay();" onchange="pushHist()"></div>
     <div class="prop-sep"></div>
     <div class="prop-row"><label>Crop Tool</label>
       <div class="fmt-btns">
