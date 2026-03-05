@@ -22,6 +22,18 @@ function openExperimentBuilder(chap, top, isNew) {
   builder.style.padding = '40px';
 
   renderExperimentDashboard(expData);
+
+  // If this is a newly created topic, save an empty placeholder immediately so it persists in the dashboard
+  if (isNew) {
+    const emptySaved = { cardData: [{ type: 'html_experiment', filename: '', htmlContent: '' }], globalConfig: { type: 'experiment' } };
+    window.dbCall('save', {
+      subject: currentSubject,
+      chapter: currentChapter,
+      topic: currentTopic,
+      jsonData: JSON.stringify(emptySaved),
+      htmlData: ''
+    }).catch(e => console.error("Auto-save new experiment failed", e));
+  }
 }
 
 function closeExperimentBuilder() {
@@ -47,7 +59,7 @@ function renderExperimentDashboard(expData) {
             ▶ Preview Experiment
           </button>
           
-          <label style="background:#f1f5f9; color:#475569; border:1px solid #cbd5e1; padding:12px 24px; border-radius:8px; font-weight:600; cursor:pointer; font-family:'Inter', sans-serif; transition:0.2s;">
+          <label id="exp-upload-btn" style="background:#f1f5f9; color:#475569; border:1px solid #cbd5e1; padding:12px 24px; border-radius:8px; font-weight:600; cursor:pointer; font-family:'Inter', sans-serif; transition:0.2s;">
             <input type="file" accept=".html" style="display:none;" onchange="handleExperimentUpload(event)">
             Replace File
           </label>
@@ -62,7 +74,7 @@ function renderExperimentDashboard(expData) {
         <h2 style="font-family:'Inter', sans-serif; font-size:1.2rem; color:#475569; margin-bottom:12px;">No Experiment Loaded</h2>
         <p style="font-family:'Inter', sans-serif; color:#94a3b8; font-size:0.9rem; margin-bottom:24px;">Upload your standalone HTML experiment file below.</p>
         
-        <label style="background:#22c55e; color:white; border:none; padding:12px 24px; border-radius:8px; font-weight:600; cursor:pointer; font-family:'Inter', sans-serif; box-shadow:0 4px 6px -1px rgba(34, 197, 94, 0.3); display:inline-block;">
+        <label id="exp-upload-btn" style="background:#22c55e; color:white; border:none; padding:12px 24px; border-radius:8px; font-weight:600; cursor:pointer; font-family:'Inter', sans-serif; box-shadow:0 4px 6px -1px rgba(34, 197, 94, 0.3); display:inline-block;">
           <input type="file" accept=".html" style="display:none;" onchange="handleExperimentUpload(event)">
           Upload HTML File
         </label>
@@ -91,12 +103,16 @@ function handleExperimentUpload(e) {
   const file = e.target.files[0];
   if (!file) return;
 
+  // Grab standard label ref before re-render
+  let ogText = 'Replace File';
+  const oldBtn = document.getElementById('exp-upload-btn');
+  if (oldBtn) ogText = oldBtn.innerHTML.replace('<input type="file" accept=".html" style="display:none;" onchange="handleExperimentUpload(event)">', '').trim();
+
   const reader = new FileReader();
   reader.onload = async (ev) => {
     try {
       const htmlContent = ev.target.result;
 
-      // Update local state structure identical to how export.js does it
       cardData = [{
         type: 'html_experiment',
         filename: file.name,
@@ -107,14 +123,15 @@ function handleExperimentUpload(e) {
       // Re-render dashboard
       renderExperimentDashboard(cardData[0]);
 
-      // Save to Firebase backend directly (bypassing auto-save delay for immediate feedback)
       const saved = { cardData, globalConfig };
 
-      const btnLabel = document.querySelector('label[style*="Replace"]') || document.querySelector('label[style*="Upload"]');
-      const ogText = btnLabel.innerHTML;
-      btnLabel.innerHTML = '⏳ Saving...';
+      // Grab NEW label ref after re-render
+      const newBtn = document.getElementById('exp-upload-btn');
+      if (newBtn) {
+        newBtn.innerHTML = '⏳ Saving...';
+      }
 
-      await dbCall('save', {
+      await window.dbCall('save', {
         subject: currentSubject,
         chapter: currentChapter,
         topic: currentTopic,
@@ -122,8 +139,21 @@ function handleExperimentUpload(e) {
         htmlData: htmlContent
       });
 
-      btnLabel.innerHTML = '✅ Saved';
-      setTimeout(() => { btnLabel.innerHTML = ogText; }, 2000);
+      // Instantly publish it too so public links work
+      await window.dbCall('publish', {
+        subject: currentSubject,
+        chapter: currentChapter,
+        topic: currentTopic,
+        htmlData: htmlContent
+      });
+
+      if (newBtn) {
+        newBtn.innerHTML = '✅ Saved';
+        setTimeout(() => {
+          // Restore the input along with the text
+          newBtn.innerHTML = `<input type="file" accept=".html" style="display:none;" onchange="handleExperimentUpload(event)">\n            ${ogText}`;
+        }, 2000);
+      }
 
     } catch (err) {
       console.error("Experiment Upload Error:", err);
