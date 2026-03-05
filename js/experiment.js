@@ -1,180 +1,146 @@
-// --- EXPERIMENT BUILDER STATE & LOGIC ---
-
-let expData = []; // Array of steps: { image, procedure, observation, takeaway }
-let expActiveIdx = -1;
+// --- EXPERIMENT DASHBOARD LOGIC ---
 
 function openExperimentBuilder(chap, top, isNew) {
   currentChapter = chap;
   currentTopic = top;
   appMode = 'experiment';
 
-  if (isNew) {
-    expData = [
-      { image: '', procedure: '', observation: '', takeaway: '' }
-    ];
-    expActiveIdx = 0;
-  } else {
-    // Need to load from db, but for now we expect it's loaded into cardData or similar
-    // We will hook this up properly with load mechanisms
-    if (Array.isArray(cardData) && cardData.length > 0 && cardData[0].procedure !== undefined) {
-      expData = cardData; // Re-use the variable from state.js during the transition
-    } else {
-      expData = [
-        { image: '', procedure: '', observation: '', takeaway: '' }
-      ];
-    }
-    expActiveIdx = 0;
+  // Check if we have loaded data (from ui.js -> openTopic loading logic)
+  let expData = null;
+  if (!isNew && Array.isArray(cardData) && cardData.length === 1 && cardData[0].type === 'html_experiment') {
+    expData = cardData[0];
   }
 
   document.getElementById('dashboard-view').style.display = 'none';
   document.getElementById('editor-view').style.display = 'none';
-  document.getElementById('experiment-builder').style.display = 'flex';
 
-  expRenderList();
-  expRenderForm();
-  expRenderPreview();
+  const builder = document.getElementById('experiment-builder');
+  builder.style.display = 'flex';
+  builder.style.flexDirection = 'column';
+  builder.style.alignItems = 'center';
+  builder.style.justifyContent = 'center';
+  builder.style.padding = '40px';
+
+  renderExperimentDashboard(expData);
 }
 
 function closeExperimentBuilder() {
   document.getElementById('experiment-builder').style.display = 'none';
-  // Return to hub, same logic as closeEditor()
   initHub();
 }
 
-function expAddStep() {
-  expData.push({ image: '', procedure: '', observation: '', takeaway: '' });
-  expActiveIdx = expData.length - 1;
-  expRenderList();
-  expRenderForm();
-  expRenderPreview();
-  triggerExpAutoSave();
-}
+function renderExperimentDashboard(expData) {
+  const builder = document.getElementById('experiment-builder');
 
-function expDeleteStep() {
-  if (expData.length <= 1) return alert("You must have at least one step.");
-  expData.splice(expActiveIdx, 1);
-  if (expActiveIdx >= expData.length) expActiveIdx = expData.length - 1;
-  expRenderList();
-  expRenderForm();
-  expRenderPreview();
-  triggerExpAutoSave();
-}
+  let contentHtml = '';
 
-function expSelectStep(idx) {
-  expActiveIdx = idx;
-  expRenderList();
-  expRenderForm();
-  expRenderPreview();
-}
-
-function expUpdateField(field, val) {
-  if (expActiveIdx < 0 || expActiveIdx >= expData.length) return;
-  expData[expActiveIdx][field] = val;
-  expRenderList(); // Quick refresh in case we want to show a preview snippet
-  expRenderPreview();
-  triggerExpAutoSave();
-}
-
-function expRenderList() {
-  const container = document.getElementById('exp-steps-list');
-  if (!container) return;
-
-  container.innerHTML = expData.map((step, i) => {
-    const isAct = i === expActiveIdx;
-    const bg = isAct ? '#e0f2fe' : '#f8fafc';
-    const border = isAct ? '#3b82f6' : '#e2e8f0';
-    return `
-      <div style="padding:10px;background:${bg};border:1px solid ${border};border-radius:6px;cursor:pointer;display:flex;align-items:center;gap:10px;" onclick="expSelectStep(${i})">
-        <div style="width:24px;height:24px;background:#3b82f6;color:#fff;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:bold;">${i + 1}</div>
-        <div style="flex:1;font-size:13px;color:#334155;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-          ${step.procedure ? step.procedure : 'Empty Step...'}
+  if (expData) {
+    // We have an experiment loaded
+    contentHtml = `
+      <div style="background:#fff; border:1px solid #e2e8f0; border-radius:12px; padding:40px; width:100%; max-width:600px; text-align:center; box-shadow:0 10px 25px rgba(0,0,0,0.05);">
+        <span style="font-size:3rem; display:block; margin-bottom:16px;">🧪</span>
+        <h2 style="font-family:'Inter', sans-serif; font-size:1.5rem; color:#0f172a; margin-bottom:8px;">Interactive Experiment Active</h2>
+        <p style="font-family:'Inter', sans-serif; color:#64748b; margin-bottom:32px;">File loaded: <strong>${expData.filename}</strong></p>
+        
+        <div style="display:flex; gap:16px; justify-content:center;">
+          <button onclick="viewExperimentHtml()" style="background:#3b82f6; color:white; border:none; padding:12px 24px; border-radius:8px; font-weight:600; cursor:pointer; font-family:'Inter', sans-serif; transition:0.2s; box-shadow:0 4px 6px -1px rgba(59, 130, 246, 0.3);">
+            ▶ Preview Experiment
+          </button>
+          
+          <label style="background:#f1f5f9; color:#475569; border:1px solid #cbd5e1; padding:12px 24px; border-radius:8px; font-weight:600; cursor:pointer; font-family:'Inter', sans-serif; transition:0.2s;">
+            <input type="file" accept=".html" style="display:none;" onchange="handleExperimentUpload(event)">
+            Replace File
+          </label>
         </div>
       </div>
     `;
-  }).join('');
-}
-
-function expRenderForm() {
-  const step = expData[expActiveIdx];
-  if (!step) return;
-
-  document.getElementById('exp-step-title').textContent = `Step ${expActiveIdx + 1} Details`;
-
-  document.getElementById('exp-img-url').value = step.image || '';
-  document.getElementById('exp-text-procedure').value = step.procedure || '';
-  document.getElementById('exp-text-observation').value = step.observation || '';
-  document.getElementById('exp-text-takeaway').value = step.takeaway || '';
-}
-
-function expRenderPreview() {
-  const stack = document.getElementById('exp-preview-images');
-  const procArea = document.getElementById('exp-preview-proc');
-  const obsArea = document.getElementById('exp-preview-obs');
-  const takeArea = document.getElementById('exp-preview-take');
-
-  if (!stack) return;
-
-  // Render Image Stack up to current step
-  stack.innerHTML = expData
-    .slice(0, expActiveIdx + 1)
-    .map((step, i) => {
-      if (!step.image) return '';
-      // Only the last image drops in, previous ones are fully visible
-      const isLast = (i === expActiveIdx);
-      return `<img src="${step.image}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;animation: ${isLast ? 'fadeIn 0.5s ease forwards' : 'none'};">`;
-    }).join('');
-
-  // Render Texts for current step
-  const curr = expData[expActiveIdx];
-  if (curr) {
-    procArea.textContent = curr.procedure || '...';
-    obsArea.textContent = curr.observation || '...';
-    takeArea.textContent = curr.takeaway || '...';
+  } else {
+    // Empty state
+    contentHtml = `
+      <div style="background:#fff; border:1px dashed #cbd5e1; border-radius:12px; padding:60px 40px; width:100%; max-width:500px; text-align:center;">
+        <span style="font-size:3rem; display:block; margin-bottom:16px; opacity:0.5;">📄</span>
+        <h2 style="font-family:'Inter', sans-serif; font-size:1.2rem; color:#475569; margin-bottom:12px;">No Experiment Loaded</h2>
+        <p style="font-family:'Inter', sans-serif; color:#94a3b8; font-size:0.9rem; margin-bottom:24px;">Upload your standalone HTML experiment file below.</p>
+        
+        <label style="background:#22c55e; color:white; border:none; padding:12px 24px; border-radius:8px; font-weight:600; cursor:pointer; font-family:'Inter', sans-serif; box-shadow:0 4px 6px -1px rgba(34, 197, 94, 0.3); display:inline-block;">
+          <input type="file" accept=".html" style="display:none;" onchange="handleExperimentUpload(event)">
+          Upload HTML File
+        </label>
+      </div>
+    `;
   }
-}
 
-// Ensure the animation exists
-const style = document.createElement('style');
-style.innerHTML = `
-  @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-  }
+  builder.innerHTML = `
+    <!-- Header -->
+    <div style="width:100%; max-width:800px; display:flex; justify-content:space-between; align-items:center; margin-bottom:32px;">
+      <div>
+        <h1 style="font-family:'Inter', sans-serif; font-size:1.5rem; color:#0f172a; margin:0;">${currentTopic}</h1>
+        <p style="font-family:'Inter', sans-serif; color:#64748b; font-size:0.9rem; margin:4px 0 0 0;">${currentSubject} • ${currentChapter}</p>
+      </div>
+      <button onclick="closeExperimentBuilder()" style="background:#fff; border:1px solid #e2e8f0; padding:8px 16px; border-radius:6px; color:#475569; font-weight:600; cursor:pointer; font-family:'Inter', sans-serif; box-shadow:0 1px 2px rgba(0,0,0,0.05);">
+        🏠 Return to Hub
+      </button>
+    </div>
+    
+    <!-- Main Content -->
+    ${contentHtml}
   `;
-document.head.appendChild(style);
-
-// --- AUTO SAVE ---
-
-let expAutoSaveTimer = null;
-function triggerExpAutoSave() {
-  const statusMenu = document.getElementById('exp-save-status');
-  if (statusMenu) statusMenu.textContent = 'Saving...';
-
-  clearTimeout(expAutoSaveTimer);
-  expAutoSaveTimer = setTimeout(async () => {
-    // We reuse the existing firebase topic save, just stuffing our 'expData' into 'cardData' so it saves correctly
-    // or we can just send it directly if we modify the save structure.
-    cardData = expData;
-    const saved = { cardData, globalConfig: {} };
-
-    const res = await firebaseDbCall('save', {
-      userId: currentUser,
-      subject: currentSubject,
-      chapter: currentChapter,
-      topic: currentTopic,
-      jsonData: JSON.stringify(saved),
-      htmlData: '' // The builder doesn't generate HTML during autosave, only Publish
-    });
-
-    if (statusMenu) {
-      statusMenu.textContent = res.message ? 'Saved' : 'Save Failed';
-      setTimeout(() => {
-        if (statusMenu.textContent === 'Saved') statusMenu.textContent = '';
-      }, 3000);
-    }
-  }, 1500);
 }
 
-async function expPublish() {
-  alert("Publishing feature for Experiments will generate a custom viewer HTML. We will implement this next!");
+function handleExperimentUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = async (ev) => {
+    try {
+      const htmlContent = ev.target.result;
+
+      // Update local state structure identical to how export.js does it
+      cardData = [{
+        type: 'html_experiment',
+        filename: file.name,
+        htmlContent: htmlContent
+      }];
+      globalConfig = { bg: { color: '#fff' }, type: 'experiment' };
+
+      // Re-render dashboard
+      renderExperimentDashboard(cardData[0]);
+
+      // Save to Firebase backend directly (bypassing auto-save delay for immediate feedback)
+      const saved = { cardData, globalConfig };
+
+      const btnLabel = document.querySelector('label[style*="Replace"]') || document.querySelector('label[style*="Upload"]');
+      const ogText = btnLabel.innerHTML;
+      btnLabel.innerHTML = '⏳ Saving...';
+
+      await dbCall('save', {
+        subject: currentSubject,
+        chapter: currentChapter,
+        topic: currentTopic,
+        jsonData: JSON.stringify(saved),
+        htmlData: htmlContent
+      });
+
+      btnLabel.innerHTML = '✅ Saved';
+      setTimeout(() => { btnLabel.innerHTML = ogText; }, 2000);
+
+    } catch (err) {
+      console.error("Experiment Upload Error:", err);
+      alert('Error saving experiment: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+
+function viewExperimentHtml() {
+  if (!cardData || !cardData[0] || cardData[0].type !== 'html_experiment') {
+    alert("No experiment data found."); return;
+  }
+
+  // Creates a blob from the raw HTML content and opens it in a new browser tab
+  const blob = new Blob([cardData[0].htmlContent], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+  window.open(url, '_blank');
 }
