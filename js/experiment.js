@@ -169,8 +169,10 @@ function viewExperimentHtml() {
     alert("No experiment data found."); return;
   }
 
-  // Creates a blob from the raw HTML content and opens it in a new browser tab
-  const blob = new Blob([cardData[0].htmlContent], { type: 'text/html' });
-  const url = URL.createObjectURL(blob);
-  window.open(url, '_blank');
+  // Injecting via document.write allows the new window to inherit the correct origin base 
+  // so root-relative paths like /virtual-chemlab/style.css resolve correctly.
+  const w = window.open('', '_blank');
+  w.document.open();
+  w.document.write(cardData[0].htmlContent);
+  w.document.close();
 }

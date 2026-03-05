@@ -9,7 +9,324 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap"
         rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+    <style>
+/* ====== ELECTRICITY EXPERIMENT CSS ====== */
+
+/* Center Canvas Layout */
+.apparatus-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+/* Wires */
+.wire-svg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.wire-line {
+    fill: none;
+    stroke: #64748b;
+    stroke-width: 4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: stroke 0.3s;
+}
+
+.wire-line.active {
+    stroke: #ea580c;
+    /* Primary color when current flows */
+}
+
+/* Battery 6V */
+.elec-battery {
+    position: absolute;
+    top: 80px;
+    left: 50px;
+    width: 60px;
+    height: 100px;
+    display: flex;
+    flex-direction: column;
+    z-index: 5;
+}
+
+.batt-term {
+    width: 20px;
+    height: 10px;
+    background: #94a3b8;
+    margin: 0 auto;
+    border-radius: 2px 2px 0 0;
+    text-align: center;
+    font-size: 8px;
+    font-weight: bold;
+    color: white;
+    line-height: 10px;
+}
+
+.batt-body {
+    flex: 1;
+    background: linear-gradient(135deg, #334155, #0f172a);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: 14px;
+    border: 2px solid #64748b;
+}
+
+.batt-term.neg {
+    border-radius: 0 0 2px 2px;
+}
+
+/* Bulb */
+.elec-bulb {
+    position: absolute;
+    top: 60px;
+    left: 230px;
+    width: 40px;
+    height: 60px;
+    z-index: 5;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.bulb-glass {
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.4);
+    border: 2px solid #cbd5e1;
+    border-radius: 50%;
+    position: relative;
+    z-index: 2;
+    transition: background 0.3s, border-color 0.3s;
+}
+
+.bulb-filament {
+    position: absolute;
+    top: 20px;
+    width: 16px;
+    height: 12px;
+    border: 2px solid #94a3b8;
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    z-index: 1;
+}
+
+.bulb-base {
+    width: 20px;
+    height: 15px;
+    background: #64748b;
+    border-radius: 0 0 4px 4px;
+    margin-top: -5px;
+    z-index: 3;
+}
+
+.bulb-glow {
+    position: absolute;
+    top: -20px;
+    left: -20px;
+    width: 80px;
+    height: 80px;
+    background: radial-gradient(circle, rgba(250, 204, 21, 0.8) 0%, transparent 70%);
+    border-radius: 50%;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+    z-index: 0;
+}
+
+.elec-bulb.on .bulb-glass {
+    background: rgba(254, 240, 138, 0.9);
+    border-color: #fca5a5;
+    box-shadow: 0 0 15px #fef08a;
+}
+
+.elec-bulb.on .bulb-glow {
+    opacity: 1;
+}
+
+.elec-bulb.on .bulb-filament {
+    border-color: #ea580c;
+}
+
+/* Switch */
+.elec-switch {
+    position: absolute;
+    top: 120px;
+    left: 400px;
+    width: 50px;
+    height: 20px;
+    z-index: 5;
+    cursor: pointer;
+}
+
+.switch-node {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background: #cbd5e1;
+    border: 2px solid #64748b;
+    border-radius: 50%;
+    top: 5px;
+}
+
+.node-left {
+    left: 0;
+}
+
+.node-right {
+    right: 0;
+}
+
+.switch-arm {
+    position: absolute;
+    top: 8px;
+    left: 5px;
+    width: 40px;
+    height: 4px;
+    background: #ef4444;
+    /* Red arm */
+    transform-origin: left center;
+    transform: rotate(-30deg);
+    /* Open by default */
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    border-radius: 2px;
+}
+
+.elec-switch.closed .switch-arm {
+    transform: rotate(0deg);
+}
+
+/* Beaker */
+.elec-beaker {
+    position: absolute;
+    bottom: 0px;
+    left: 175px;
+    width: 150px;
+    height: 150px;
+    background: rgba(226, 232, 240, 0.2);
+    border: 4px solid #cbd5e1;
+    border-top: none;
+    border-radius: 0 0 20px 20px;
+    z-index: 2;
+    overflow: hidden;
+    /* Contains liquid */
+}
+
+/* Beaker Lip */
+.elec-beaker::before {
+    content: '';
+    position: absolute;
+    top: -4px;
+    left: -10px;
+    width: 20px;
+    height: 10px;
+    border-bottom: 4px solid #cbd5e1;
+    border-radius: 0 0 10px 0;
+}
+
+.elec-liquid {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 0%;
+    /* Fills dynamically */
+    background: rgba(186, 230, 253, 0.4);
+    transition: height 1s, background-color 0.5s;
+}
+
+/* Different liquid colors */
+.elec-liquid.H2SO4 {
+    background: rgba(186, 230, 253, 0.4);
+}
+
+.elec-liquid.HCl {
+    background: rgba(224, 242, 254, 0.5);
+}
+
+.elec-liquid.Glucose {
+    background: rgba(254, 240, 138, 0.3);
+}
+
+/* Slightly yellow */
+.elec-liquid.Alcohol {
+    background: rgba(241, 245, 249, 0.6);
+}
+
+/* Cork */
+.elec-cork {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 30px;
+    background: #713f12;
+    /* Brown cork */
+    border-radius: 10px 10px 0 0;
+    z-index: 3;
+}
+
+/* Nails */
+.elec-nail {
+    position: absolute;
+    bottom: 10px;
+    width: 6px;
+    height: 60px;
+    background: linear-gradient(90deg, #94a3b8, #cbd5e1, #94a3b8);
+    border-radius: 3px 3px 0 0;
+    z-index: 4;
+}
+
+/* Bubbles on nails */
+.nail-bubbles {
+    position: absolute;
+    top: 0;
+    left: -10px;
+    width: 26px;
+    height: 100%;
+    pointer-events: none;
+}
+
+.elec-bubble {
+    position: absolute;
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    border-radius: 50%;
+    opacity: 0;
+    animation: riseBubble 1.5s infinite ease-in;
+}
+
+@keyframes riseBubble {
+    0% {
+        transform: translateY(0) scale(0.5);
+        opacity: 0;
+    }
+
+    20% {
+        opacity: 1;
+    }
+
+    80% {
+        opacity: 1;
+    }
+
+    100% {
+        transform: translateY(-80px) scale(1.5);
+        opacity: 0;
+    }
+}
+</style>
     <link rel="stylesheet" href="electricity.css">
 </head>
 
@@ -181,7 +498,252 @@
 
     </main>
 
-    <script src="electricity.js"></script>
+    <script>
+// --- ELECTRICITY EXPERIMENT LOGIC ---
+
+// State
+let selectedSolution = 'HCl';
+let isSwitchOn = false;
+let hasLiquid = false;
+
+// Elements
+const elecLiquid = document.getElementById('elecLiquid');
+const elecSwitch = document.getElementById('elecSwitch');
+const elecBulb = document.getElementById('elecBulb');
+const switchIcon = document.getElementById('switchIcon');
+const circuitBadge = document.getElementById('circuitBadge');
+const reactionStatus = document.getElementById('reactionStatus');
+const notebookLogs = document.getElementById('notebookLogs');
+const pendingLog = document.getElementById('pendingLog');
+const btnSwitch = document.getElementById('btnSwitch');
+const wireLines = document.querySelectorAll('.wire-line');
+
+// Solutions Database
+const solutions = {
+    'HCl': {
+        name: 'Dilute HCl',
+        conducts: true,
+        desc: 'Strong acid, fully dissociates into H⁺ and Cl⁻ ions.'
+    },
+    'H2SO4': {
+        name: 'Dilute H₂SO₄',
+        conducts: true,
+        desc: 'Strong acid, provides H⁺ and SO₄²⁻ ions.'
+    },
+    'Glucose': {
+        name: 'Glucose Solution',
+        conducts: false,
+        desc: 'Covalent compound, does not produce free ions in water.'
+    },
+    'Alcohol': {
+        name: 'Alcohol Solution',
+        conducts: false,
+        desc: 'Covalent covalent, does not produce free ions in water.'
+    }
+};
+
+// --- INITIALIZATION ---
+function initExperiment() {
+    // Select default solution
+    selectSolution('HCl');
+}
+
+// --- CONTROLS ---
+
+function selectSolution(type) {
+    if (isSwitchOn) {
+        logToNotebook("Turn off the switch before changing solutions.", true);
+        return;
+    }
+
+    selectedSolution = type;
+
+    // Update UI Buttons
+    document.querySelectorAll('.choice-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.dataset.solution === type) btn.classList.add('active');
+    });
+
+    // Fill beaker visually
+    fillBeaker(type);
+
+    // Log action
+    logToNotebook(`Poured <strong>${solutions[type].name}</strong> into the beaker.`);
+}
+
+function fillBeaker(type) {
+    hasLiquid = true;
+    elecLiquid.className = `elec-liquid ${type}`;
+    // Trigger animation by setting height
+    setTimeout(() => elecLiquid.style.height = '60px', 50);
+}
+
+function toggleSwitch() {
+    if (!hasLiquid) {
+        logToNotebook("Please select a solution first.", true);
+        return;
+    }
+
+    isSwitchOn = !isSwitchOn;
+
+    if (isSwitchOn) {
+        // TURN ON
+        elecSwitch.classList.add('closed');
+        btnSwitch.innerHTML = `Turn Switch OFF <span class="icon-right" id="switchIcon">🛑</span>`;
+        logToNotebook("Closed the switch. Circuit is complete.");
+
+        checkConductivity();
+
+    } else {
+        // TURN OFF
+        elecSwitch.classList.remove('closed');
+        btnSwitch.innerHTML = `Turn Switch ON <span class="icon-right" id="switchIcon">🔌</span>`;
+        logToNotebook("Opened the switch. Circuit is broken.");
+
+        stopConductivity();
+    }
+}
+
+// --- SIMULATION LOGIC ---
+
+function checkConductivity() {
+    const sol = solutions[selectedSolution];
+
+    if (sol.conducts) {
+        // Conducts Electricity!
+
+        // 1. Wires turn orange
+        wireLines.forEach(w => w.classList.add('active'));
+
+        // 2. Bulb Glows
+        elecBulb.classList.add('on');
+
+        // 3. Bubbles form on nails (Electrolysis)
+        startBubbles();
+
+        // 4. Update Status Badges
+        circuitBadge.textContent = 'ON';
+        circuitBadge.style.opacity = 1;
+        circuitBadge.style.borderColor = '#eab308'; // yellow
+        circuitBadge.style.color = '#eab308';
+
+        reactionStatus.textContent = 'Current Flowing / Electrolysis';
+        reactionStatus.classList.add('active');
+
+        // 5. Log Result
+        setTimeout(() => {
+            logToNotebook(`Result: <strong>Bulb flows brightly!</strong>`, false, 'success');
+            logToNotebook(`Observation: Bubbles of gas are observed at the nails.`);
+            logToNotebook(`Conclusion: ${sol.name} contains free ions that conduct electricity.`, false, 'highlight');
+        }, 1000);
+
+    } else {
+        // Does NOT conduct
+        circuitBadge.textContent = 'FAIL';
+        circuitBadge.style.opacity = 1;
+        circuitBadge.style.borderColor = '#ef4444'; // red
+        circuitBadge.style.color = '#ef4444';
+
+        reactionStatus.textContent = 'No Current Detected';
+        reactionStatus.className = 'reaction-status';
+
+        setTimeout(() => {
+            logToNotebook(`Result: <strong>Bulb does NOT glow.</strong>`, true);
+            logToNotebook(`Conclusion: ${sol.name} does not produce ions and cannot conduct electricity.`, false, 'highlight');
+        }, 1000);
+    }
+}
+
+function stopConductivity() {
+    wireLines.forEach(w => w.classList.remove('active'));
+    elecBulb.classList.remove('on');
+    stopBubbles();
+
+    circuitBadge.style.opacity = 0;
+    reactionStatus.textContent = 'Circuit Open';
+    reactionStatus.className = 'reaction-status';
+}
+
+// --- BUBBLE ANIMATIONS ---
+
+let bubbleIntervals = [];
+
+function startBubbles() {
+    const nail1 = document.getElementById('nail1Bubbles');
+    const nail2 = document.getElementById('nail2Bubbles');
+
+    const createBubble = (container) => {
+        if (!container) return;
+        const b = document.createElement('div');
+        b.className = 'elec-bubble';
+        b.style.left = Math.random() * 20 + 'px'; // Random X position within nail width
+        // Randomize animation slightly
+        b.style.animationDuration = (1 + Math.random()) + 's';
+
+        container.appendChild(b);
+
+        // Remove after animation
+        setTimeout(() => {
+            if (b && b.parentNode) b.parentNode.removeChild(b);
+        }, 1500);
+    };
+
+    bubbleIntervals.push(setInterval(() => createBubble(nail1), 300));
+    bubbleIntervals.push(setInterval(() => createBubble(nail2), 300));
+}
+
+function stopBubbles() {
+    bubbleIntervals.forEach(clearInterval);
+    bubbleIntervals = [];
+    document.getElementById('nail1Bubbles').innerHTML = '';
+    document.getElementById('nail2Bubbles').innerHTML = '';
+}
+
+
+// --- NOTEBOOK / UTILS ---
+
+function logToNotebook(text, isWarning = false, specialClass = '') {
+    const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+    const log = document.createElement('div');
+    log.className = `log-card ${specialClass}`;
+    if (isWarning) log.style.borderLeft = '4px solid #ef4444';
+    if (specialClass === 'success') log.style.borderLeft = '4px solid #22c55e';
+    if (specialClass === 'highlight') {
+        log.style.background = '#fffbeb';
+        log.style.borderColor = '#fde68a';
+    }
+
+    log.innerHTML = `
+        <div style="font-size: 0.7rem; color: #94a3b8; margin-bottom: 4px;">[${time}]</div>
+        <div>${text}</div>
+    `;
+
+    notebookLogs.insertBefore(log, pendingLog);
+    notebookLogs.scrollTop = notebookLogs.scrollHeight;
+}
+
+function resetExperiment() {
+    if (isSwitchOn) toggleSwitch();
+
+    // Clear beaker
+    hasLiquid = false;
+    elecLiquid.style.height = '0';
+
+    // Clear logs
+    const cards = notebookLogs.querySelectorAll('.log-card:not(.pending-log)');
+    cards.forEach(c => c.remove());
+
+    // Reset selection
+    document.querySelectorAll('.choice-btn').forEach(btn => btn.classList.remove('active'));
+
+    logToNotebook("Experiment reset apparatus cleaned.");
+}
+
+// Start
+initExperiment();
+
+</script>
 </body>
 
 </html>

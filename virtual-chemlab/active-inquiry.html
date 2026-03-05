@@ -8,7 +8,907 @@
     <!-- Clean, readable fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather&display=swap"
         rel="stylesheet">
-    <link rel="stylesheet" href="/virtual-chemlab/active-inquiry.css">
+    <style>
+/* ====== ACTIVE INQUIRY: LIGHT THEME CSS ====== */
+
+:root {
+    --bg-page: #f8fafc;
+    --bg-surface: #ffffff;
+    --bg-surface-alt: #f1f5f9;
+
+    --text-primary: #1e293b;
+    --text-secondary: #64748b;
+    --text-muted: #94a3b8;
+
+    /* Indigo / Purple Accents */
+    --accent-primary: #6366f1;
+    --accent-hover: #4f46e5;
+    --accent-light: #e0e7ff;
+
+    /* Status Colors */
+    --success: #10b981;
+    --success-light: #d1fae5;
+    --warning: #f59e0b;
+    --error: #ef4444;
+
+    --border-light: #e2e8f0;
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body.light-theme {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-page);
+    color: var(--text-primary);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* HEADER */
+.app-header {
+    height: 64px;
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border-light);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 24px;
+    z-index: 10;
+}
+
+.logo-section {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.app-icon {
+    width: 40px;
+    height: 40px;
+    background: var(--accent-primary);
+    color: white;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.app-titles h1 {
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.sub-title {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.header-stats {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.stat-pill {
+    background: var(--bg-surface-alt);
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.stat-pill.rating {
+    background: #fef3c7;
+    color: #b45309;
+}
+
+.stat-pill.rating .star {
+    color: #f59e0b;
+}
+
+.stat-pill.streak {
+    background: #ffedd5;
+    color: #c2410c;
+}
+
+.user-avatar img {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #e2e8f0;
+}
+
+/* WORKSPACE LAYOUT */
+.lab-workspace {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+}
+
+.panel {
+    background: var(--bg-page);
+    display: flex;
+    flex-direction: column;
+}
+
+.left-panel {
+    width: 280px;
+    border-right: 1px solid var(--border-light);
+    overflow-y: auto;
+    background: #ffffff;
+}
+
+.center-panel {
+    flex: 1;
+    position: relative;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow-y: auto;
+}
+
+.right-panel {
+    width: 320px;
+    border-left: 1px solid var(--border-light);
+    background: #ffffff;
+}
+
+.section-title {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 16px;
+}
+
+/* LEFT PANEL (PROCEDURE) */
+.procedure-section {
+    padding: 24px;
+}
+
+.procedure-tracker {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    position: relative;
+}
+
+/* Vertical line behind dots */
+.procedure-tracker::before {
+    content: '';
+    position: absolute;
+    top: 10px;
+    bottom: 10px;
+    left: 4px;
+    width: 2px;
+    background: var(--border-light);
+    z-index: 0;
+}
+
+.proc-step {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    position: relative;
+    z-index: 1;
+    transition: 0.3s;
+}
+
+.proc-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--border-light);
+}
+
+.proc-step.active {
+    color: var(--accent-primary);
+    font-weight: 600;
+}
+
+.proc-step.active .proc-dot {
+    background: var(--accent-primary);
+    box-shadow: 0 0 0 4px var(--accent-light);
+}
+
+.proc-step.done {
+    color: var(--text-primary);
+}
+
+.proc-step.done .proc-dot {
+    background: var(--text-primary);
+}
+
+/* INVENTORY */
+.inventory-section {
+    padding: 0 24px 24px;
+}
+
+.inventory-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.inv-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    padding: 16px;
+    text-align: left;
+    transition: 0.2s;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.inv-card.selectable {
+    cursor: pointer;
+    opacity: 1;
+}
+
+.inv-card.selectable:hover {
+    border-color: var(--accent-primary);
+    box-shadow: var(--shadow-sm);
+}
+
+.inv-card.active {
+    border-color: var(--accent-primary);
+    background: var(--accent-light);
+    opacity: 1;
+}
+
+.inv-icon {
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+}
+
+.inv-card.active .inv-icon {
+    color: var(--accent-primary);
+}
+
+.inv-name {
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 2px;
+}
+
+.inv-type {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+}
+
+
+/* CENTER PANEL (WORKBENCH) */
+.workbench-container {
+    width: 100%;
+    max-width: 800px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+/* Internal Image Visualizer */
+.visualizer-card {
+    width: 100%;
+    height: 400px;
+    background: var(--bg-surface);
+    border-radius: 16px;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-light);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.image-sequence {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+}
+
+.image-frame {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    opacity: 0;
+    transition: opacity 0.5s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.image-frame.active {
+    opacity: 1;
+    z-index: 1;
+}
+
+/* In-Situ Overlay Bubbles */
+.insitu-overlay {
+    position: absolute;
+    left: 20%;
+    top: 45%;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(8px);
+    border: 1px solid var(--border-light);
+    box-shadow: var(--shadow-md);
+    padding: 12px 16px;
+    border-radius: 12px;
+    max-width: 250px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    animation: slideUpFade 0.5s ease-out;
+    z-index: 10;
+}
+
+@keyframes slideUpFade {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.insitu-overlay p {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    line-height: 1.4;
+}
+
+.info-icon {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--accent-light);
+    color: var(--accent-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+/* EXPLANATION & PACED BUTTON CARD */
+.explanation-card {
+    background: var(--bg-surface);
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-light);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.explanation-content {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+}
+
+.icon-wrap {
+    color: var(--accent-primary);
+    background: var(--accent-light);
+    padding: 12px;
+    border-radius: 12px;
+}
+
+.text-wrap h3 {
+    font-size: 1.1rem;
+    margin-bottom: 6px;
+}
+
+.text-wrap p {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.5;
+    max-width: 500px;
+}
+
+/* 5-SECOND TIMER BUTTON */
+.action-btn {
+    position: relative;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    border: none;
+    background: white;
+    box-shadow: var(--shadow-sm);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.3s;
+}
+
+.action-btn:disabled {
+    cursor: not-allowed;
+}
+
+.btn-icon {
+    color: var(--text-muted);
+    font-size: 1.2rem;
+    z-index: 2;
+    transition: 0.3s;
+}
+
+.action-btn.ready {
+    background: var(--accent-primary);
+}
+
+.action-btn.ready .btn-icon {
+    color: white;
+}
+
+/* SVG Ring Timer */
+.progress-ring {
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    transform: rotate(-90deg);
+}
+
+.ring-track {
+    stroke: var(--bg-surface-alt);
+}
+
+.ring-fill {
+    stroke: var(--accent-primary);
+    stroke-dasharray: 125.6;
+    /* 2 * PI * 20 */
+    stroke-dashoffset: 125.6;
+    transition: stroke-dashoffset 0.1s linear;
+}
+
+
+/* THOUGHT EXPERIMENT MODAL */
+.modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(30, 41, 59, 0.4);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    opacity: 1;
+    transition: 0.3s;
+}
+
+.modal-overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.thought-card {
+    background: white;
+    width: 600px;
+    border-radius: 16px;
+    box-shadow: var(--shadow-lg);
+    overflow: hidden;
+}
+
+.modal-header {
+    background: var(--bg-surface-alt);
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--accent-primary);
+    font-weight: 700;
+    font-size: 0.85rem;
+    letter-spacing: 0.05em;
+}
+
+.thought-card h2 {
+    font-family: 'Merriweather', serif;
+    padding: 24px 24px 0;
+    font-size: 1.5rem;
+}
+
+.modal-body {
+    padding: 24px;
+    display: flex;
+    gap: 24px;
+}
+
+.modal-icon-card {
+    background: var(--accent-light);
+    color: var(--accent-primary);
+    width: 140px;
+    height: 140px;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    font-weight: 700;
+    font-size: 0.8rem;
+}
+
+.modal-content p {
+    font-size: 1.05rem;
+    line-height: 1.6;
+    margin-bottom: 24px;
+    color: var(--text-primary);
+}
+
+.hypothesis-options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.hypo-btn {
+    padding: 16px;
+    border-radius: 12px;
+    border: 1px solid var(--border-light);
+    background: var(--bg-page);
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: 0.2s;
+    color: var(--text-primary);
+}
+
+.hypo-btn:hover {
+    border-color: var(--accent-primary);
+    background: var(--bg-surface);
+}
+
+.modal-footer {
+    background: var(--bg-surface-alt);
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+
+/* CAPSTONE ASSESSMENT */
+.capstone-container {
+    width: 100%;
+    max-width: 800px;
+    background: white;
+    border-radius: 16px;
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--border-light);
+    padding: 32px;
+}
+
+.capstone-container.hidden {
+    display: none;
+}
+
+.capstone-header span {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--accent-primary);
+}
+
+.capstone-header h2 {
+    font-size: 1.8rem;
+    margin: 8px 0;
+}
+
+.capstone-header p {
+    color: var(--text-secondary);
+    margin-bottom: 32px;
+}
+
+.mcq-question-box {
+    background: var(--bg-surface-alt);
+    padding: 20px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 1.1rem;
+    margin-bottom: 24px;
+}
+
+.mcq-options {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.mcq-option {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    padding: 20px;
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    background: white;
+    text-align: left;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.mcq-option:hover {
+    border-color: var(--accent-light);
+}
+
+.mcq-option.correct {
+    border-color: var(--success);
+    background: var(--success-light);
+}
+
+.mcq-option.wrong {
+    border-color: var(--accent-primary);
+    background: var(--accent-light);
+    opacity: 0.7;
+}
+
+.mcq-option .radio-circle {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid var(--border-light);
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.mcq-option.correct .radio-circle {
+    border-color: var(--success);
+    background: var(--success);
+}
+
+.mcq-option.wrong .radio-circle {
+    border-color: var(--accent-primary);
+    background: var(--accent-primary);
+    box-shadow: inset 0 0 0 4px white;
+}
+
+.option-text strong {
+    display: block;
+    font-weight: 500;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: var(--text-primary);
+}
+
+.feedback-text {
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-top: 8px;
+}
+
+.feedback-text.correct {
+    color: #065f46;
+}
+
+.feedback-text.wrong {
+    color: var(--accent-primary);
+}
+
+.feedback-text.hidden {
+    display: none;
+}
+
+
+/* RIGHT PANEL (NOTEBOOK) */
+.notebook-header {
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border-light);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--accent-primary);
+}
+
+.notebook-header h2 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.notebook-scroll-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 24px;
+    background: var(--bg-surface-alt);
+}
+
+.log-entry {
+    margin-bottom: 20px;
+}
+
+.log-time {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--accent-primary);
+    margin-bottom: 6px;
+}
+
+.log-card {
+    background: white;
+    padding: 16px;
+    border-radius: 12px 12px 12px 0;
+    box-shadow: var(--shadow-sm);
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: var(--text-secondary);
+    font-style: italic;
+    border: 1px solid var(--border-light);
+}
+
+.log-card.sys-record {
+    font-style: normal;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.log-card.highlight {
+    background: var(--accent-light);
+    border-color: var(--accent-primary);
+    color: var(--accent-primary);
+    font-style: normal;
+    font-weight: 600;
+}
+
+.notebook-input {
+    padding: 16px;
+    border-top: 1px solid var(--border-light);
+    display: flex;
+    gap: 12px;
+}
+
+.notebook-input input {
+    flex: 1;
+    padding: 12px 16px;
+    border: 1px solid var(--border-light);
+    border-radius: 20px;
+    font-family: 'Inter', sans-serif;
+}
+
+.send-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: none;
+    background: var(--accent-light);
+    color: var(--accent-primary);
+    font-size: 1.2rem;
+    cursor: pointer;
+}
+
+/* PLACEHOLDER ART FOR SVG EXPERIMENT SIMULATION */
+.placeholder-art {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.glass-beaker {
+    width: 200px;
+    height: 180px;
+    border: 6px solid #cbd5e1;
+    border-top: none;
+    border-radius: 0 0 20px 20px;
+    position: relative;
+    background: rgba(255, 255, 255, 0.5);
+    z-index: 2;
+}
+
+.liquid {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 100px;
+    background: #e0f2fe;
+    border-radius: 0 0 14px 14px;
+    transition: 1s;
+}
+
+.liquid.purple {
+    background: #e0e7ff;
+}
+
+.electrode {
+    position: absolute;
+    bottom: 10px;
+    width: 12px;
+    height: 140px;
+    background: #334155;
+    border-radius: 6px 6px 0 0;
+}
+
+.electrode.left {
+    left: 40px;
+}
+
+.electrode.right {
+    right: 40px;
+}
+
+.bulb-off,
+.bulb-on {
+    position: absolute;
+    top: 40px;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    z-index: 5;
+}
+
+.bulb-off {
+    background: #e2e8f0;
+    border: 4px solid #cbd5e1;
+}
+
+.bulb-on {
+    background: #fef08a;
+    border: 4px solid #eab308;
+    box-shadow: 0 0 40px #fef08a, inset 0 0 20px white;
+}
+
+.bubbles {
+    position: absolute;
+    top: 0;
+    left: -10px;
+    right: -10px;
+    bottom: 0;
+    background-image: radial-gradient(#fff 2px, transparent 2px);
+    background-size: 10px 10px;
+    opacity: 0.6;
+    animation: rise 2s linear infinite;
+}
+
+@keyframes rise {
+    from {
+        background-position: 0 0;
+    }
+
+    to {
+        background-position: 0 -40px;
+    }
+}
+</style>
 </head>
 
 <body class="light-theme">
@@ -329,7 +1229,272 @@
 
     </main>
 
-    <script src="/virtual-chemlab/active-inquiry.js"></script>
+    <script>
+// --- ACTIVE INQUIRY LOGIC ---
+
+// State
+let currentStep = 1;
+let selectedHypothesis = null;
+let selectedItem = null;
+let isAnimating = false;
+
+// DOM Elements
+const logContainer = document.getElementById('notebookLogs');
+const procedureTracker = document.getElementById('procedureTracker');
+const nextBtn = document.getElementById('nextStepBtn');
+const actionRing = document.getElementById('actionRing');
+const expTitle = document.getElementById('expTitle');
+const expBody = document.getElementById('expBody');
+
+const inventoryCards = document.querySelectorAll('.inv-card');
+
+// Data Definitions
+const stepData = {
+    1: {
+        title: "Setup Beaker",
+        body: "Place a clean 100ml beaker onto the workbench to prepare for the conductivity test.",
+        log: "Beaker placed on workbench. Equipment check passed.",
+        requiresInventory: false,
+        nextWait: 5000 // 5 seconds
+    },
+    2: {
+        title: "Add Solution",
+        body: "Select a solution from your Inventory and add it to the beaker.",
+        log: "Solution added to beaker.",
+        requiresInventory: true,
+        nextWait: 5000
+    },
+    3: {
+        title: "Insert Electrodes",
+        body: "Lower the graphite electrodes into the solution. Ensure the switch remains open.",
+        log: "Electrodes immersed. Circuit connected but switch open.",
+        requiresInventory: false,
+        nextWait: 5000,
+        thoughtGated: true
+    },
+    4: {
+        title: "Observe Circuit",
+        body: "Close the circuit switch and quietly observe the electrodes and the bulb.",
+        log: "Circuit closed.",
+        requiresInventory: false,
+        nextWait: 6000
+    }
+};
+
+// --- START EXPERIMENT ---
+function initExperiment() {
+    logTimeEntry(1);
+    startWaitTimer(stepData[1].nextWait);
+}
+
+// --- CORE PACING & PROGRESSION ---
+function startWaitTimer(ms) {
+    isAnimating = true;
+    nextBtn.disabled = true;
+    nextBtn.classList.remove('ready');
+
+    // Reset ring
+    actionRing.style.transition = 'none';
+    actionRing.style.strokeDashoffset = '125.6';
+
+    // Force reflow
+    void actionRing.offsetWidth;
+
+    // Animate ring
+    actionRing.style.transition = `stroke-dashoffset ${ms}ms linear`;
+    actionRing.style.strokeDashoffset = '0';
+
+    setTimeout(() => {
+        isAnimating = false;
+        enableNextStep();
+    }, ms);
+}
+
+function enableNextStep() {
+    // Only enable if we don't have pending requirements
+    if (stepData[currentStep].requiresInventory && !selectedItem) {
+        // Wait for inventory selection
+        makeInventorySelectable();
+        return;
+    }
+
+    // Check thought gate before step 3 completion
+    if (currentStep === 2 && stepData[3].thoughtGated && selectedHypothesis === null) {
+        showThoughtExperiment();
+        return;
+    }
+
+    nextBtn.disabled = false;
+    nextBtn.classList.add('ready');
+}
+
+function handleNextStep() {
+    if (isAnimating) return;
+
+    // Transition to Next Step
+    nextBtn.disabled = true;
+    nextBtn.classList.remove('ready');
+
+    const oldStep = currentStep;
+    currentStep++;
+
+    if (currentStep > 4) {
+        finishExperiment();
+        return;
+    }
+
+    // Update UI
+    updateImageFrame(oldStep, currentStep);
+    updateProcedureTracker(oldStep, currentStep);
+
+    // Update Explanation Card
+    expTitle.textContent = stepData[currentStep].title;
+    expBody.textContent = stepData[currentStep].body;
+
+    // Log old step completion / new step start
+    let logMsg = stepData[currentStep].log;
+    if (currentStep === 2 && selectedItem) {
+        logMsg = `${selectedItem} (50ml) added to the beaker. Ions beginning to disperse.`;
+    }
+    if (currentStep === 4) {
+        logMsg = `Bubbling observed at the electrodes. The circuit is now complete.`;
+    }
+
+    addLog(logMsg, currentStep === 4 ? 'highlight' : '');
+
+    // In-situ observation handle
+    if (currentStep === 4) {
+        setTimeout(() => {
+            document.getElementById('bubbleOverlay').style.display = 'flex';
+        }, 1500);
+    }
+
+    // Start timer for current step
+    startWaitTimer(stepData[currentStep].nextWait);
+}
+
+// --- VISUALIZERS ---
+function updateImageFrame(oldS, newS) {
+    document.getElementById(`frame${oldS}`).classList.remove('active');
+    document.getElementById(`frame${newS}`).classList.add('active');
+}
+
+function updateProcedureTracker(oldS, newS) {
+    document.getElementById(`step${oldS}-marker`).classList.replace('active', 'done');
+
+    if (newS <= 4) {
+        document.getElementById(`step${newS}-marker`).classList.replace('pending', 'active');
+    }
+}
+
+// --- INVENTORY ---
+function makeInventorySelectable() {
+    expBody.innerHTML = `<strong>Please select 'Dilute HCl' from the inventory to continue.</strong>`;
+
+    inventoryCards.forEach(card => {
+        card.classList.add('selectable');
+        card.addEventListener('click', function handleSelect() {
+            if (this.id !== 'inv-hcl') {
+                addLog("System Warning: Please select Dilute HCl for this controlled prototype.", "sys-record");
+                return;
+            }
+
+            // Valid selection
+            inventoryCards.forEach(c => {
+                c.classList.remove('selectable', 'active');
+                c.removeEventListener('click', handleSelect);
+            });
+
+            this.classList.add('active');
+            selectedItem = "Dilute HCl";
+            addLog(`Selected: Dilute HCl (Strong Acid)`);
+
+            expBody.textContent = stepData[currentStep].body;
+            enableNextStep(); // Button is now ready
+        });
+    });
+}
+
+// --- THOUGHT EXPERIMENT ---
+function showThoughtExperiment() {
+    document.getElementById('thoughtModal').classList.remove('hidden');
+}
+
+function submitHypothesis(isCorrect) {
+    selectedHypothesis = isCorrect;
+    document.getElementById('thoughtModal').classList.add('hidden');
+
+    addLog(`Hypothesis logged: The bulb will not glow if solid NaCl is used.`);
+
+    // Now enable the button
+    enableNextStep();
+}
+
+// --- CAPSTONE MCQ ---
+function finishExperiment() {
+    document.getElementById('workbenchView').style.display = 'none';
+    document.getElementById('capstoneView').style.display = 'block';
+    document.getElementById('capstoneView').classList.remove('hidden');
+
+    addLog(`Experiment practical complete. Awaiting final assessment.`, 'sys-record');
+}
+
+function selectFinalAnswer(btn, isCorrect) {
+    // Disable all options
+    document.querySelectorAll('.mcq-option').forEach(opt => {
+        opt.style.pointerEvents = 'none';
+        opt.classList.remove('correct', 'wrong');
+        opt.querySelector('.feedback-text').classList.add('hidden');
+    });
+
+    if (isCorrect) {
+        btn.classList.add('correct');
+        btn.querySelector('.feedback-text').classList.remove('hidden');
+
+        setTimeout(() => {
+            addLog(`FINAL INFERENCE KEY: HCl is a strong acid that completely dissociates into free-moving ions in water, which act as charge carriers.`, 'highlight');
+            updateStreak();
+        }, 1000);
+
+    } else {
+        btn.classList.add('wrong');
+        btn.querySelector('.feedback-text').classList.remove('hidden');
+    }
+}
+
+
+// --- UTILS ---
+function addLog(text, customClass = '') {
+    const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    const html = `
+    <div class="log-entry">
+        <div class="log-time">${time}</div>
+        <div class="log-card ${customClass}">
+            ${text}
+        </div>
+    </div>`;
+
+    logContainer.insertAdjacentHTML('beforeend', html);
+    logContainer.scrollTop = logContainer.scrollHeight;
+}
+
+function logTimeEntry() {
+    document.getElementById('logTime1').textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+function updateStreak() {
+    document.querySelector('.streak').innerHTML = `<span class="flame">🔥</span> Streak: 13`;
+    document.querySelector('.streak').style.transform = 'scale(1.1)';
+    setTimeout(() => { document.querySelector('.streak').style.transform = ''; }, 300);
+}
+
+// Start
+initExperiment();
+// Hide bubble initially
+document.getElementById('bubbleOverlay').style.display = 'none';
+
+</script>
 </body>
 
 </html>
