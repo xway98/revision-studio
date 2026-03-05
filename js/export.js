@@ -8,17 +8,27 @@ function loadHTML(e) {
     const meta = doc.getElementById('studio-save-data');
     if (meta) {
       try {
-        const data = JSON.parse(decodeURIComponent(atob(meta.getAttribute('content'))));
+        const raw = decodeURIComponent(atob(meta.getAttribute('content')));
+        const parsed = JSON.parse(raw);
+        let data = parsed;
+        if (Array.isArray(parsed)) {
+          data = { cardData: parsed, globalConfig: {} };
+        }
         cardData = data.cardData.map(c => {
           if (c.img && !c.imgs) { c.imgs = [c.img]; delete c.img; }
+          if (!c.imgs) c.imgs = [];
           c.imgs = c.imgs.map(i => ({ crop: { t: 0, r: 0, b: 0, l: 0 }, ...i }));
+          if (!c.texts) c.texts = [];
           return c;
         });
-        globalConfig = { bg: { color: '#fff', imgUrl: '' }, progress: { show: true }, transition: { type: 'fade' }, customFont: { url: '', name: '' }, logo: { url: '', width: 25, x: 50, y: 92 }, export: { scriptUrl: '' }, drive: { clientId: '', folderId: '' }, ...data.globalConfig };
+        globalConfig = { bg: { color: '#fff', imgUrl: '' }, progress: { show: true }, transition: { type: 'fade' }, customFont: { url: '', name: '' }, logo: { url: '', width: 25, x: 50, y: 92 }, export: { scriptUrl: '' }, drive: { clientId: '', folderId: '' }, ...(data.globalConfig || {}) };
         if (globalConfig.customFont?.url) applyFontLink(globalConfig.customFont.url);
         activeCardIdx = 0; hist = []; histIdx = -1; deselectEl(); renderAll();
         alert('Loaded successfully!');
-      } catch (err) { alert('Error parsing file.'); }
+      } catch (err) {
+        console.error("Studio File Parse Error:", err);
+        alert('Error parsing file: ' + err.message);
+      }
     } else alert('No save data found.');
   };
   reader.readAsText(file); e.target.value = '';
