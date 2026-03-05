@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gamified Virtual Lab - Preparation of HCl Gas</title>
+    <!-- Modern Tech Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Rajdhani:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="gamified-lab.css">
+</head>
+
+<body class="dark-theme">
+
+    <!-- Top Gamification Header -->
+    <header class="gamified-header">
+        <div class="lab-title">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round" class="neon-icon blue">
+                <path d="M9 3H15M10 3V9L5 18C4.5 19 5 21 6.5 21H17.5C19 21 19.5 19 19 18L14 9V3"></path>
+                <path d="M5.5 16H18.5"></path>
+            </svg>
+            <h1>NEXUS <span>CHEM LAB</span></h1>
+        </div>
+
+        <div class="player-stats">
+            <div class="stat-badge elo-rating">
+                <span class="stat-icon">⭐</span>
+                <span class="stat-label">RATING</span>
+                <span class="stat-value" id="eloScore">1200</span>
+            </div>
+            <div class="stat-badge burn-streak">
+                <span class="stat-icon flame">🔥</span>
+                <span class="stat-label">STREAK</span>
+                <span class="stat-value">12</span>
+            </div>
+            <div class="user-avatar">
+                <img src="https://api.dicebear.com/7.x/bottts/svg?seed=Neon&backgroundColor=0ea5e9" alt="User Avatar">
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <main class="lab-dashboard">
+
+        <!-- Panel 1: Progress & Inventory -->
+        <aside class="panel left-panel">
+
+            <section class="progress-section">
+                <h2 class="panel-heading">MISSION LOG</h2>
+                <div class="timeline-tracker" id="progressTracker">
+                    <div class="timeline-step active" id="step1-marker">
+                        <div class="node"></div>
+                        <div class="label">1. Set up Apparatus</div>
+                    </div>
+                    <div class="timeline-step pending" id="step2-marker">
+                        <div class="node"></div>
+                        <div class="label">2. Add H₂SO₄</div>
+                    </div>
+                    <div class="timeline-step pending" id="step3-marker">
+                        <div class="node"></div>
+                        <div class="label">3. Dry Litmus Test</div>
+                    </div>
+                    <div class="timeline-step pending" id="step4-marker">
+                        <div class="node"></div>
+                        <div class="label">4. Moist Litmus Test</div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="inventory-section">
+                <h2 class="panel-heading">CHEMICAL INVENTORY</h2>
+                <div class="inventory-grid">
+
+                    <button class="inv-card neon-border orange" data-item="NaCl" onclick="selectItem('NaCl')">
+                        <div class="card-icon">🧂</div>
+                        <div class="card-title">Solid NaCl</div>
+                        <div class="card-sub">Sodium Chloride</div>
+                    </button>
+
+                    <button class="inv-card neon-border orange" data-item="H2SO4" onclick="selectItem('H2SO4')">
+                        <div class="card-icon">🧪</div>
+                        <div class="card-title">Conc. H₂SO₄</div>
+                        <div class="card-sub">Sulphuric Acid</div>
+                    </button>
+
+                    <button class="inv-card neon-border blue" data-item="DryLitmus" onclick="selectItem('DryLitmus')">
+                        <div class="card-icon">📄</div>
+                        <div class="card-title">Dry Litmus</div>
+                        <div class="card-sub">Blue Paper</div>
+                    </button>
+
+                    <button class="inv-card neon-border blue" data-item="MoistLitmus"
+                        onclick="selectItem('MoistLitmus')">
+                        <div class="card-icon">💧</div>
+                        <div class="card-title">Moist Litmus</div>
+                        <div class="card-sub">Wet Blue Paper</div>
+                    </button>
+
+                </div>
+            </section>
+        </aside>
+
+        <!-- Panel 2: Center Workbench -->
+        <section class="panel center-panel">
+
+            <div class="workbench-header">
+                <h3>WORKBENCH <span class="badge" id="currentActionBadge">AWAITING INPUT</span></h3>
+                <div class="tech-lines"></div>
+            </div>
+
+            <div class="viewer-container">
+                <!-- Static Image Simulator Layer -->
+                <div class="image-layer current" id="imgLayer1">
+                    <div class="placeholder empty-scene">
+                        <span class="icon">🔬</span>
+                        <p>Apparatus Setup: Test tube with Solid NaCl</p>
+                    </div>
+                </div>
+
+                <div class="image-layer" id="imgLayer2">
+                    <div class="placeholder mixing-scene">
+                        <span class="icon">♨️</span>
+                        <p>H₂SO₄ added to NaCl -> Effervescence observed</p>
+                    </div>
+                </div>
+
+                <div class="image-layer" id="imgLayer3">
+                    <div class="placeholder test-scene">
+                        <span class="icon">📄</span>
+                        <p>Dry Blue Litmus brought near gas -> No Color Change</p>
+                    </div>
+                </div>
+
+                <div class="image-layer" id="imgLayer4">
+                    <div class="placeholder result-scene">
+                        <span class="icon">🟥</span>
+                        <p>Moist Blue Litmus brought near gas -> Turns RED</p>
+                    </div>
+                </div>
+
+                <!-- Scanning HUD Overlay -->
+                <div class="scanner-hud">
+                    <div class="crosshair tl"></div>
+                    <div class="crosshair tr"></div>
+                    <div class="crosshair bl"></div>
+                    <div class="crosshair br"></div>
+                </div>
+            </div>
+
+            <!-- Prominent Action Bar -->
+            <div class="action-bar ui-container">
+                <div class="action-info">
+                    <span class="label">SELECTED ITEM:</span>
+                    <strong id="selectedItemDisplay" class="neon-text none">NONE</strong>
+                </div>
+
+                <div class="action-toggle">
+                    <label class="mech-switch">
+                        <input type="checkbox" id="mainActionToggle" disabled onchange="executeAction()">
+                        <span class="slider"></span>
+                        <span class="switch-label text-off">ENGAGE</span>
+                        <span class="switch-label text-on">ACTIVE</span>
+                    </label>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- Panel 3: Lab Notebook & Takeaway -->
+        <aside class="panel right-panel">
+            <h2 class="panel-heading">DATA TERMINAL</h2>
+
+            <div class="terminal-container">
+                <div class="terminal-logs" id="terminalLogs">
+                    <div class="log-line sys">[SYSTEM] Boot sequence initiated...</div>
+                    <div class="log-line sys">[SYSTEM] Activity 2.9 Loaded.</div>
+                    <div class="log-line info">Mission: Observe acidic properties of HCl gas.</div>
+                    <div class="log-line prompt">>> Awaiting user selection from inventory.</div>
+                </div>
+            </div>
+
+            <!-- Secured Takeaway Section -->
+            <div class="takeaway-section">
+                <h2 class="panel-heading">INFERENCE SECURED</h2>
+                <div class="takeaway-card locked" id="takeawayCard">
+
+                    <div class="lock-overlay" id="lockOverlay">
+                        <div class="lock-icon">🔒</div>
+                        <span>COMPLETE MISSION TO DECRYPT</span>
+                    </div>
+
+                    <div class="decrypted-content">
+                        <h4>MISSION CONCLUSION</h4>
+                        <p><strong>Result:</strong> Dry HCl gas does not change the colour of dry litmus paper. HCl
+                            solution changes moist blue litmus to red.</p>
+                        <p><strong>Inference:</strong> Hydrogen ions in HCl are produced only in the presence of water.
+                            The separation of H+ ions from HCl molecules cannot occur in the absence of water.</p>
+
+                        <div class="success-banner">
+                            <span>MISSION SUCCESS</span>
+                            <span class="xp-gain">+150 XP</span>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </aside>
+
+    </main>
+
+    <script src="hcl-preparation.js"></script>
+</body>
+
+</html>

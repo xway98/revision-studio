@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Virtual ChemLab - Electricity</title>
+    <!-- Google Fonts for modern typography -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="electricity.css">
+</head>
+
+<body>
+
+    <!-- Top Navigation Area -->
+    <nav class="navbar">
+        <div class="nav-brand">
+            <div class="logo">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M13 2L3 14H12L11 22L21 10H12L13 2Z" stroke="#ea580c" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+            </div>
+            <h1><strong>Virtual</strong> ChemLab</h1>
+        </div>
+        <div class="nav-links">
+            <a href="index.html">Experiments</a>
+            <a href="#" class="active">Electricity (Act 2.3)</a>
+            <a href="#">Safety Guide</a>
+        </div>
+        <div class="nav-actions">
+            <!-- User Profile (same as index) -->
+            <div class="user-profile">
+                <img src="https://api.dicebear.com/7.x/notionists/svg?seed=Felix&backgroundColor=ea580c"
+                    alt="User Profile" class="avatar">
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Workspace -->
+    <main class="dashboard">
+
+        <!-- Left Controls Sidebar -->
+        <aside class="left-panel">
+            <div class="panel-header">
+                <span class="experiment-id">ACTIVITY 2.3</span>
+                <h2>Electrical Conductivity of Solutions</h2>
+            </div>
+
+            <div class="control-group">
+                <label>1. Select Solution</label>
+                <div class="button-list">
+                    <button class="choice-btn active" data-solution="HCl" onclick="selectSolution('HCl')">
+                        <span class="droplet-icon">💧</span>
+                        Dilute HCl
+                    </button>
+                    <button class="choice-btn" data-solution="H2SO4" onclick="selectSolution('H2SO4')">
+                        <span class="droplet-icon">💧</span>
+                        Dilute H₂SO₄
+                    </button>
+                    <button class="choice-btn" data-solution="Glucose" onclick="selectSolution('Glucose')">
+                        <span class="droplet-icon">🧪</span>
+                        Glucose Solution
+                    </button>
+                    <button class="choice-btn" data-solution="Alcohol" onclick="selectSolution('Alcohol')">
+                        <span class="droplet-icon">🧪</span>
+                        Alcohol Solution
+                    </button>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label>2. Circuit Actions</label>
+                <div class="button-list">
+                    <button class="action-btn" id="btnSwitch" onclick="toggleSwitch()">
+                        Turn Switch ON
+                        <span class="icon-right" id="switchIcon">🔌</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="tip-box">
+                <p><em><strong>Tip:</strong> Observe the bulb. If the solution contains free ions, it will conduct
+                        electricity and the bulb will glow.</em></p>
+            </div>
+        </aside>
+
+        <!-- Center Simulation Canvas -->
+        <section class="center-panel">
+            <div class="simulation-card">
+                <div class="sim-header">
+                    <div class="live-status">
+                        <span class="recording-dot"></span> LIVE SIMULATION
+                    </div>
+                    <div class="molecule-badge" id="circuitBadge">OFF</div>
+                </div>
+
+                <div class="sim-stage">
+                    <div class="apparatus-container"
+                        style="width:500px; height:400px; display:flex; justify-content:center; align-items:flex-end; padding-bottom:50px;">
+
+                        <!-- Battery -->
+                        <div class="elec-battery">
+                            <div class="batt-term pos">+</div>
+                            <div class="batt-body">6V</div>
+                            <div class="batt-term neg">-</div>
+                        </div>
+
+                        <!-- Bulb -->
+                        <div class="elec-bulb" id="elecBulb">
+                            <div class="bulb-glass"></div>
+                            <div class="bulb-filament"></div>
+                            <div class="bulb-base"></div>
+                            <div class="bulb-glow" id="bulbGlow"></div>
+                        </div>
+
+                        <!-- Switch -->
+                        <div class="elec-switch" id="elecSwitch">
+                            <div class="switch-node node-left"></div>
+                            <div class="switch-arm"></div>
+                            <div class="switch-node node-right"></div>
+                        </div>
+
+                        <!-- Beaker -->
+                        <div class="elec-beaker">
+                            <div class="elec-liquid" id="elecLiquid"></div>
+
+                            <!-- Cork and Nails inside Beaker -->
+                            <div class="elec-cork">
+                                <div class="elec-nail" style="left: 15px;">
+                                    <div class="nail-bubbles" id="nail1Bubbles"></div>
+                                </div>
+                                <div class="elec-nail" style="right: 15px;">
+                                    <div class="nail-bubbles" id="nail2Bubbles"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Wires (SVG overlay for easy routing) -->
+                        <svg class="wire-svg" width="500" height="400"
+                            style="position:absolute; top:0; left:0; pointer-events:none; z-index:0;">
+                            <!-- Bat Positive -> Bulb -->
+                            <path class="wire-line" d="M 80 80 L 80 30 L 250 30 L 250 60" />
+                            <!-- Bulb -> Switch -->
+                            <path class="wire-line" d="M 280 60 L 280 30 L 420 30 L 420 80" />
+                            <!-- Bat Negative -> Nail 1 -->
+                            <path class="wire-line" d="M 80 180 L 80 360 L 205 360 L 205 280" />
+                            <!-- Switch -> Nail 2 -->
+                            <path class="wire-line" d="M 420 120 L 420 360 L 295 360 L 295 280" />
+                        </svg>
+
+                    </div>
+                </div>
+
+                <div class="sim-footer">
+                    <div class="sim-tabs">
+                        <button class="active">CIRCUIT</button>
+                    </div>
+                    <div class="reaction-status" id="reactionStatus">Circuit Open</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Right Lab Notebook Sidebar -->
+        <aside class="right-panel">
+            <div class="notebook-header">
+                <h3>Lab Notebook</h3>
+            </div>
+            <div class="notebook-logs" id="notebookLogs">
+                <div class="log-card pending-log" id="pendingLog">
+                    Waiting for selection...
+                </div>
+            </div>
+            <div class="notebook-footer">
+                <button class="btn-secondary" onclick="resetExperiment()">Reset Circuit</button>
+            </div>
+        </aside>
+
+    </main>
+
+    <script src="electricity.js"></script>
+</body>
+
+</html>

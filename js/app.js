@@ -79,6 +79,7 @@ function renderAll() {
   renderCanvas();
   renderPropsPanel();
   syncGlobalUI();
+  if (typeof syncExperimentUI === 'function') syncExperimentUI();
   resizeCanvas();
 }
 

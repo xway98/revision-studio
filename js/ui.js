@@ -32,7 +32,31 @@ function toggleGlobal() {
 function renderPropsPanel() {
   const empty = document.getElementById('prop-empty-state');
   const content = document.getElementById('prop-content');
-  if (!sel.type) { empty.style.display = 'flex'; content.style.display = 'none'; return; }
+
+  if (cardData[0] && cardData[0].type === 'html_experiment') {
+    empty.style.display = 'flex'; content.style.display = 'none';
+    empty.innerHTML = `
+      <span style="font-size:2rem;margin-bottom:12px">⚙️</span>
+      <p style="color:#64748b;font-size:0.9rem">Properties are disabled for interactive HTML experiments.</p>`;
+    return;
+  }
+
+  // Restore regular empty state if normal cards
+  if (!sel.type) {
+    empty.style.display = 'flex'; content.style.display = 'none';
+    empty.innerHTML = `
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#1abc9c" stroke-width="1.5">
+        <rect x="3" y="3" width="18" height="18" rx="2" />
+        <path d="M8 12h8M12 8v8" />
+      </svg>
+      <p>Click any element on the canvas to edit its properties here</p>
+      <div class="prop-add-btns">
+        <button class="add-el-btn ct-text" onclick="addTextToActive()">+ Text</button>
+        <button class="add-el-btn ct-img" onclick="addImgToActive()">+ Image</button>
+      </div>`;
+    return;
+  }
+
   empty.style.display = 'none'; content.style.display = 'block';
   const fonts = getFonts();
 
@@ -169,10 +193,24 @@ function richCmd(cmd, val) {
 
 function renderCardsList() {
   const list = document.getElementById('cards-list');
+  const addBtn = document.getElementById('add-card-btn');
+
+  if (cardData[0] && cardData[0].type === 'html_experiment') {
+    list.innerHTML = `
+      <div style="padding:16px;color:#cbd5e1;text-align:center;font-size:0.9rem;background:#0f172a;margin:16px;border-radius:8px;">
+        <i>Single HTML File Loaded</i>
+      </div>`;
+    if (addBtn) addBtn.style.display = 'none';
+    document.getElementById('card-counter').textContent = `Experiment View`;
+    return;
+  }
+
+  if (addBtn) addBtn.style.display = 'block';
+
   list.innerHTML = cardData.map((c, i) => `
     <div class="card-pill${i === activeCardIdx ? ' active' : ''}" onclick="deselectEl();activeCardIdx=${i};renderAll();pushHash();">
       <span class="card-pill-num">${i + 1}</span>
-      <span class="card-pill-title">${c.header.text || '(untitled)'}</span>
+      <span class="card-pill-title">${c.header?.text || '(untitled)'}</span>
       <span class="card-pill-btns">
         <button class="cpb cpb-dup" onclick="duplicateCard(${i},event)">⧉</button>
         <button class="cpb cpb-del" onclick="deleteCard(${i},event)">✕</button>
@@ -197,7 +235,6 @@ function syncGlobalUI() {
   s('drive-client-id', globalConfig.drive?.clientId || '');
   s('drive-folder-id', globalConfig.drive?.folderId || '');
 }
-
 
 // --- DASHBOARD LOGIC ---
 
@@ -263,6 +300,7 @@ async function initHub() {
   appMode = 'dashboard';
   document.getElementById('editor-view').style.display = 'none';
   document.getElementById('dashboard-view').style.display = 'flex';
+  document.getElementById('experiment-builder').style.display = 'none'; // Ensure experiment builder is hidden
 
   if (!currentUser) {
     document.getElementById('login-modal').style.display = 'flex';
@@ -395,32 +433,59 @@ function renderHubContent(chaptersObj, pubList = null) {
 
   // ============== STANDARD SUBJECT CHAPTER DASHBOARD ==============
   const chapters = Object.keys(chaptersObj).sort();
-  if (chapters.length === 0) {
-    cont.innerHTML = `<div style="color:#64748b;font-size:14px;">No chapters yet. Click '+ Create New Chapter' to begin.</div>`;
-    return;
-  }
 
   let html = `<div class="chapter-grid">`;
 
-  chapters.forEach(chap => {
+  // A preset list of pastel background colors and simple emojis to simulate the card icons
+  const designCards = [
+    { bg: '#e0e7ff', icon: '📘' }, // indigo-100
+    { bg: '#f3e8ff', icon: '⚙️' }, // purple-100
+    { bg: '#fae8ff', icon: '💡' }, // fuchsia-100
+    { bg: '#ccfbf1', icon: '🌊' }, // teal-100
+    { bg: '#fce7f3', icon: '🚀' }, // pink-100
+    { bg: '#fee2e2', icon: '📦' }, // red-100
+    { bg: '#ffedd5', icon: '🌡️' }  // orange-100
+  ];
+
+  chapters.forEach((chap, idx) => {
     const topicsList = chaptersObj[chap].filter(t => t !== '_placeholder').sort();
+
+    // Cycle through designs
+    const design = designCards[idx % designCards.length];
 
     // Add admin delete button if applicable
     let delBtn = '';
     if (currentUser === 'admin') {
-      delBtn = `<button class="admin-delete-btn chapter-delete-btn" onclick="event.stopPropagation(); deleteChapter('${chap}')" title="Delete Chapter">
+      delBtn = `<button class="admin-delete-btn chapter-delete-btn" style="position:absolute; top:10px; right:10px;" onclick="event.stopPropagation(); deleteChapter('${chap}')" title="Delete Chapter">
                   <i style="pointer-events:none;">🗑</i>
                 </button>`;
     }
 
-    html += `<div class="chapter-card" style="cursor:pointer;" onclick="openTopicSidebar('${currentSubject}', '${chap}')">
-              <div class="card-title">${chap} ${delBtn}</div>
-              <div class="card-tags">
-                <span class="card-tag tag-subject">${currentSubject}</span>
-                <span class="card-tag tag-count">${topicsList.length} Topic(s)</span>
-              </div>
-             </div>`;
+    html += `
+      <div class="chapter-card" style="cursor:pointer; position:relative;" onclick="openTopicSidebar('${currentSubject}', '${chap}')">
+        ${delBtn}
+        <div class="card-icon-area" style="background:${design.bg};">
+          ${design.icon}
+        </div>
+        <div class="card-info">
+          <div class="card-meta">
+            <span class="tag-subject">${currentSubject}</span>
+            <span class="dot">•</span>
+            <span>${topicsList.length} Topic${topicsList.length !== 1 ? 's' : ''}</span>
+          </div>
+          <h3 class="card-title">${chap}</h3>
+        </div>
+      </div>
+    `;
   });
+
+  // Always show the Add New Chapter card at the end
+  html += `
+    <div class="add-new-card" onclick="openCreateChapterModal()">
+      <div class="plus-icon">+</div>
+      <span>Add New Chapter</span>
+    </div>
+  `;
 
   html += `</div>`;
   cont.innerHTML = html;
@@ -650,12 +715,18 @@ async function openTopic(chap, top) {
 }
 
 function openEditor(chap, top, isNew) {
+  if (currentSubject === 'Interactive Experiments') {
+    openExperimentBuilder(chap, top, isNew);
+    return;
+  }
+
   currentChapter = chap; currentTopic = top; appMode = 'editor';
   if (isNew) {
     cardData = [{ type: 'revision', header: { text: top, font: 'Arial', size: 22, color: '#ffffff', bgColor: '#3498db', bgAlpha: 100, x: 50, y: 7, width: 90, borderW: 0, borderC: '#000', borderR: 8, shadowBlur: 0, shadowAlpha: 50, shadowColor: '#000' }, texts: [{ text: 'Tap to edit this text box', font: 'Arial', size: 17, x: 50, y: 44, align: 'center', color: '#2c3e50', weight: 'normal', lineSpace: 1.5, width: 85 }], imgs: [] }];
     if (typeof triggerAutoSave === 'function') triggerAutoSave(true);
   }
   document.getElementById('dashboard-view').style.display = 'none';
+  document.getElementById('experiment-builder').style.display = 'none';
   document.getElementById('editor-view').style.display = 'flex';
   activeCardIdx = 0; hist = []; histIdx = -1; deselectEl(); renderAll(); pushHist(); pushHash();
 }

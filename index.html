@@ -61,39 +61,79 @@
 
       <!-- LEFT SIDEBAR -->
       <div id="hub-sidebar">
-        <div class="sidebar-logo" style="flex-direction: column; align-items: flex-start; gap: 8px; font-size: 18px;">
-          <img src="https://lh3.googleusercontent.com/d/1t6B1qOkP-i9U_fXM_diVz9Bk31aqMitv" style="height: 20px;">
-          <span>Revision Card Studio</span>
+        <div class="sidebar-logo">
+          <div class="logo-top">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect width="24" height="24" rx="6" fill="#3b82f6" />
+              <path d="M7 8H17V10H7V8ZM10 13H17V15H10V13Z" fill="white" />
+            </svg>
+            <span class="logo-text">UPRIO</span>
+          </div>
+          <div class="logo-subtext">REVISION STUDIO</div>
         </div>
 
         <div class="sidebar-nav">
           <div class="sidebar-group">
             <div class="sidebar-group-title">SUBJECTS</div>
-            <div class="sidebar-tab active" onclick="setSubject('Physics')">⚛️ Physics</div>
-            <div class="sidebar-tab" onclick="setSubject('Chemistry')">🧪 Chemistry</div>
-            <div class="sidebar-tab" onclick="setSubject('Biology')">🧬 Biology</div>
+            <div class="sidebar-tab active" onclick="setSubject('Physics')">
+              <span class="tab-icon">⚛️</span> Physics
+            </div>
+            <div class="sidebar-tab" onclick="setSubject('Chemistry')">
+              <span class="tab-icon">🔬</span> Chemistry
+            </div>
+            <div class="sidebar-tab" onclick="setSubject('Biology')">
+              <span class="tab-icon">🌿</span> Biology
+            </div>
+          </div>
+
+          <div class="sidebar-group">
+            <div class="sidebar-group-title">EXPERIMENTS</div>
+            <div class="sidebar-tab" onclick="setSubject('Interactive Experiments')">
+              <span class="tab-icon">🧪</span> Interactive Experiments
+            </div>
           </div>
 
           <div class="sidebar-group">
             <div class="sidebar-group-title">EXPORT</div>
-            <div class="sidebar-tab published-tab" onclick="setSubject('Published Links')">🔗 Published Links</div>
+            <div class="sidebar-tab" onclick="setSubject('Published Links')">
+              <span class="tab-icon">🔗</span> Published Links
+            </div>
           </div>
         </div>
 
         <div class="sidebar-footer">
-          <div>Logged in as: <strong id="hub-user-disp"></strong></div>
-          <button onclick="logoutAdmin()"
-            style="margin-top:5px;background:none;border:none;color:#ef4444;cursor:pointer;font-weight:bold;font-size:12px;padding:0;">Logout
-            Account</button>
+          <div class="sidebar-tab" style="padding-left:0; pointer-events:none;">
+            <span class="tab-icon">🛡️</span> <span id="hub-user-disp">Admin</span>
+          </div>
+          <button class="logout-btn" onclick="logoutAdmin()">
+            <span class="tab-icon" style="color:#ef4444;">⎋</span> Logout
+          </button>
         </div>
       </div>
 
       <!-- MAIN CONTENT AREA -->
       <div id="hub-main">
         <div id="hub-header">
-          <h1 id="hub-title-disp">Physics</h1>
-          <button id="btn-create-chapter" class="add-new-btn" onclick="openCreateChapterModal()">+ Create New
-            Chapter</button>
+          <div class="header-titles">
+            <h1 id="hub-title-disp">Physics</h1>
+            <p id="hub-subtitle-disp">Manage and organize your physics revision chapters.</p>
+          </div>
+
+          <div class="header-actions">
+            <div class="search-bar">
+              <span class="search-icon">🔍</span>
+              <input type="text" id="chapter-search" placeholder="Search chapters..."
+                onkeyup="filterChapters(this.value)">
+            </div>
+            <button id="btn-create-chapter" class="add-new-btn" onclick="openCreateChapterModal()">+ Create New
+              Chapter</button>
+          </div>
+        </div>
+
+        <!-- Subtabs Filter -->
+        <div class="hub-subtabs">
+          <div class="subtab active">All Chapters</div>
+          <div class="subtab">Archived</div>
         </div>
 
         <div id="hub-content">
@@ -128,7 +168,9 @@
           <button class="tb tb-undo" id="btn-redo" onclick="redo()" disabled>↪</button>
           <label class="tb tb-load" style="cursor:pointer;">📂 Load
             <input type="file" accept=".html" style="display:none;" onchange="loadHTML(event)">
-          </label>
+            <label class="tb tb-load" style="cursor:pointer;" title="Upload an HTML Experiment">🧪 Upload Exp. HTML
+              <input type="file" accept=".html" style="display:none;" onchange="loadExperimentHTML(event)">
+            </label>
         </div>
       </div>
 
@@ -213,6 +255,9 @@
           </div>
         </div>
       </div>
+
+
+
     </div>
 
     <!-- ════════════════════════════ RIGHT PANE ════════════════════════════ -->
@@ -272,6 +317,118 @@
     </div>
   </div>
   </div> <!-- END EDITOR VIEW -->
+
+  <!-- ════════════════════════════ EXPERIMENT BUILDER VIEW ════════════════════════════ -->
+  <div id="experiment-builder" style="display:none;width:100%;height:100%;background:#f1f5f9;flex-direction:row;">
+    <!-- LEFT: Steps List -->
+    <div style="width:260px;background:#fff;border-right:1px solid #e2e8f0;display:flex;flex-direction:column;">
+      <div
+        style="padding:15px;border-bottom:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;">
+        <h2 style="font-size:14px;color:#0f172a;margin:0;">Interactive Steps</h2>
+        <button style="background:none;border:none;font-size:18px;cursor:pointer;color:#3b82f6;" onclick="expAddStep()"
+          title="Add Step">＋</button>
+      </div>
+      <div id="exp-steps-list" style="flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px;">
+        <!-- Steps rendered here -->
+      </div>
+      <div style="padding:15px;border-top:1px solid #e2e8f0;">
+        <button class="ct-btn" style="width:100%;background:#f1f5f9;color:#334155;border:1px solid #cbd5e1;"
+          onclick="closeExperimentBuilder()">🏠 Hub</button>
+      </div>
+    </div>
+
+    <!-- MIDDLE: Form Editor -->
+    <div
+      style="flex:1;display:flex;flex-direction:column;max-width:400px;background:#fff;border-right:1px solid #e2e8f0;">
+      <div
+        style="padding:15px;border-bottom:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;">
+        <h2 style="font-size:16px;color:#0f172a;margin:0;" id="exp-step-title">Step Details</h2>
+        <button style="background:none;border:none;cursor:pointer;color:#ef4444;font-size:12px;font-weight:bold;"
+          onclick="expDeleteStep()">🗑 Delete</button>
+      </div>
+      <div style="padding:20px;display:flex;flex-direction:column;gap:16px;overflow-y:auto;">
+        <div>
+          <label
+            style="display:block;font-size:11px;font-weight:700;color:#64748b;margin-bottom:6px;text-transform:uppercase;">Image/Asset
+            URL for this step</label>
+          <input type="text" id="exp-img-url" placeholder="Paste image URL here..."
+            style="width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;"
+            oninput="expUpdateField('image', this.value)">
+          <div style="font-size:10px;color:#94a3b8;margin-top:4px;">When changing to this step, this image will stack
+            over previous images.</div>
+        </div>
+        <div>
+          <label
+            style="display:block;font-size:11px;font-weight:700;color:#64748b;margin-bottom:6px;text-transform:uppercase;">Procedure
+            (What to do)</label>
+          <textarea id="exp-text-procedure" placeholder="e.g. Add 5g of Zinc..."
+            style="width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;min-height:80px;resize:vertical;"
+            oninput="expUpdateField('procedure', this.value)"></textarea>
+        </div>
+        <div>
+          <label
+            style="display:block;font-size:11px;font-weight:700;color:#64748b;margin-bottom:6px;text-transform:uppercase;">Observation
+            (What happens)</label>
+          <textarea id="exp-text-observation" placeholder="e.g. Effervescence..."
+            style="width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;min-height:80px;resize:vertical;"
+            oninput="expUpdateField('observation', this.value)"></textarea>
+        </div>
+        <div>
+          <label
+            style="display:block;font-size:11px;font-weight:700;color:#64748b;margin-bottom:6px;text-transform:uppercase;">Takeaway
+            (Learn)</label>
+          <textarea id="exp-text-takeaway" placeholder="e.g. Hydrogen gas formed..."
+            style="width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;min-height:80px;resize:vertical;"
+            oninput="expUpdateField('takeaway', this.value)"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Preview Stack -->
+    <div style="flex:1.5;display:flex;flex-direction:column;position:relative;">
+      <div
+        style="padding:15px;background:#fff;border-bottom:1px solid #e2e8f0;display:flex;justify-content:flex-end;gap:10px;">
+        <span id="exp-save-status" style="margin-right:auto;align-self:center;font-size:12px;color:#64748b;"></span>
+        <button class="ct-btn" style="background:#22c55e;color:#fff;" onclick="expPublish()">☁️ Publish
+          Experim.</button>
+      </div>
+
+      <div style="flex:1;padding:20px;display:flex;align-items:center;justify-content:center;">
+        <!-- The Preview Device -->
+        <div
+          style="width:100%;max-width:600px;height:500px;background:#fff;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,0.05);border:1px solid #e2e8f0;display:flex;overflow:hidden;">
+
+          <!-- Image Stack Area -->
+          <div id="exp-preview-stack"
+            style="flex:1;position:relative;background:#f8fafc;border-right:1px solid #e2e8f0;overflow:hidden;">
+            <div
+              style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#cbd5e1;font-size:12px;">
+              Image Stack Area</div>
+            <div id="exp-preview-images" style="position:absolute;inset:0;"></div>
+          </div>
+
+          <!-- Text Area -->
+          <div style="width:250px;padding:20px;display:flex;flex-direction:column;gap:15px;overflow-y:auto;">
+            <div style="color:#0f172a;font-size:14px;font-weight:700;">Procedure</div>
+            <div id="exp-preview-proc"
+              style="color:#475569;font-size:13px;background:#f1f5f9;padding:12px;border-radius:6px;min-height:60px;">
+            </div>
+
+            <div style="color:#0f172a;font-size:14px;font-weight:700;">Observation</div>
+            <div id="exp-preview-obs"
+              style="color:#0284c7;font-size:13px;background:#e0f2fe;padding:12px;border-radius:6px;min-height:60px;">
+            </div>
+
+            <div style="color:#0f172a;font-size:14px;font-weight:700;">Takeaway</div>
+            <div id="exp-preview-take"
+              style="color:#15803d;font-size:13px;background:#dcfce7;padding:12px;border-radius:6px;min-height:60px;">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
 
   </div> <!-- END MAIN CONTAINER (if any) -->
 
@@ -489,13 +646,14 @@
     };
   </script>
 
-  <script src="js/state.js?v=sidebar_alpha"></script>
-  <script src="js/utils.js?v=sidebar_alpha"></script>
-  <script src="js/cards.js?v=sidebar_alpha"></script>
-  <script src="js/canvas.js?v=sidebar_alpha"></script>
-  <script src="js/ui.js?v=sidebar_alpha"></script>
-  <script src="js/export.js?v=sidebar_alpha"></script>
-  <script src="js/app.js?v=sidebar_alpha"></script>
+  <script src="js/state.js?v=exp1"></script>
+  <script src="js/utils.js?v=exp1"></script>
+  <script src="js/cards.js?v=exp1"></script>
+  <script src="js/canvas.js?v=exp1"></script>
+  <script src="js/ui.js?v=exp1"></script>
+  <script src="js/export.js?v=exp1"></script>
+  <script src="js/experiment.js?v=exp1"></script>
+  <script src="js/app.js?v=exp1"></script>
 </body>
 
 </html>

@@ -1,0 +1,316 @@
+/* ====== ELECTRICITY EXPERIMENT CSS ====== */
+
+/* Center Canvas Layout */
+.apparatus-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+/* Wires */
+.wire-svg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.wire-line {
+    fill: none;
+    stroke: #64748b;
+    stroke-width: 4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: stroke 0.3s;
+}
+
+.wire-line.active {
+    stroke: #ea580c;
+    /* Primary color when current flows */
+}
+
+/* Battery 6V */
+.elec-battery {
+    position: absolute;
+    top: 80px;
+    left: 50px;
+    width: 60px;
+    height: 100px;
+    display: flex;
+    flex-direction: column;
+    z-index: 5;
+}
+
+.batt-term {
+    width: 20px;
+    height: 10px;
+    background: #94a3b8;
+    margin: 0 auto;
+    border-radius: 2px 2px 0 0;
+    text-align: center;
+    font-size: 8px;
+    font-weight: bold;
+    color: white;
+    line-height: 10px;
+}
+
+.batt-body {
+    flex: 1;
+    background: linear-gradient(135deg, #334155, #0f172a);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: 14px;
+    border: 2px solid #64748b;
+}
+
+.batt-term.neg {
+    border-radius: 0 0 2px 2px;
+}
+
+/* Bulb */
+.elec-bulb {
+    position: absolute;
+    top: 60px;
+    left: 230px;
+    width: 40px;
+    height: 60px;
+    z-index: 5;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.bulb-glass {
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.4);
+    border: 2px solid #cbd5e1;
+    border-radius: 50%;
+    position: relative;
+    z-index: 2;
+    transition: background 0.3s, border-color 0.3s;
+}
+
+.bulb-filament {
+    position: absolute;
+    top: 20px;
+    width: 16px;
+    height: 12px;
+    border: 2px solid #94a3b8;
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    z-index: 1;
+}
+
+.bulb-base {
+    width: 20px;
+    height: 15px;
+    background: #64748b;
+    border-radius: 0 0 4px 4px;
+    margin-top: -5px;
+    z-index: 3;
+}
+
+.bulb-glow {
+    position: absolute;
+    top: -20px;
+    left: -20px;
+    width: 80px;
+    height: 80px;
+    background: radial-gradient(circle, rgba(250, 204, 21, 0.8) 0%, transparent 70%);
+    border-radius: 50%;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+    z-index: 0;
+}
+
+.elec-bulb.on .bulb-glass {
+    background: rgba(254, 240, 138, 0.9);
+    border-color: #fca5a5;
+    box-shadow: 0 0 15px #fef08a;
+}
+
+.elec-bulb.on .bulb-glow {
+    opacity: 1;
+}
+
+.elec-bulb.on .bulb-filament {
+    border-color: #ea580c;
+}
+
+/* Switch */
+.elec-switch {
+    position: absolute;
+    top: 120px;
+    left: 400px;
+    width: 50px;
+    height: 20px;
+    z-index: 5;
+    cursor: pointer;
+}
+
+.switch-node {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background: #cbd5e1;
+    border: 2px solid #64748b;
+    border-radius: 50%;
+    top: 5px;
+}
+
+.node-left {
+    left: 0;
+}
+
+.node-right {
+    right: 0;
+}
+
+.switch-arm {
+    position: absolute;
+    top: 8px;
+    left: 5px;
+    width: 40px;
+    height: 4px;
+    background: #ef4444;
+    /* Red arm */
+    transform-origin: left center;
+    transform: rotate(-30deg);
+    /* Open by default */
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    border-radius: 2px;
+}
+
+.elec-switch.closed .switch-arm {
+    transform: rotate(0deg);
+}
+
+/* Beaker */
+.elec-beaker {
+    position: absolute;
+    bottom: 0px;
+    left: 175px;
+    width: 150px;
+    height: 150px;
+    background: rgba(226, 232, 240, 0.2);
+    border: 4px solid #cbd5e1;
+    border-top: none;
+    border-radius: 0 0 20px 20px;
+    z-index: 2;
+    overflow: hidden;
+    /* Contains liquid */
+}
+
+/* Beaker Lip */
+.elec-beaker::before {
+    content: '';
+    position: absolute;
+    top: -4px;
+    left: -10px;
+    width: 20px;
+    height: 10px;
+    border-bottom: 4px solid #cbd5e1;
+    border-radius: 0 0 10px 0;
+}
+
+.elec-liquid {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 0%;
+    /* Fills dynamically */
+    background: rgba(186, 230, 253, 0.4);
+    transition: height 1s, background-color 0.5s;
+}
+
+/* Different liquid colors */
+.elec-liquid.H2SO4 {
+    background: rgba(186, 230, 253, 0.4);
+}
+
+.elec-liquid.HCl {
+    background: rgba(224, 242, 254, 0.5);
+}
+
+.elec-liquid.Glucose {
+    background: rgba(254, 240, 138, 0.3);
+}
+
+/* Slightly yellow */
+.elec-liquid.Alcohol {
+    background: rgba(241, 245, 249, 0.6);
+}
+
+/* Cork */
+.elec-cork {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 30px;
+    background: #713f12;
+    /* Brown cork */
+    border-radius: 10px 10px 0 0;
+    z-index: 3;
+}
+
+/* Nails */
+.elec-nail {
+    position: absolute;
+    bottom: 10px;
+    width: 6px;
+    height: 60px;
+    background: linear-gradient(90deg, #94a3b8, #cbd5e1, #94a3b8);
+    border-radius: 3px 3px 0 0;
+    z-index: 4;
+}
+
+/* Bubbles on nails */
+.nail-bubbles {
+    position: absolute;
+    top: 0;
+    left: -10px;
+    width: 26px;
+    height: 100%;
+    pointer-events: none;
+}
+
+.elec-bubble {
+    position: absolute;
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    border-radius: 50%;
+    opacity: 0;
+    animation: riseBubble 1.5s infinite ease-in;
+}
+
+@keyframes riseBubble {
+    0% {
+        transform: translateY(0) scale(0.5);
+        opacity: 0;
+    }
+
+    20% {
+        opacity: 1;
+    }
+
+    80% {
+        opacity: 1;
+    }
+
+    100% {
+        transform: translateY(-80px) scale(1.5);
+        opacity: 0;
+    }
+}

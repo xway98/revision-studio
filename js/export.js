@@ -34,9 +34,37 @@ function loadHTML(e) {
   reader.readAsText(file); e.target.value = '';
 }
 
+// --- LOAD EXPERIMENT HTML ---
+function loadExperimentHTML(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const htmlContent = ev.target.result;
+      cardData = [{
+        type: 'html_experiment',
+        filename: file.name,
+        htmlContent: htmlContent
+      }];
+      globalConfig = { bg: { color: '#fff' }, type: 'experiment' };
+      activeCardIdx = 0; hist = []; histIdx = -1; deselectEl(); renderAll();
+      triggerAutoSave(true);
+      alert('Experiment HTML Loaded! Publishing this topic will use the custom HTML directly.');
+    } catch (err) {
+      console.error("Experiment Load Error:", err);
+      alert('Error loading experiment: ' + err.message);
+    }
+  };
+  reader.readAsText(file); e.target.value = '';
+}
+
 // --- GENERATE & DOWNLOAD HTML ---
 
 function getExportCode() {
+  if (cardData && cardData.length === 1 && cardData[0].type === 'html_experiment') {
+    return cardData[0].htmlContent;
+  }
+
   const saved = { cardData, globalConfig };
   const enc = btoa(encodeURIComponent(JSON.stringify(saved)));
 

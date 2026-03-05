@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Active Inquiry - Conductivity Experiment</title>
+    <!-- Clean, readable fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="active-inquiry.css">
+</head>
+
+<body class="light-theme">
+
+    <!-- Top Navigation Bar -->
+    <header class="app-header">
+        <div class="logo-section">
+            <div class="app-icon ui-icon-beaker">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M9 3H15M10 3V9L5 18C4.5 19 5 21 6.5 21H17.5C19 21 19.5 19 19 18L14 9V3"></path>
+                </svg>
+            </div>
+            <div class="app-titles">
+                <h1>Active Inquiry</h1>
+                <span class="sub-title">EXPERIMENT 04: CONDUCTIVITY</span>
+            </div>
+        </div>
+
+        <div class="header-stats">
+            <div class="stat-pill rating">
+                <span class="star">★</span> Lab Rating: 4.8
+            </div>
+            <div class="stat-pill streak">
+                <span class="flame">🔥</span> Streak: 12
+            </div>
+            <div class="user-avatar">
+                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix&backgroundColor=f8fafc" alt="User">
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <main class="lab-workspace">
+
+        <!-- Left Panel: Procedure & Inventory -->
+        <aside class="panel left-panel">
+
+            <section class="procedure-section">
+                <h2 class="section-title">PROCEDURE</h2>
+                <ul class="procedure-tracker" id="procedureTracker">
+                    <li class="proc-step active" id="step1-marker">
+                        <span class="proc-dot"></span> Setup Beaker
+                    </li>
+                    <li class="proc-step pending" id="step2-marker">
+                        <span class="proc-dot"></span> Add Solution
+                    </li>
+                    <li class="proc-step pending" id="step3-marker">
+                        <span class="proc-dot"></span> Insert Electrodes
+                    </li>
+                    <li class="proc-step pending" id="step4-marker">
+                        <span class="proc-dot"></span> Observe
+                    </li>
+                </ul>
+            </section>
+
+            <section class="inventory-section">
+                <h2 class="section-title">INVENTORY</h2>
+                <div class="inventory-grid">
+
+                    <div class="inv-card" id="inv-hcl">
+                        <div class="inv-icon">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="1.5">
+                                <path d="M9 3H15M10 3V9L5 18C4.5 19 5 21 6.5 21H17.5C19 21 19.5 19 19 18L14 9V3"></path>
+                            </svg>
+                        </div>
+                        <div class="inv-name">Dilute HCl</div>
+                        <div class="inv-type">Strong Acid</div>
+                    </div>
+
+                    <div class="inv-card" id="inv-naoh">
+                        <div class="inv-icon">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="1.5">
+                                <path d="M5 22h14M5 2h14M14 22V9.272M14 9.272L9 2M14 9.272H9"></path>
+                            </svg>
+                        </div>
+                        <div class="inv-name">NaOH (aq)</div>
+                        <div class="inv-type">Strong Base</div>
+                    </div>
+
+                    <div class="inv-card" id="inv-glucose">
+                        <div class="inv-icon">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="1.5">
+                                <circle cx="12" cy="12" r="4" />
+                                <circle cx="18" cy="6" r="2" />
+                                <circle cx="6" cy="18" r="2" />
+                                <path d="M14.5 9.5l2-2M9.5 14.5l-2 2" />
+                            </svg>
+                        </div>
+                        <div class="inv-name">Glucose</div>
+                        <div class="inv-type">Non-elec.</div>
+                    </div>
+
+                    <div class="inv-card" id="inv-alcohol">
+                        <div class="inv-icon">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="1.5">
+                                <rect x="7" y="5" width="10" height="14" rx="2" ry="2" />
+                                <path d="M12 2v3M10 7h4" />
+                            </svg>
+                        </div>
+                        <div class="inv-name">Alcohol</div>
+                        <div class="inv-type">Non-elec.</div>
+                    </div>
+
+                </div>
+            </section>
+        </aside>
+
+        <!-- Center Panel: Workbench -->
+        <section class="panel center-panel">
+
+            <div class="workbench-container" id="workbenchView">
+
+                <!-- Main Visualizer (The Experiment Image Placeholder) -->
+                <div class="visualizer-card">
+
+                    <div class="image-sequence" id="imageSequence">
+                        <!-- Step 1 Image -->
+                        <div class="image-frame active" id="frame1">
+                            <div class="placeholder-art beaker-empty">
+                                <div class="glass-beaker"></div>
+                            </div>
+                        </div>
+
+                        <!-- Step 2 Image -->
+                        <div class="image-frame" id="frame2">
+                            <div class="placeholder-art beaker-liquid">
+                                <div class="glass-beaker">
+                                    <div class="liquid blue"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 3 Image -->
+                        <div class="image-frame" id="frame3">
+                            <div class="placeholder-art beaker-electrodes">
+                                <div class="glass-beaker">
+                                    <div class="liquid blue"></div>
+                                    <div class="electrode left"></div>
+                                    <div class="electrode right"></div>
+                                </div>
+                                <div class="bulb-off"></div>
+                            </div>
+                        </div>
+
+                        <!-- Step 4 Image (Bubbles + Light) -->
+                        <div class="image-frame" id="frame4">
+                            <div class="placeholder-art beaker-active">
+                                <div class="glass-beaker">
+                                    <div class="liquid blue"></div>
+                                    <div class="electrode left">
+                                        <div class="bubbles"></div>
+                                    </div>
+                                    <div class="electrode right">
+                                        <div class="bubbles"></div>
+                                    </div>
+                                </div>
+                                <div class="bulb-on"></div>
+                            </div>
+
+                            <!-- In-Situ Overlay! -->
+                            <div class="insitu-overlay" id="bubbleOverlay">
+                                <span class="info-icon">i</span>
+                                <p>Notice: Tiny gas bubbles begin to form immediately at the electrodes.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Explanation & Paced Action Card -->
+                <div class="explanation-card" id="explanationCard">
+                    <div class="explanation-content">
+                        <div class="icon-wrap">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                        </div>
+                        <div class="text-wrap">
+                            <h3 id="expTitle">Setup Beaker</h3>
+                            <p id="expBody">Place a clean 100ml beaker onto the workbench to prepare for the
+                                conductivity test.</p>
+                        </div>
+                    </div>
+
+                    <button class="action-btn" id="nextStepBtn" disabled onclick="handleNextStep()">
+                        <!-- 5 Second Loading Ring SVG -->
+                        <svg class="progress-ring" width="48" height="48">
+                            <circle class="ring-track" stroke-width="4" fill="transparent" r="20" cx="24" cy="24" />
+                            <circle class="ring-fill" id="actionRing" stroke-width="4" fill="transparent" r="20" cx="24"
+                                cy="24" />
+                        </svg>
+                        <span class="btn-icon">➔</span>
+                    </button>
+                </div>
+
+            </div>
+
+            <!-- "Thought Experiment" Modal Overlay (Hidden by default) -->
+            <div class="modal-overlay hidden" id="thoughtModal">
+                <div class="thought-card">
+                    <div class="modal-header">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path
+                                d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
+                        </svg>
+                        <span>THOUGHT EXPERIMENT</span>
+                    </div>
+                    <h2>Quick Question</h2>
+
+                    <div class="modal-body">
+                        <div class="modal-icon-card">
+                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="1.5">
+                                <path d="M9 3H15M10 3V9L5 18C4.5 19 5 21 6.5 21H17.5C19 21 19.5 19 19 18L14 9V3"></path>
+                            </svg>
+                            <span>NACL (S)</span>
+                        </div>
+                        <div class="modal-content">
+                            <p>Before we insert the electrodes: What do you think would happen if we used solid NaCl
+                                instead of Dilute HCl?</p>
+
+                            <div class="hypothesis-options">
+                                <button class="hypo-btn" onclick="submitHypothesis(false)">The bulb will glow
+                                    brighter</button>
+                                <button class="hypo-btn" onclick="submitHypothesis(true)">The bulb will not glow at
+                                    all</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <span class="info-icon">i</span> SELECT A HYPOTHESIS TO CONTINUE THE EXPERIMENT
+                    </div>
+                </div>
+            </div>
+
+            <!-- Capstone Takeaway Assessment Card (Hidden by default) -->
+            <div class="capstone-container hidden" id="capstoneView">
+                <div class="capstone-header">
+                    <span>★ FINAL ASSESSMENT</span>
+                    <h2>Capstone Takeaway</h2>
+                    <p>Apply your observations from the conductivity experiment to conclude the session.</p>
+                </div>
+
+                <div class="mcq-question-box">
+                    <p>Based on the observations, why did the bulb glow with HCl but not with the glucose solution?</p>
+                </div>
+
+                <div class="mcq-options">
+
+                    <button class="mcq-option" onclick="selectFinalAnswer(this, true)">
+                        <div class="radio-circle"></div>
+                        <div class="option-text">
+                            <strong>HCl is a strong acid that completely dissociates into free-moving ions in water,
+                                which act as charge carriers allowing electric current to flow.</strong>
+                            <div class="feedback-text correct hidden">Correct: Electrolytes conduct electricity via free
+                                ions.</div>
+                        </div>
+                    </button>
+
+                    <button class="mcq-option" onclick="selectFinalAnswer(this, false)">
+                        <div class="radio-circle"></div>
+                        <div class="option-text">
+                            <strong>Glucose molecules are covalently bonded and do not produce ions when dissolved in
+                                water, meaning there are no mobile charges to complete the circuit.</strong>
+                            <div class="feedback-text wrong hidden">Incorrect: While true, this doesn't explain why HCl
+                                worked.</div>
+                        </div>
+                    </button>
+
+                    <button class="mcq-option" onclick="selectFinalAnswer(this, false)">
+                        <div class="radio-circle"></div>
+                        <div class="option-text">
+                            <strong>Glucose solution acts as an insulator because the physical size of the sugar
+                                molecules blocks the electrons from traveling between the electrodes.</strong>
+                            <div class="feedback-text wrong hidden">Incorrect: Size does not block electrons; lack of
+                                ions does.</div>
+                        </div>
+                    </button>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- Right Panel: Lab Notebook -->
+        <aside class="panel right-panel">
+            <div class="notebook-header">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                </svg>
+                <h2>Lab Notebook</h2>
+            </div>
+
+            <div class="notebook-scroll-area" id="notebookLogs">
+
+                <div class="log-entry">
+                    <div class="log-time" id="logTime1">10:42 AM</div>
+                    <div class="log-card">
+                        Beaker placed on workbench. Equipment check passed.
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="notebook-input">
+                <input type="text" placeholder="Write an observation...">
+                <button class="send-btn">➔</button>
+            </div>
+        </aside>
+
+    </main>
+
+    <script src="active-inquiry.js"></script>
+</body>
+
+</html>

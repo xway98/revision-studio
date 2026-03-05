@@ -234,6 +234,21 @@ function renderCanvas() {
   const cont = document.getElementById('canvas-elements');
   cont.innerHTML = '';
 
+  if (cardData[0] && cardData[0].type === 'html_experiment') {
+    lc.style.backgroundImage = 'none';
+    lc.style.backgroundColor = '#1e293b';
+    cont.innerHTML = `
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:white;text-align:center;padding:24px;">
+        <span style="font-size:3rem;margin-bottom:12px">🧪</span>
+        <h3 style="font-family:'Inter', sans-serif;font-size:1.2rem;margin-bottom:8px">Interactive Experiment Loaded</h3>
+        <p style="font-family:'Inter', sans-serif;font-size:0.9rem;color:#94a3b8">${cardData[0].filename}</p>
+        <p style="font-family:'Inter', sans-serif;font-size:0.8rem;color:#475569;margin-top:24px;background:#0f172a;padding:8px 12px;border-radius:6px">
+          The canvas editor is disabled for HTML experiments.<br>Publish this topic to interact with the code.
+        </p>
+      </div>`;
+    return;
+  }
+
   const card = getCard();
 
   // Progress bar
