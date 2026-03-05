@@ -133,9 +133,9 @@ function renderPropsPanel() {
     <div class="prop-sep"></div>
     <div class="prop-row"><label>Crop Tool</label>
       <div class="fmt-btns">
-        <button class="fmt-btn" style="background:#f39c12;border-color:#f39c12;" onclick="startCrop()">✂ Open Crop Tool</button>
+        <button class="fmt-btn" style="background:#f59e0b;border-color:#f59e0b;color:#fff;" onclick="startCrop()">✂ Open Crop Tool</button>
       </div>
-      <div style="font-size:10px;color:#556677;margin-top:4px;">Drag the yellow handles on the canvas to crop, then click Apply.</div>
+      <div style="font-size:10px;color:#64748b;margin-top:4px;">Drag the yellow handles on the canvas to crop, then click Apply.</div>
     </div>
     <div class="prop-row"><div class="prop-lbl"><span>Crop (T/R/B/L)</span></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:11px;color:#95a5a6;">

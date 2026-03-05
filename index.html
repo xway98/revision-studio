@@ -147,8 +147,8 @@
           </svg>
           <p>Click any element on the canvas to edit its properties here</p>
           <div class="prop-add-btns">
-            <button class="add-el-btn" style="background:#2980b9;" onclick="addTextToActive()">+ Text</button>
-            <button class="add-el-btn" style="background:#e67e22;" onclick="addImgToActive()">+ Image</button>
+            <button class="add-el-btn ct-text" onclick="addTextToActive()">+ Text</button>
+            <button class="add-el-btn ct-img" onclick="addImgToActive()">+ Image</button>
           </div>
         </div>
         <div id="prop-content" style="display:none;"></div>
@@ -226,9 +226,10 @@
           <span id="card-counter">Card 1 / 1</span>
           <button class="nav-btn" onclick="nextCard()">›</button>
         </div>
-        <button class="ct-btn" style="background:#e67e22;margin-left:auto;margin-right:8px;" onclick="closeEditor()">🏠
-          Hub</button>
-        <button class="ct-btn" style="background:#2ecc71;" id="btn-publish" onclick="publishToSheet()">☁️
+        <button class="ct-btn"
+          style="background:#f1f5f9; color:#334155; border:1px solid #cbd5e1; margin-left:auto; margin-right:8px;"
+          onclick="closeEditor()">🏠 Hub</button>
+        <button class="ct-btn" style="background:#22c55e; color:#fff;" id="btn-publish" onclick="publishToSheet()">☁️
           Publish</button>
         <button class="ct-btn ct-download" style="margin-left:8px;" onclick="downloadHTML()">⬇ DL</button>
       </div>
